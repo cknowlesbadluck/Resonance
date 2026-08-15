@@ -1,36 +1,42 @@
 # Resonance Architecture
 
-## Product boundary
+## Product definition
 
-Resonance is a provider-neutral integration and orchestration control plane. The product owns projects, agents, skills, MCP registrations, integrations, workflows, runs, permissions, events, and audit history. Providers execute capabilities behind explicit adapters and policy checks.
+Resonance is a secure, provider-neutral AI-native integration and orchestration control plane with a native iOS control cockpit. It connects external services, skills, agents, MCP tools, workflows, and execution artifacts behind explicit capability and policy boundaries.
 
 ## System shape
 
 ```text
-Native iOS control surface / Web control plane
-                |
-                v
-        Resonance API boundary
-                |
-       +--------+--------+
-       |                 |
-       v                 v
-  Supabase state     Workflow engine
-       |                 |
-       +--------+--------+
-                |
-          Provider adapters
-                |
-   +------------+-------------+----------------+
-   |            |             |                |
- GitHub      Supabase       Linear          Figma
-   |            |             |                |
-   +------------+-------------+----------------+
-                |
-       AI / Agent runtimes
-       OpenAI / Brainbase
-                |
-              MCP
+Native iOS control cockpit / Web control plane
+                    |
+                    v
+             Resonance API
+                    |
+       +------------+-------------+
+       |                          |
+       v                          v
+ Identity / Projects       Workflow Runtime
+       |                          |
+       +------------+-------------+
+                    |
+             Capability Policy
+                    |
+       +------------+-------------+
+       |            |             |
+   Connectors     Skills       Agents/MCP
+       |            |             |
+       +------------+-------------+
+                    |
+             Provider Adapters
+                    |
+     GitHub / Supabase / Linear / Figma
+          OpenAI / Brainbase / MCP
+                    |
+              Run Event Bus
+                    |
+          Artifacts / Audit / State
+                    |
+                Supabase
 ```
 
 ## Core domains
@@ -38,48 +44,75 @@ Native iOS control surface / Web control plane
 - **Project** — security and configuration boundary.
 - **Agent** — executable specialist identity.
 - **Skill** — reusable capability assigned to agents.
+- **Connector** — provider integration definition.
+- **Installation** — project-scoped connector configuration and opaque credential reference.
+- **Capability** — explicit operation with scopes, risk, version, and provider.
 - **MCP server/tool** — external tool capability with explicit permission scope.
-- **Integration** — authenticated provider connection and capability registry.
-- **Workflow** — declarative sequence/parallel/conditional execution plan.
-- **Run** — one execution of a workflow, with status and event history.
-- **Permission** — explicit capability grant; production/destructive actions require approval.
+- **Workflow** — persisted declarative execution graph.
+- **Run** — one execution of a workflow, with lifecycle state and immutable event history.
+- **Approval** — explicit human authorization for privileged actions.
+- **Artifact** — files, patches, reports, logs, screenshots, and build outputs produced by execution.
 - **Audit event** — immutable operational history.
-
-## Provider neutrality
-
-Agent configuration must reference a provider abstraction rather than hard-code a single model vendor. OpenAI is the initial provider, with the data model intentionally capable of representing additional providers later.
 
 ## Execution policy
 
-1. Resolve project.
-2. Resolve requested workflow.
-3. Resolve agents and skills.
-4. Resolve integration/MCP capabilities.
-5. Evaluate permissions.
-6. Create a Run.
-7. Execute steps and emit events.
+Every action resolves through:
+
+`actor -> project -> agent -> connector -> capability -> resource -> action -> policy -> approval -> execution`
+
+1. Resolve project and membership.
+2. Resolve workflow/agent/skill.
+3. Resolve integration/MCP capabilities.
+4. Evaluate policy and granted scopes.
+5. Create an idempotent Run.
+6. Execute through provider adapters.
+7. Emit immutable events.
 8. Pause at approval gates.
 9. Persist artifacts/results.
-10. Mark completion/failure and append audit history.
+10. Complete/fail/cancel and append audit history.
 
-No adapter should silently bypass the permission layer.
+No adapter may bypass policy or expose secret material.
+
+## Extension model
+
+Third-party extensions should be manifest-driven:
+
+- Connector manifest
+- Skill manifest
+- Plugin manifest
+- Agent manifest
+- MCP server manifest
+- Workflow manifest
+
+Each manifest declares identity, version, capabilities, required credentials, permissions, runtime entry points, health checks, and compatibility requirements.
+
+## Provider neutrality
+
+Agent configuration references provider abstractions rather than a single model vendor. OpenAI and Brainbase are initial integration targets, with the data model designed for additional providers.
 
 ## iOS direction
 
-The native iOS client is the primary long-term control surface. It should consume the same API/domain contracts as the web control plane and remain a thin, testable presentation layer over shared domain semantics.
+The native iOS client is the operational cockpit. It should emphasize observe/decide/approve/control rather than duplicate backend orchestration:
 
-Initial feature areas:
-
-- Dashboard
-- Projects
-- Agents
-- Skills
-- MCP
-- Integrations
-- Workflows
-- Runs
+- Dashboard and project health
+- Agent status
+- Workflow control
+- Live run/event stream
 - Approvals
-- Activity
-- Settings
+- Failures and diagnostics
+- Artifacts
+- Notifications
+- Integrations and capability management
+- App Intents for high-value control actions
 
-The iOS app should use small SwiftUI feature modules, explicit dependency boundaries, async state, secure credential handling, and App Intents for high-value control actions when the native project is compiled on macOS/Xcode.
+The iOS app consumes the same API/domain contracts as the web control plane and remains a thin, testable presentation layer.
+
+## Floot migration record
+
+Floot was used as a rapid prototype/build host. The canonical source of truth is GitHub. The known Floot project and restore point are recorded in `docs/FLOOT-SALVAGE.md`.
+
+The Floot-specific runtime must be replaced by ordinary repository code before Resonance is considered independent. Database schema/migrations belong under `supabase/`; provider adapters, runtime, policy, workflows, agents, manifests, and tests belong in the repository.
+
+## Cost constraint
+
+Development is intended to remain $0 out-of-pocket. Do not make paid infrastructure, paid agent builders, or Apple Developer membership prerequisites for core development. Use free/open-source/self-hosted alternatives wherever possible.
