@@ -13,18 +13,21 @@ export async function POST(request: Request, context: { params: Promise<{ workfl
     const { user, role } = await requireProjectMember(request, workflow.project_id);
     if (!workflow.enabled) return NextResponse.json({ error: "Workflow is disabled" }, { status: 409 });
     const definition = validateDefinition(workflow.definition);
-    const blocked = definition.steps.find((step) => !capabilityAllowed(role, step.capability));
+    const firstApproval = definition.steps.findIndex((step) => step.type === "approval");
+    const executableSteps = firstApproval < 0 ? definition.steps : definition.steps.slice(0, firstApproval);
+    const blocked = executableSteps.find((step) => !capabilityAllowed(role, step.capability));
     if (blocked) {
       await audit(workflow.project_id, user.id, "workflow.denied", "workflow", workflow.id, { step_id: blocked.id, capability: blocked.capability });
-      return NextResponse.json({ error: "Permission denied for workflow step", step_id: blocked.id }, { status: 403 });
+      return NextResponse.json({ error: "Permission denied before approval gate", step_id: blocked.id }, { status: 403 });
     }
 
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const { data: run, error: runError } = await supabase.from("workflow_runs").insert({
       workflow_id: workflow.id,
       project_id: workflow.project_id,
       requested_by: user.id,
       status: "queued",
-      input: (await request.json().catch(() => ({}))) as Record<string, unknown>,
+      input: body,
     }).select("*").single();
     if (runError) return NextResponse.json({ error: runError.message }, { status: 500 });
 
