@@ -1,6 +1,19 @@
 # Resonance
 
-Resonance is a provider-neutral integration and orchestration control plane for development, deployment, data, project management, design, AI agents, and MCP tools.
+**Provider-neutral AI composition fabric.**
+
+Resonance lets agents, skills, MCP tools, and fully-equipped plugins form temporary, goal-aligned working spaces (Chambers) under explicit policy, then dissolve cleanly while preserving artifacts and audit.
+
+It is a governed, overpowered evolution of MCP.
+
+## Core Idea
+
+- An **Agenda** (goal + constraints + success criteria) organizes the work.
+- A **Chamber** is the temporary shared execution space bound to that Agenda.
+- **Agents** are transported from their origins into the Chamber (they keep identity and permissions).
+- A live **Toolkit** of fully-equipped plugins is seeded and can grow via controlled pulls.
+- A scoped **Context Plane** provides shared memory with filtered views.
+- When the Agenda is satisfied (or the run ends), the Chamber **dissolves**. Agents return to origin. Artifacts and audit remain.
 
 ## Canonical stack
 
@@ -11,38 +24,41 @@ Resonance is a provider-neutral integration and orchestration control plane for 
 - **OpenAI** — initial AI provider behind a provider-neutral agent layer
 - **Brainbase** — agent runtime/management where appropriate
 - **MCP** — permissioned tool/resource interoperability
-- **SwiftUI** — long-term native iOS control surface
+- **SwiftUI** — native iOS control cockpit
 - **Next.js** — current web control plane and API boundary
 
-## Architecture
+## Architecture (short)
 
-```text
-Native iOS / Web control plane
-            ↓
-       Resonance API
-            ↓
-  Supabase state + realtime
-            ↓
-      Workflow engine
-            ↓
-     Provider adapters
-            ↓
- GitHub / Supabase / Linear / Figma / AI / MCP
+```
+Control Plane (Web + iOS cockpit)
+        ↓
+   Resonance API
+        ↓
+ Identity + Projects + Policy
+        ↓
+ Chamber / Workflow Runtime
+        ↓
+ Capability Policy Gate
+        ↓
+ Connectors + Skills + Agents + MCP
+        ↓
+ Provider Adapters
+        ↓
+ Event Bus + Artifacts + Audit → Supabase
 ```
 
-Resonance owns orchestration state, permissions, workflow runs, events, and audit history. External providers execute capabilities through explicit adapters and policy checks.
+See `docs/ARCHITECTURE.md` for the full contract.
 
-## Core domain
+## Current status
 
-Projects, project members, providers, integrations, agents, skills, MCP servers, workflows, workflow runs, workflow events, and audit events are represented as first-class entities. The initial schema is in `supabase/migrations/20260815000000_resonance_core.sql`.
+Foundation + composition domain is being established:
 
-## Development roadmap
+- Domain types for Agenda, Chamber, Toolkit, Context Plane, fully-equipped plugins
+- Schema migration for Chambers and Agendas
+- Chamber runtime contracts
+- Updated architecture and roadmap
 
-See `docs/ROADMAP.md` for the detailed build sequence and `docs/ARCHITECTURE.md` for the architectural contract.
-
-## Current implementation
-
-The repository began as a small Next.js/TypeScript integration-plane prototype. The current work evolves that foundation into the full Resonance control plane instead of replacing it with a disconnected prototype.
+The system evolves the original control-plane foundation rather than replacing it.
 
 ## Local development
 
@@ -53,3 +69,22 @@ npm run dev
 ```
 
 Required environment variables are documented in `.env.example`. Never commit provider secrets.
+
+## Documentation
+
+- `docs/ARCHITECTURE.md` — system shape, domain, Chamber contract, invariants
+- `docs/ROADMAP.md` — phased execution plan
+- `src/domain/types.ts` — core TypeScript contracts
+- `src/chambers/runtime.ts` — Chamber runtime interfaces
+- `supabase/migrations/` — schema
+
+## Design invariants
+
+- Composition over central puppet-master orchestration
+- Agents keep origin identity; they are transported, never merged
+- Agenda is the primary organizing force
+- Toolkits are live and fully-equipped
+- Policy, capability scopes, and audit are unbypassable
+- Local-first with explicit bridges
+- Clean lifecycle (form → work → dissolve)
+- Control plane stays separate from execution runtime

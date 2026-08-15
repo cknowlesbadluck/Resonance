@@ -2,7 +2,9 @@
 
 ## Product definition
 
-Resonance is a secure, provider-neutral AI-native integration and orchestration control plane with a native iOS control cockpit. It connects external services, skills, agents, MCP tools, workflows, and execution artifacts behind explicit capability and policy boundaries.
+Resonance is a secure, provider-neutral AI-native **composition fabric** with a native iOS control cockpit. It connects external services, skills, agents, MCP tools, and fully-equipped plugins into temporary, goal-aligned working spaces (Chambers) behind explicit capability and policy boundaries.
+
+It is an overpowered, governed evolution of MCP: agents are transported from their origins into shared Chambers organized by an Agenda, work against a live toolkit, and dissolve cleanly while preserving artifacts and audit.
 
 ## System shape
 
@@ -15,7 +17,7 @@ Native iOS control cockpit / Web control plane
        +------------+-------------+
        |                          |
        v                          v
- Identity / Projects       Workflow Runtime
+ Identity / Projects       Chamber / Workflow Runtime
        |                          |
        +------------+-------------+
                     |
@@ -23,14 +25,11 @@ Native iOS control cockpit / Web control plane
                     |
        +------------+-------------+
        |            |             |
-   Connectors     Skills       Agents/MCP
+   Connectors     Skills       Agents / MCP
        |            |             |
        +------------+-------------+
                     |
              Provider Adapters
-                    |
-     GitHub / Supabase / Linear / Figma
-          OpenAI / Brainbase / MCP
                     |
               Run Event Bus
                     |
@@ -42,17 +41,36 @@ Native iOS control cockpit / Web control plane
 ## Core domains
 
 - **Project** — security and configuration boundary.
-- **Agent** — executable specialist identity.
-- **Skill** — reusable capability assigned to agents.
+- **Agenda** — structured goal + constraints + success criteria that drives a run.
+- **Chamber** — temporary shared execution space bound to one Agenda. A Workflow Run may execute as a Chamber.
+- **Agent** — executable specialist identity that keeps its origin. Agents are activated/transported into Chambers, never permanently merged.
+- **Skill / Plugin** — fully-equipped capability unit (tools, resources, templates, session state, config).
+- **Toolkit** — live, permission-filtered set of plugins available inside a Chamber. Can grow via controlled resource pulls.
+- **Context Plane** — scoped shared memory for a Chamber with filtered views per participant.
 - **Connector** — provider integration definition.
 - **Installation** — project-scoped connector configuration and opaque credential reference.
 - **Capability** — explicit operation with scopes, risk, version, and provider.
 - **MCP server/tool** — external tool capability with explicit permission scope.
-- **Workflow** — persisted declarative execution graph.
-- **Run** — one execution of a workflow, with lifecycle state and immutable event history.
+- **Workflow** — persisted declarative execution graph (may back a Chamber).
+- **Run** — one execution of a workflow/Chamber, with lifecycle state and immutable event history.
 - **Approval** — explicit human authorization for privileged actions.
 - **Artifact** — files, patches, reports, logs, screenshots, and build outputs produced by execution.
 - **Audit event** — immutable operational history.
+
+## Chamber Runtime Contract
+
+Every Chamber-backed Run must support:
+
+1. Agenda binding
+2. Agent activation/transport (identity + permissions preserved)
+3. Initial toolkit seeding from Agenda + registered capabilities
+4. Scoped context plane with filtered views
+5. Dynamic resource/skill pulls under policy
+6. Contribution protocol among participants
+7. Basic dissonance/conflict detection
+8. Approval pauses for privileged actions
+9. Clean dissolution (agents return to origin, context extracted or discarded)
+10. Immutable event stream + final artifacts + audit
 
 ## Execution policy
 
@@ -61,58 +79,26 @@ Every action resolves through:
 `actor -> project -> agent -> connector -> capability -> resource -> action -> policy -> approval -> execution`
 
 1. Resolve project and membership.
-2. Resolve workflow/agent/skill.
+2. Resolve workflow/agent/skill/Agenda.
 3. Resolve integration/MCP capabilities.
 4. Evaluate policy and granted scopes.
-5. Create an idempotent Run.
-6. Execute through provider adapters.
-7. Emit immutable events.
-8. Pause at approval gates.
-9. Persist artifacts/results.
-10. Complete/fail/cancel and append audit history.
+5. Create an idempotent Run / open Chamber.
+6. Activate/transport agents and seed toolkit.
+7. Execute through provider adapters under the shared context.
+8. Emit immutable events.
+9. Pause at approval gates.
+10. Persist artifacts/results.
+11. Dissolve Chamber, return agents to origin, complete/fail/cancel and append audit history.
 
 No adapter may bypass policy or expose secret material.
 
-## Extension model
+## Design invariants
 
-Third-party extensions should be manifest-driven:
-
-- Connector manifest
-- Skill manifest
-- Plugin manifest
-- Agent manifest
-- MCP server manifest
-- Workflow manifest
-
-Each manifest declares identity, version, capabilities, required credentials, permissions, runtime entry points, health checks, and compatibility requirements.
-
-## Provider neutrality
-
-Agent configuration references provider abstractions rather than a single model vendor. OpenAI and Brainbase are initial integration targets, with the data model designed for additional providers.
-
-## iOS direction
-
-The native iOS client is the operational cockpit. It should emphasize observe/decide/approve/control rather than duplicate backend orchestration:
-
-- Dashboard and project health
-- Agent status
-- Workflow control
-- Live run/event stream
-- Approvals
-- Failures and diagnostics
-- Artifacts
-- Notifications
-- Integrations and capability management
-- App Intents for high-value control actions
-
-The iOS app consumes the same API/domain contracts as the web control plane and remains a thin, testable presentation layer.
-
-## Floot migration record
-
-Floot was used as a rapid prototype/build host. The canonical source of truth is GitHub. The known Floot project and restore point are recorded in `docs/FLOOT-SALVAGE.md`.
-
-The Floot-specific runtime must be replaced by ordinary repository code before Resonance is considered independent. Database schema/migrations belong under `supabase/`; provider adapters, runtime, policy, workflows, agents, manifests, and tests belong in the repository.
-
-## Cost constraint
-
-Development is intended to remain $0 out-of-pocket. Do not make paid infrastructure, paid agent builders, or Apple Developer membership prerequisites for core development. Use free/open-source/self-hosted alternatives wherever possible.
+- Composition over central puppet-master orchestration.
+- Agents keep origin identity; they are transported, never merged.
+- Agenda is the primary organizing force for Chambers.
+- Toolkits are live and fully-equipped.
+- Policy, capability scopes, and audit are unbypassable.
+- Local-first with explicit bridges.
+- Clean lifecycle (form → work → dissolve) is mandatory.
+- Control plane stays separate from execution runtime.
