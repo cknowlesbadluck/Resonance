@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Activity,
   Bot,
@@ -9,12 +10,15 @@ import {
   Database,
   GitBranch,
   Layers3,
+  LogIn,
+  LogOut,
   Network,
   Play,
   ShieldCheck,
   Sparkles,
   Workflow,
 } from "lucide-react";
+import { browserClient } from "../lib/browser";
 import { initialAgents, initialSkills, resonanceIntegrations } from "../lib/domain";
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
@@ -32,13 +36,37 @@ const icons = {
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/events?limit=8")
-      .then((response) => (response.ok ? response.json() : { events: [] }))
-      .then((data) => setEvents(data.events ?? []))
-      .finally(() => setLoading(false));
+    let active = true;
+    async function load() {
+      try {
+        const supabase = browserClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!active) return;
+        setEmail(sessionData.session?.user.email ?? null);
+        if (!sessionData.session?.access_token) return;
+        const response = await fetch("/api/events?limit=8", {
+          headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data.events ?? []);
+        }
+      } catch {
+        // The public shell remains usable while Supabase is unconfigured.
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () => { active = false; };
   }, []);
+
+  async function signOut() {
+    try { await browserClient().auth.signOut(); } finally { setEmail(null); setEvents([]); }
+  }
 
   return (
     <main className="shell">
@@ -47,7 +75,7 @@ export default function Home() {
           <span className="orb" />
           <div><strong>RESONANCE</strong><small>integration & orchestration plane</small></div>
         </div>
-        <div className="status"><span className="dot" /> foundation online</div>
+        {email ? <button className="secondary" onClick={signOut}><LogOut size={14} /> {email}</button> : <Link className="secondary" href="/login"><LogIn size={14} /> Sign in</Link>}
       </header>
 
       <section className="hero">
@@ -77,7 +105,7 @@ export default function Home() {
           return <article className="card" key={integration.key}>
             <div className="card-icon"><Icon size={19} /></div>
             <div><h3>{integration.name}</h3><p>{integration.description}</p><small>{integration.category}</small></div>
-            <span className="connected"><CheckCircle2 size={15} /> registered</span>
+            <span className="connected"><CheckCircle2 size={15} /> available</span>
           </article>;
         })}
       </section>
@@ -85,7 +113,7 @@ export default function Home() {
       <section className="lower">
         <article className="panel">
           <div className="panel-head"><div><p className="eyebrow">LIVE STREAM</p><h2>Recent events</h2></div><Activity size={19} /></div>
-          {loading ? <p className="muted">Loading event stream…</p> : events.length ? events.map((event) => <div className="event" key={event.id}><span className="event-dot" /><div><strong>{event.type}</strong><small>{event.source}</small></div><span className="event-status">{event.status}</span></div>) : <div className="empty"><CircleAlert size={20} /><span>No events yet. The bus is waiting for the first workflow.</span></div>}
+          {loading ? <p className="muted">Loading event stream…</p> : events.length ? events.map((event) => <div className="event" key={event.id}><span className="event-dot" /><div><strong>{event.type}</strong><small>{event.source}</small></div><span className="event-status">{event.status}</span></div>) : <div className="empty"><CircleAlert size={20} /><span>{email ? "No events yet. The bus is waiting for the first workflow." : "Sign in to view your project event stream."}</span></div>}
         </article>
         <article className="panel architecture">
           <p className="eyebrow">EXECUTION MODEL</p><h2>Request → Result</h2>
