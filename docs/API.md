@@ -20,6 +20,7 @@ Project membership is checked server-side for every project-scoped operation. Th
 ## Registry
 
 - `GET /api/registry?project_id=<id>` — return integrations, agents, skills, MCP servers, and workflows for a project.
+- `POST /api/registry` — create an integration, agent, skill, or MCP server. Viewer roles are denied.
 
 ## Workflows
 
@@ -27,7 +28,7 @@ Project membership is checked server-side for every project-scoped operation. Th
 - `POST /api/workflows` — create a validated workflow definition.
 - `POST /api/workflows/<workflowId>/run` — create and execute a workflow run.
 - `GET /api/runs/<runId>` — read a run and its event history.
-- `POST /api/runs/<runId>/approve` — approve a run paused at an explicit approval step.
+- `POST /api/runs/<runId>/approve` — approve a run paused at an explicit approval step; owner/admin only.
 
 ## Workflow definition
 
@@ -39,12 +40,13 @@ The first engine supports three intentionally small step types:
 
 A step may declare a capability such as `read`, `analyze`, `modify`, `execute`, `commit`, `create_pr`, `merge`, `deploy`, or `admin`.
 
-The current policy is conservative: members may execute read/analyze work; privileged steps require an owner/admin approval boundary. The engine is deliberately provider-neutral so real GitHub/Supabase/Linear/Figma/AI/MCP adapters can be attached without changing run semantics.
+The current policy is conservative: members may execute read/analyze work; privileged steps must sit behind an explicit approval boundary, and only owners/admins can approve. The engine is deliberately provider-neutral so real GitHub/Supabase/Linear/Figma/AI/MCP adapters can be attached without changing run semantics.
 
 ## Event ingestion
 
-- `POST /api/events` — authenticated server-side event ingestion boundary.
-- `POST /api/webhooks/github` — GitHub webhook receiver using `GITHUB_WEBHOOK_SECRET` and forwarding verified deliveries into the event stream.
+- `GET /api/events` — authenticated event stream for the caller's projects.
+- `POST /api/events` — authenticated project event ingestion boundary.
+- `POST /api/webhooks/github` — GitHub webhook receiver using `GITHUB_WEBHOOK_SECRET` and persisting verified deliveries directly with the server-side client.
 
 ## Provider adapter contract
 
