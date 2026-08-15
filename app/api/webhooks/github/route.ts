@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { adminClient } from "../../../../lib/server";
 
 function verify(raw: string, signature: string | null) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
@@ -12,9 +13,21 @@ function verify(raw: string, signature: string | null) {
 export async function POST(request: Request) {
   const raw = await request.text();
   if (!verify(raw, request.headers.get("x-hub-signature-256"))) return NextResponse.json({ error: "invalid signature" }, { status: 401 });
-  const payload = JSON.parse(raw);
-  const event = request.headers.get("x-github-event") ?? "unknown";
-  const base = new URL(request.url).origin;
-  const response = await fetch(`${base}/api/events`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ source: "github", type: `github.${event}`, external_id: request.headers.get("x-github-delivery"), payload }) });
-  return NextResponse.json({ accepted: response.ok });
+
+  try {
+    const payload = JSON.parse(raw);
+    const event = request.headers.get("x-github-event") ?? "unknown";
+    const externalId = request.headers.get("x-github-delivery");
+    const { error } = await adminClient().from("events").insert({
+      source: "github",
+      type: `github.${event}`,
+      status: "received",
+      external_id: externalId,
+      payload,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ accepted: true, event: `github.${event}`, external_id: externalId });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid webhook payload" }, { status: 400 });
+  }
 }
