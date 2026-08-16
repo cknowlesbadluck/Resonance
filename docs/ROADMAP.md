@@ -63,9 +63,9 @@
 - Learned reliability/capability metadata.
 - Human-in-the-loop for consequential decisions.
 
-## Phase 8 — Control surfaces
+## Phase 8 — Product surfaces
 - Web control plane.
-- iOS cockpit.
+- Native iOS application.
 - MCP-facing control interface where useful.
 - External application/API clients.
 
