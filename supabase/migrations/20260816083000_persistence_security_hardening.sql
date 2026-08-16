@@ -18,17 +18,16 @@ $$;
 revoke all on function private.is_project_member(uuid) from public;
 grant execute on function private.is_project_member(uuid) to authenticated;
 
+-- Keep the exposed public policies, but route their membership check through the
+-- non-PostgREST private function so the SECURITY DEFINER helper is not directly callable.
 drop policy if exists projects_member_select on public.projects;
 drop policy if exists project_members_self_select on public.project_members;
-drop policy if exists integrations_member_all on public.integrations;
-drop policy if exists agents_member_all on public.agents;
-drop policy if exists skills_member_all on public.skills;
-drop policy if exists agent_skills_member_all on public.agent_skills;
-drop policy if exists mcp_servers_member_all on public.mcp_servers;
-drop policy if exists workflows_member_all on public.workflows;
-drop policy if exists workflow_runs_member_all on public.workflow_runs;
-drop policy if exists workflow_events_member_all on public.workflow_events;
-drop policy if exists audit_events_member_select on public.audit_events;
+drop policy if exists nexus_identities_member_all on public.nexus_identities;
+drop policy if exists nexus_resources_member_all on public.nexus_resources;
+drop policy if exists nexus_capabilities_member_all on public.nexus_capabilities;
+drop policy if exists nexus_context_member_all on public.nexus_context_entries;
+drop policy if exists nexus_execution_member_all on public.nexus_executions;
+drop policy if exists nexus_evidence_member_select on public.nexus_evidence;
 
 create policy projects_member_select on public.projects
   for select using (private.is_project_member(id));
@@ -36,50 +35,30 @@ create policy projects_member_select on public.projects
 create policy project_members_self_select on public.project_members
   for select using (user_id = auth.uid() or private.is_project_member(project_id));
 
-create policy integrations_member_all on public.integrations
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
+create policy nexus_identities_member_all on public.nexus_identities
+  for all using (project_id is null or private.is_project_member(project_id))
+  with check (project_id is null or private.is_project_member(project_id));
 
-create policy agents_member_all on public.agents
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
+create policy nexus_resources_member_all on public.nexus_resources
+  for all using (project_id is null or private.is_project_member(project_id))
+  with check (project_id is null or private.is_project_member(project_id));
 
-create policy skills_member_all on public.skills
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
+create policy nexus_capabilities_member_all on public.nexus_capabilities
+  for all using (project_id is null or private.is_project_member(project_id))
+  with check (project_id is null or private.is_project_member(project_id));
 
-create policy agent_skills_member_all on public.agent_skills
-  for all
-  using (exists (
-    select 1 from public.agents a
-    where a.id = agent_id and private.is_project_member(a.project_id)
-  ))
-  with check (exists (
-    select 1 from public.agents a
-    where a.id = agent_id and private.is_project_member(a.project_id)
-  ));
+create policy nexus_context_member_all on public.nexus_context_entries
+  for all using (project_id is null or private.is_project_member(project_id))
+  with check (project_id is null or private.is_project_member(project_id));
 
-create policy mcp_servers_member_all on public.mcp_servers
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
+create policy nexus_execution_member_all on public.nexus_executions
+  for all using (project_id is null or private.is_project_member(project_id))
+  with check (project_id is null or private.is_project_member(project_id));
 
-create policy workflows_member_all on public.workflows
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
-
-create policy workflow_runs_member_all on public.workflow_runs
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
-
-create policy workflow_events_member_all on public.workflow_events
-  for all using (private.is_project_member(project_id))
-  with check (private.is_project_member(project_id));
-
-create policy audit_events_member_select on public.audit_events
-  for select using (private.is_project_member(project_id));
+create policy nexus_evidence_member_select on public.nexus_evidence
+  for select using (project_id is null or private.is_project_member(project_id));
 
 alter table public.providers enable row level security;
-
 create policy providers_authenticated_select on public.providers
   for select to authenticated
   using (true);
