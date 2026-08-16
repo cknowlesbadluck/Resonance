@@ -36,7 +36,7 @@ jobs:
         working-directory: ios
         run: swift test
 
-      - name: Archive unsigned iOS app
+      - name: Archive iOS app for device
         working-directory: ios
         run: |
           xcodebuild \
@@ -50,24 +50,30 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             archive
 
-      - name: Package unsigned IPA candidate
+      # SideStore performs the final on-device signing/install step. The IPA
+      # produced here intentionally contains a valid iOS app bundle without
+      # requiring Resonance to possess the user's Apple signing credentials.
+      - name: Package SideStore IPA
         run: |
           mkdir -p "$RUNNER_TEMP/Payload"
           cp -R "$RUNNER_TEMP/Resonance.xcarchive/Products/Applications/Resonance.app" "$RUNNER_TEMP/Payload/"
           cd "$RUNNER_TEMP"
-          zip -qry Resonance-unsigned.ipa Payload
+          zip -qry Resonance-SideStore.ipa Payload
 
-      - name: Validate IPA structure
+      - name: Validate SideStore IPA
         run: |
-          unzip -l "$RUNNER_TEMP/Resonance-unsigned.ipa"
-          test -f "$RUNNER_TEMP/Resonance-unsigned.ipa"
+          unzip -l "$RUNNER_TEMP/Resonance-SideStore.ipa"
+          test -f "$RUNNER_TEMP/Resonance-SideStore.ipa"
           test -d "$RUNNER_TEMP/Resonance.xcarchive/Products/Applications/Resonance.app"
+          shasum -a 256 "$RUNNER_TEMP/Resonance-SideStore.ipa" | tee "$RUNNER_TEMP/Resonance-SideStore.ipa.sha256"
 
-      - name: Upload IPA candidate
+      - name: Upload SideStore IPA
         uses: actions/upload-artifact@v4
         with:
-          name: resonance-ios-unsigned-ipa
-          path: ${{ runner.temp }}/Resonance-unsigned.ipa
+          name: resonance-ios-sidestore-ipa
+          path: |
+            ${{ runner.temp }}/Resonance-SideStore.ipa
+            ${{ runner.temp }}/Resonance-SideStore.ipa.sha256
           if-no-files-found: error
           retention-days: 14
 
