@@ -1,0 +1,24 @@
+name: Resonance
+options:
+  bundleIdPrefix: com.resonance
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  Resonance:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: ResonanceCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.resonance.app
+        SWIFT_VERSION: 6.0
+        INFOPLIST_KEY_CFBundleDisplayName: Resonance
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        DEVELOPMENT_TEAM: ""
+    scheme:
+      testTargets: []
