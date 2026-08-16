@@ -20,7 +20,7 @@ export class LemonadeAdapter implements NexusAdapter {
       requiredPermissions: ["execute"], risk: "low", availability: "available", provenance: "amd-lemonade",
       compatibility: ["desktop", "local-ai"],
     };
-    return { identity: { id: this.id, type: "provider", name: "AMD Lemonade" }, capabilities: [capability] };
+    return { identity: { id: this.id, type: "service", name: "AMD Lemonade" }, capabilities: [capability] };
   }
 
   async invoke(request: InvocationRequest): Promise<InvocationResult> {
