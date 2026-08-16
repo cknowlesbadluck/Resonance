@@ -3,11 +3,11 @@ import Foundation
 public actor NexusAPI {
     private let baseURL: URL
     private let session: URLSession
-    private let decoder: JSONDecoder
-    private let encoder: JSONEncoder
+    private let decoder = JSONDecoder()
+    private let encoder = JSONEncoder()
     private let bearerToken: String
 
-    public init(baseURL: URL, bearerToken: String, session: URLSession = .shared) { self.baseURL = baseURL; self.bearerToken = bearerToken; self.session = session; self.decoder = JSONDecoder(); self.encoder = JSONEncoder() }
+    public init(baseURL: URL, bearerToken: String, session: URLSession = .shared) { self.baseURL = baseURL; self.bearerToken = bearerToken; self.session = session }
 
     public func capabilities(projectId: String) async throws -> [NexusCapability] {
         let response: CapabilityListResponse = try await request(path: "api/nexus/capabilities?projectId=\(projectId)")
@@ -15,7 +15,8 @@ public actor NexusAPI {
     }
 
     public func submitIntent(_ intent: IntentRequest, idempotencyKey: String) async throws -> NexusExecutionResponse {
-        try await requestData(path: "api/nexus/executions", method: "POST", body: intent, idempotencyKey: idempotencyKey)
+        let data = try await requestData(path: "api/nexus/executions", method: "POST", body: intent, idempotencyKey: idempotencyKey)
+        return try decoder.decode(NexusExecutionResponse.self, from: data)
     }
 
     public func executions(projectId: String) async throws -> [NexusExecution] {
@@ -24,7 +25,8 @@ public actor NexusAPI {
     }
 
     private func request<T: Decodable>(path: String) async throws -> T {
-        try decoder.decode(T.self, from: requestData(path: path, method: "GET", body: Optional<EmptyBody>.none, idempotencyKey: nil).value)
+        let data = try await requestData(path: path, method: "GET", body: Optional<EmptyBody>.none, idempotencyKey: nil)
+        return try decoder.decode(T.self, from: data)
     }
 
     private func requestData<B: Encodable>(path: String, method: String, body: B?, idempotencyKey: String?) async throws -> Data {
