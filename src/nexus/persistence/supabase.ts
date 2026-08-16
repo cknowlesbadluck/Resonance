@@ -26,7 +26,7 @@ export class SupabaseNexusPersistence implements NexusPersistence {
     if (error) throw error;
   }
   async saveExecution(execution: NexusExecution, projectId?: string) {
-    const { error } = await this.db.from("nexus_executions").upsert({ id: execution.id, project_id: projectId ?? null, plan_id: execution.planId, status: execution.status, output: execution.output ?? null, error: execution.error ?? null, started_at: execution.startedAt ?? null, completed_at: execution.completedAt ?? null });
+    const { error } = await this.db.from("nexus_executions").upsert({ id: execution.id, project_id: projectId ?? null, plan_id: execution.planId, status: execution.status, attempts: execution.attempts, output: execution.output ?? null, error: execution.error ?? null, started_at: execution.startedAt ?? null, completed_at: execution.completedAt ?? null });
     if (error) throw error;
   }
   async saveEvidence(evidence: NexusEvidence, projectId?: string) {
