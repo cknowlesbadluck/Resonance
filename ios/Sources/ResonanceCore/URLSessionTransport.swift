@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 12.0, *)
 public struct URLSessionNexusTransport: NexusTransport {
     private let baseURL: URL
     private let session: URLSession
