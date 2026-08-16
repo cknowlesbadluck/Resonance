@@ -1,0 +1,78 @@
+name: iOS Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-release.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.4'
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Resolve and test Swift package
+        working-directory: ios
+        run: swift test
+
+      - name: Archive unsigned iOS app
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project Resonance.xcodeproj \
+            -scheme Resonance \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Resonance.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Package unsigned IPA candidate
+        run: |
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$RUNNER_TEMP/Resonance.xcarchive/Products/Applications/Resonance.app" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -qry Resonance-unsigned.ipa Payload
+
+      - name: Validate IPA structure
+        run: |
+          unzip -l "$RUNNER_TEMP/Resonance-unsigned.ipa"
+          test -f "$RUNNER_TEMP/Resonance-unsigned.ipa"
+          test -d "$RUNNER_TEMP/Resonance.xcarchive/Products/Applications/Resonance.app"
+
+      - name: Upload IPA candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: resonance-ios-unsigned-ipa
+          path: ${{ runner.temp }}/Resonance-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Xcode archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: resonance-ios-xcarchive
+          path: ${{ runner.temp }}/Resonance.xcarchive
+          if-no-files-found: error
+          retention-days: 14
