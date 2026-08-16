@@ -3,7 +3,9 @@ name: iOS Release
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
+      - codex/production-phase-testing
     paths:
       - 'ios/**'
       - '.github/workflows/ios-release.yml'
