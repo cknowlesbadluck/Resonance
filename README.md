@@ -85,12 +85,21 @@ Nexus v1 now contains provider-neutral capability registration/discovery, policy
 
 The external bridge fixtures prove the architecture; they are not claims of production credentials or external-service connectivity.
 
+## ChatGPT / Codex plugin
+
+Resonance includes a skills-only ChatGPT/Codex plugin under `plugins/resonance/`. It packages a focused engineering workflow for auditing, implementing, hardening, testing, and releasing Resonance without claiming access to private provider accounts.
+
+The repository also includes `.agents/plugins/marketplace.json` for local plugin discovery and a `plugin:check` CI gate. A real production MCP server is intentionally not claimed by the plugin until an authenticated, deployed endpoint exists and passes the current OpenAI MCP submission requirements.
+
+For local Codex/ChatGPT desktop testing, add this repository as a marketplace source and install **Resonance** from the resulting plugin directory. Public publication remains a separate verification step.
+
 ## Development
 
 ```bash
 npm install
 cp .env.example .env.local
 npm run dev
+npm run plugin:check
 npm run typecheck
 npm test
 npm run build
