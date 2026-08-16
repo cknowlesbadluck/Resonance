@@ -20,7 +20,16 @@ export class NexusExecutor {
         if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
         let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-          result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
+          try {
+            result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
+          } catch (error) {
+            if (attempt === maxAttempts) {
+              result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+              break;
+            }
+            await sleep(retry.backoffMs * attempt);
+            continue;
+          }
           if (result.ok || attempt === maxAttempts) break;
           await sleep(retry.backoffMs * attempt);
         }
