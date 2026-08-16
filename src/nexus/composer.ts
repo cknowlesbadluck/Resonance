@@ -9,7 +9,7 @@ export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry,
     const candidates = sortCapabilities(registry.list().filter((capability) => capabilityMatches(capability, requirement)));
     if (!candidates.length) throw new Error(`No compatible capability for ${requirement.key}`);
     const selected = candidates[0];
-    const adapter = adapters.find((item) => item.id === selected.providerId || item.id === selected.metadata?.adapterId);
+    const adapter = adapters.find((item) => item.id === selected.adapterId || item.id === selected.providerId);
     if (!adapter) throw new Error(`No adapter for capability ${selected.id}`);
     const decision = policy.evaluate(intent.requestedBy, selected);
     return { id: `${intent.id}-step-${index}`, capabilityId: selected.id, adapterId: adapter.id, input: {}, requiresApproval: decision.requiresApproval };
