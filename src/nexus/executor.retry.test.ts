@@ -51,4 +51,24 @@ describe("NexusExecutor retry semantics", () => {
     expect(attempts).toBe(3);
     expect(result.execution.status).toBe("completed");
   });
+
+  it("records audit evidence when the final adapter attempt throws", async () => {
+    const adapter: NexusAdapter = {
+      id: "flaky",
+      kind: "test",
+      async describe() { return { identity: { id: "flaky", type: "connector", name: "Flaky" }, capabilities: [] }; },
+      async invoke() { throw new Error("permanent exception"); },
+    };
+    const evidence: Array<{ type: string; summary: string; payload: unknown }> = [];
+
+    const result = await new NexusExecutor([adapter], {
+      recordEvidence: async (item) => { evidence.push(item); },
+    }).execute({ ...plan, retry: { maxAttempts: 2, backoffMs: 0 } });
+
+    expect(result.execution.status).toBe("failed");
+    expect(result.execution.error).toBe("permanent exception");
+    expect(evidence).toHaveLength(1);
+    expect(evidence[0]).toMatchObject({ type: "audit", summary: "Capability capability failed." });
+    expect(evidence[0].payload).toBe("permanent exception");
+  });
 });
