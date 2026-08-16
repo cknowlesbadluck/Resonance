@@ -1,25 +1,41 @@
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy } from "./types";
 
-export interface ExecutionSink { recordEvidence(evidence: NexusEvidence): Promise<void>; }
+export interface ExecutionSink {
+  recordEvidence(evidence: NexusEvidence): Promise<void>;
+  recordExecution?(execution: NexusExecution, projectId?: string): Promise<void>;
+}
 const DEFAULT_RETRY: ExecutionRetryPolicy = { maxAttempts: 1, backoffMs: 0 };
 const sleep = (ms: number) => ms > 0 ? new Promise<void>((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
 
 export class NexusExecutor {
   constructor(private readonly adapters: NexusAdapter[], private readonly sink: ExecutionSink) {}
+
+  private async persistExecution(execution: NexusExecution, projectId: string) {
+    if (this.sink.recordExecution) await this.sink.recordExecution(execution, projectId);
+  }
+
   async execute(plan: NexusExecutionPlan): Promise<{ execution: NexusExecution; evidence: NexusEvidence[] }> {
-    const execution: NexusExecution = { id: crypto.randomUUID(), planId: plan.id, status: "running", startedAt: new Date().toISOString() };
+    const execution: NexusExecution = { id: crypto.randomUUID(), planId: plan.id, status: "running", attempts: 0, startedAt: new Date().toISOString() };
     const evidence: NexusEvidence[] = [];
     const retry = plan.retry ?? DEFAULT_RETRY;
     const maxAttempts = Math.max(1, retry.maxAttempts);
     try {
+      await this.persistExecution(execution, plan.projectId);
       const outputs: unknown[] = [];
       for (const step of plan.steps) {
-        if (step.requiresApproval) { execution.status = "waiting"; execution.error = "Approval required before execution."; return { execution, evidence }; }
+        if (step.requiresApproval) {
+          execution.status = "waiting";
+          execution.error = "Approval required before execution.";
+          await this.persistExecution(execution, plan.projectId);
+          return { execution, evidence };
+        }
         const adapter = this.adapters.find((item) => item.id === step.adapterId);
         if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
         let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          execution.attempts += 1;
+          await this.persistExecution(execution, plan.projectId);
           try {
             result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
           } catch (error) {
@@ -40,9 +56,11 @@ export class NexusExecutor {
         outputs.push(result.output);
       }
       execution.status = "completed"; execution.completedAt = new Date().toISOString(); execution.output = outputs;
+      await this.persistExecution(execution, plan.projectId);
       return { execution, evidence };
     } catch (error) {
       execution.status = "failed"; execution.completedAt = new Date().toISOString(); execution.error = error instanceof Error ? error.message : String(error);
+      await this.persistExecution(execution, plan.projectId);
       return { execution, evidence };
     }
   }
