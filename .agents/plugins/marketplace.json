@@ -1,0 +1,20 @@
+{
+  "name": "resonance-plugins",
+  "interface": {
+    "displayName": "Resonance Plugins"
+  },
+  "plugins": [
+    {
+      "name": "resonance",
+      "source": {
+        "source": "local",
+        "path": "../../plugins/resonance"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
