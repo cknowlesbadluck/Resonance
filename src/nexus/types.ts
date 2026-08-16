@@ -6,7 +6,7 @@ export interface NexusProvider { id: string; key: string; name: string; category
 export interface NexusIdentity { id: string; type: NexusActorType; name: string; providerId?: string; externalId?: string; metadata?: Record<string, unknown>; }
 export interface NexusResource { id: string; type: string; name: string; providerId?: string; externalId?: string; uri?: string; metadata?: Record<string, unknown>; }
 export interface NexusCapability {
-  id: string; key: string; name: string; description?: string; providerId?: string; identityId?: string; resourceType?: string;
+  id: string; key: string; name: string; description?: string; providerId?: string; adapterId?: string; identityId?: string; resourceType?: string;
   requiredPermissions: string[]; risk: CapabilityRisk; inputSchema?: Record<string, unknown>; outputSchema?: Record<string, unknown>;
   tags?: string[]; compatibility?: string[]; availability?: "available" | "degraded" | "unavailable"; provenance?: string; version?: string;
 }
