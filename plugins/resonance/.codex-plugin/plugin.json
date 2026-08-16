@@ -1,0 +1,38 @@
+{
+  "name": "resonance",
+  "version": "0.1.0",
+  "description": "Provider-neutral Nexus engineering workflows for auditing, extending, testing, and releasing Resonance.",
+  "author": {
+    "name": "Christopher Knowles",
+    "url": "https://github.com/cknowlesbadluck"
+  },
+  "homepage": "https://github.com/cknowlesbadluck/Resonance",
+  "repository": "https://github.com/cknowlesbadluck/Resonance",
+  "license": "MIT",
+  "keywords": ["resonance", "nexus", "mcp", "integration", "codex", "engineering"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Resonance",
+    "shortDescription": "Engineer the Resonance Nexus",
+    "longDescription": "Provider-neutral engineering workflows for the Resonance Nexus. Audit architecture, implement additive changes, harden integrations, verify policy and persistence boundaries, run repository-native checks, and prepare release-ready changes without coupling Resonance core to any single provider.",
+    "developerName": "Christopher Knowles",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Audit Resonance architecture and implementation",
+      "Design provider-neutral Nexus changes",
+      "Harden APIs, policy, persistence, and integrations",
+      "Run and interpret typecheck, tests, and builds",
+      "Prepare ChatGPT/Codex plugin releases"
+    ],
+    "websiteURL": "https://github.com/cknowlesbadluck/Resonance",
+    "defaultPrompt": [
+      "Audit Resonance and identify the highest-risk production gaps.",
+      "Implement the next safe Resonance engineering improvement.",
+      "Prepare Resonance for a verified ChatGPT/Codex release."
+    ],
+    "brandColor": "#3B82F6",
+    "brandColorDark": "#60A5FA",
+    "composerIcon": "./assets/resonance.svg",
+    "logo": "./assets/resonance.svg"
+  }
+}
