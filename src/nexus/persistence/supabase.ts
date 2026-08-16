@@ -33,4 +33,6 @@ export class SupabaseNexusPersistence implements NexusPersistence {
     const { error } = await this.db.from("nexus_evidence").upsert({ id: evidence.id, project_id: projectId ?? null, execution_id: evidence.executionId, evidence_type: evidence.type, summary: evidence.summary, payload: evidence.payload, created_at: evidence.createdAt });
     if (error) throw error;
   }
+  async recordExecution(execution: NexusExecution, projectId?: string) { return this.saveExecution(execution, projectId); }
+  async recordEvidence(evidence: NexusEvidence, projectId?: string) { return this.saveEvidence(evidence, projectId); }
 }
