@@ -4,8 +4,7 @@ export const capabilityLevels = [
   "modify",
   "execute",
   "commit",
-  "create_pr",
-  "merge",
+  "publish",
   "deploy",
   "admin",
 ] as const;
@@ -29,7 +28,9 @@ export type IntegrationKey =
   | "figma"
   | "openai"
   | "brainbase"
-  | "mcp";
+  | "mcp"
+  | "connector"
+  | "api";
 
 export interface IntegrationDescriptor {
   key: IntegrationKey;
@@ -39,38 +40,40 @@ export interface IntegrationDescriptor {
 }
 
 export const resonanceIntegrations: IntegrationDescriptor[] = [
-  { key: "github", name: "GitHub", category: "Source control", description: "Repositories, branches, commits, PRs and Actions." },
-  { key: "supabase", name: "Supabase", category: "Backend", description: "Database, auth, realtime and Edge Functions." },
-  { key: "linear", name: "Linear", category: "Execution", description: "Issues, projects, milestones and delivery tracking." },
-  { key: "figma", name: "Figma", category: "Design", description: "Design source of truth and UI system." },
-  { key: "openai", name: "OpenAI", category: "AI provider", description: "Provider-neutral agent intelligence, initially backed by OpenAI." },
-  { key: "brainbase", name: "Brainbase", category: "Agent runtime", description: "Agent management and execution where appropriate." },
-  { key: "mcp", name: "MCP", category: "Tool protocol", description: "Explicitly permissioned tools and resources." },
+  { key: "github", name: "GitHub", category: "Source control", description: "A connected repository and delivery capability provider." },
+  { key: "supabase", name: "Supabase", category: "Persistence", description: "An operational persistence and backend capability provider." },
+  { key: "linear", name: "Linear", category: "Planning", description: "A connected planning and work-tracking capability provider." },
+  { key: "figma", name: "Figma", category: "Design", description: "A connected design and visual-resource capability provider." },
+  { key: "openai", name: "OpenAI", category: "AI provider", description: "One possible model and AI capability provider; not a Resonance authority." },
+  { key: "brainbase", name: "Brainbase", category: "Agent runtime", description: "One possible external agent capability provider." },
+  { key: "mcp", name: "MCP", category: "Interoperability", description: "A standardized bridge for exposing tools and resources to participating systems." },
+  { key: "connector", name: "Connector", category: "Interoperability", description: "A generic provider adapter boundary." },
+  { key: "api", name: "API", category: "Interoperability", description: "A generic API integration boundary." },
 ];
 
 export const initialAgents = [
   "Architect",
-  "iOS Engineer",
-  "Backend Engineer",
-  "Database Engineer",
-  "UI Engineer",
-  "Integration Engineer",
-  "QA Engineer",
-  "Security Engineer",
-  "Code Reviewer",
-  "Product Planner",
+  "Analyst",
+  "Researcher",
+  "Planner",
+  "Builder",
+  "Operator",
+  "Reviewer",
+  "Tester",
+  "Security Reviewer",
+  "Coordinator",
 ] as const;
 
 export const initialSkills = [
-  "SwiftUI feature development",
-  "iOS debugging",
-  "Supabase schema design",
-  "Supabase security",
-  "GitHub PR review",
-  "Security audit",
+  "System analysis",
+  "Research and synthesis",
+  "Planning",
   "API integration",
-  "Systematic debugging",
-  "Code refactoring",
-  "Figma-to-SwiftUI",
-  "Agent orchestration",
+  "Tool execution",
+  "Data modeling",
+  "Security review",
+  "Testing",
+  "Code review",
+  "Context management",
+  "Agent coordination",
 ] as const;
