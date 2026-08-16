@@ -16,5 +16,5 @@ export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry,
     return { id: `${intent.id}-step-${index}`, capabilityId: selected.id, adapterId: adapter.id, input: {}, requiresApproval: decision.requiresApproval };
   });
   const approvalRequired = steps.some((step) => step.requiresApproval);
-  return { id: crypto.randomUUID(), intentId: intent.id, actorId: intent.requestedBy, mode: steps.length > 1 ? "chamber" : "direct", steps, contextRefs: intent.contextRefs ?? [], approvalRequired, rationale: [`Matched ${steps.length} provider-neutral capability requirement(s).`] };
+  return { id: crypto.randomUUID(), intentId: intent.id, projectId: intent.projectId, actorId: intent.requestedBy, mode: steps.length > 1 ? "chamber" : "direct", steps, contextRefs: intent.contextRefs ?? [], approvalRequired, rationale: [`Matched ${steps.length} provider-neutral capability requirement(s).`] };
 }
