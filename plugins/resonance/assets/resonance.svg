@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Resonance</title>
+  <desc id="desc">A geometric resonance mark made from three connected arcs.</desc>
+  <rect width="256" height="256" rx="56" fill="#0B1220"/>
+  <path d="M64 96c0-22 18-40 40-40h48c22 0 40 18 40 40s-18 40-40 40h-48c-22 0-40 18-40 40s18 40 40 40h48" fill="none" stroke="#60A5FA" stroke-width="18" stroke-linecap="round"/>
+  <path d="M104 56v144M152 56v144" stroke="#A78BFA" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+</svg>
