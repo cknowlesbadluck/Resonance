@@ -1,104 +1,121 @@
 # Resonance Architecture
 
-## Product definition
+## Identity
 
-Resonance is a secure, provider-neutral AI-native **composition fabric** with a native iOS control cockpit. It connects external services, skills, agents, MCP tools, and fully-equipped plugins into temporary, goal-aligned working spaces (Chambers) behind explicit capability and policy boundaries.
+Resonance is a **provider-neutral integration and intelligence Nexus**. It bridges AI models, agents, skills, tools, connectors, plugins, applications, resources, and people.
 
-It is an overpowered, governed evolution of MCP: agents are transported from their origins into shared Chambers organized by an Agenda, work against a live toolkit, and dissolve cleanly while preserving artifacts and audit.
+It is not a replacement platform for those participants. It is the plane that makes their cooperation possible.
 
-## System shape
+## Core invariants
+
+1. Integration without domination.
+2. Provider-specific logic stays in adapters.
+3. Connection does not imply authority.
+4. MCP is one bridge, not the core abstraction.
+5. Chambers are optional execution spaces inside the Nexus.
+6. Quicksilver is independent and must not shape Resonance core domains.
+7. Context is scoped and policy-controlled.
+8. Mutations are attributable and auditable.
+9. Useful knowledge can survive temporary execution.
+
+## Domain model
+
+### Identity
+
+A stable participant/system identity: human, model, agent, skill, tool, plugin, application, service, resource, or connector.
+
+### Capability
+
+A normalized operation or resource capability with permissions, risk, provenance, compatibility, availability, and adapter binding.
+
+### Resource
+
+An external or internal thing a capability operates on, such as a repository, document, issue, database, deployment, or dataset.
+
+### Adapter
+
+The provider boundary. Adapters translate provider-specific protocols into the Nexus contract. Current protocol examples are MCP and HTTP/webhook-style bridges.
+
+### Context
+
+Scoped information for an execution or participant. Working context is temporary; promoted knowledge can persist.
+
+### Intent
+
+The desired outcome plus capability requirements, actor, project, and optional context references.
+
+### Composition
+
+Discovery and selection of compatible capabilities, resources, adapters, permissions, and execution mode.
+
+### Execution
+
+A governed invocation sequence. It may be direct for simple work or use a Chamber for coordinated work.
+
+### Evidence
+
+Durable events, audit records, artifacts, decisions, and knowledge produced by execution.
+
+## Runtime flow
 
 ```text
-Native iOS control cockpit / Web control plane
-                    |
-                    v
-             Resonance API
-                    |
-       +------------+-------------+
-       |                          |
-       v                          v
- Identity / Projects       Chamber / Workflow Runtime
-       |                          |
-       +------------+-------------+
-                    |
-             Capability Policy
-                    |
-       +------------+-------------+
-       |            |             |
-   Connectors     Skills       Agents / MCP
-       |            |             |
-       +------------+-------------+
-                    |
-             Provider Adapters
-                    |
-              Run Event Bus
-                    |
-          Artifacts / Audit / State
-                    |
-                Supabase
+Intent
+  ↓
+Capability discovery
+  ↓
+Provider/resource matching
+  ↓
+Scoped context
+  ↓
+Policy evaluation
+  ↓
+Composition
+  ├── direct execution
+  └── Chamber / workflow execution
+  ↓
+Adapter invocation
+  ↓
+Events + audit + artifacts
+  ↓
+Persistent knowledge/result
 ```
 
-## Core domains
+## Chambers
 
-- **Project** — security and configuration boundary.
-- **Agenda** — structured goal + constraints + success criteria that drives a run.
-- **Chamber** — temporary shared execution space bound to one Agenda. A Workflow Run may execute as a Chamber.
-- **Agent** — executable specialist identity that keeps its origin. Agents are activated/transported into Chambers, never permanently merged.
-- **Skill / Plugin** — fully-equipped capability unit (tools, resources, templates, session state, config).
-- **Toolkit** — live, permission-filtered set of plugins available inside a Chamber. Can grow via controlled resource pulls.
-- **Context Plane** — scoped shared memory for a Chamber with filtered views per participant.
-- **Connector** — provider integration definition.
-- **Installation** — project-scoped connector configuration and opaque credential reference.
-- **Capability** — explicit operation with scopes, risk, version, and provider.
-- **MCP server/tool** — external tool capability with explicit permission scope.
-- **Workflow** — persisted declarative execution graph (may back a Chamber).
-- **Run** — one execution of a workflow/Chamber, with lifecycle state and immutable event history.
-- **Approval** — explicit human authorization for privileged actions.
-- **Artifact** — files, patches, reports, logs, screenshots, and build outputs produced by execution.
-- **Audit event** — immutable operational history.
+A Chamber remains a useful abstraction for temporary coordinated execution. It is no longer the identity of Resonance.
 
-## Chamber Runtime Contract
+A Chamber may contain agents, skills, tools, plugins, context, and permissions. When it dissolves, temporary execution state can disappear while artifacts, audit, and promoted knowledge remain.
 
-Every Chamber-backed Run must support:
+## MCP
 
-1. Agenda binding
-2. Agent activation/transport (identity + permissions preserved)
-3. Initial toolkit seeding from Agenda + registered capabilities
-4. Scoped context plane with filtered views
-5. Dynamic resource/skill pulls under policy
-6. Contribution protocol among participants
-7. Basic dissonance/conflict detection
-8. Approval pauses for privileged actions
-9. Clean dissolution (agents return to origin, context extracted or discarded)
-10. Immutable event stream + final artifacts + audit
+MCP belongs behind an adapter boundary. Core domains use `NexusCapability`, `NexusResource`, `NexusIdentity`, and normalized invocation contracts rather than MCP-specific types.
 
-## Execution policy
+This permits Resonance to bridge MCP alongside HTTP APIs, webhooks, SDKs, native connectors, and future protocols.
 
-Every action resolves through:
+## Policy
 
-`actor -> project -> agent -> connector -> capability -> resource -> action -> policy -> approval -> execution`
+The existing policy gate remains a foundational security boundary. Nexus composition asks policy whether a capability is allowed and whether approval is required before execution. Capability exposure must never silently expand actor authority.
 
-1. Resolve project and membership.
-2. Resolve workflow/agent/skill/Agenda.
-3. Resolve integration/MCP capabilities.
-4. Evaluate policy and granted scopes.
-5. Create an idempotent Run / open Chamber.
-6. Activate/transport agents and seed toolkit.
-7. Execute through provider adapters under the shared context.
-8. Emit immutable events.
-9. Pause at approval gates.
-10. Persist artifacts/results.
-11. Dissolve Chamber, return agents to origin, complete/fail/cancel and append audit history.
+## Persistence
 
-No adapter may bypass policy or expose secret material.
+The existing Supabase schema remains the operational foundation. Nexus graph tables add identities, resources, capabilities, context, executions, and evidence without deleting the existing Agenda/Chamber/workflow model.
 
-## Design invariants
+A dedicated Resonance Supabase project must be provisioned separately from Quicksilver before production persistence is activated.
 
-- Composition over central puppet-master orchestration.
-- Agents keep origin identity; they are transported, never merged.
-- Agenda is the primary organizing force for Chambers.
-- Toolkits are live and fully-equipped.
-- Policy, capability scopes, and audit are unbypassable.
-- Local-first with explicit bridges.
-- Clean lifecycle (form → work → dissolve) is mandatory.
-- Control plane stays separate from execution runtime.
+## Control plane
+
+The current Next.js surface is the web control plane. It exposes Nexus discovery and composition surfaces while keeping execution/domain logic in `src/nexus`.
+
+Future surfaces may include iOS and MCP-facing control interfaces, but they are clients of the Nexus rather than the Nexus itself.
+
+## Domain-independence rule
+
+For every proposed core abstraction:
+
+> Would this still make sense if Quicksilver did not exist?
+
+If the answer is no, move the concern outside Resonance core.
+
+## Governance
+
+Critical reformation requires two explicit approvals. Approval 1 authorizes the proposal; Approval 2 authorizes execution immediately before the change. Normal additive implementation does not require this gate unless it crosses the critical threshold.
