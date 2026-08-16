@@ -8,21 +8,10 @@ public struct NexusIntent: Codable, Identifiable, Sendable, Hashable {
     public let requiresApproval: Bool
 
     public enum Status: String, Codable, Sendable, Hashable {
-        case draft
-        case ready
-        case awaitingApproval
-        case executing
-        case completed
-        case failed
+        case draft, ready, awaitingApproval, executing, completed, failed
     }
 
-    public init(
-        id: String,
-        text: String,
-        status: Status = .draft,
-        requiredCapabilityIDs: [String] = [],
-        requiresApproval: Bool = false
-    ) {
+    public init(id: String, text: String, status: Status = .draft, requiredCapabilityIDs: [String] = [], requiresApproval: Bool = false) {
         self.id = id
         self.text = text
         self.status = status
@@ -38,11 +27,7 @@ public struct NexusEvidence: Codable, Identifiable, Sendable, Hashable {
     public let summary: String
 
     public enum Kind: String, Codable, Sendable, Hashable {
-        case event
-        case artifact
-        case approval
-        case result
-        case error
+        case event, artifact, approval, result, error
     }
 
     public init(id: String, timestamp: Date, kind: Kind, summary: String) {
