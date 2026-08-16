@@ -9,11 +9,13 @@ export interface NexusCapability {
   id: string; key: string; name: string; description?: string; providerId?: string; adapterId?: string; identityId?: string; resourceType?: string;
   requiredPermissions: string[]; risk: CapabilityRisk; inputSchema?: Record<string, unknown>; outputSchema?: Record<string, unknown>;
   tags?: string[]; compatibility?: string[]; availability?: "available" | "degraded" | "unavailable"; provenance?: string; version?: string;
+  cost?: number; latencyMs?: number;
 }
 export interface CapabilityRequirement { key: string; requiredPermissions?: string[]; resourceType?: string; preferredProviderIds?: string[]; maxRisk?: CapabilityRisk; tags?: string[]; }
 export interface NexusIntent { id: string; objective: string; projectId: string; requirements: CapabilityRequirement[]; contextRefs?: string[]; requestedBy: string; metadata?: Record<string, unknown>; }
 export interface ExecutionStep { id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; }
-export interface NexusExecutionPlan { id: string; intentId: string; projectId: string; actorId: string; mode: ExecutionMode; steps: ExecutionStep[]; contextRefs: string[]; approvalRequired: boolean; rationale: string[]; }
+export interface ExecutionRetryPolicy { maxAttempts: number; backoffMs: number; }
+export interface NexusExecutionPlan { id: string; intentId: string; projectId: string; actorId: string; mode: ExecutionMode; steps: ExecutionStep[]; contextRefs: string[]; approvalRequired: boolean; rationale: string[]; retry?: ExecutionRetryPolicy; }
 export interface NexusExecution { id: string; planId: string; status: "planned" | "running" | "waiting" | "completed" | "failed" | "cancelled"; startedAt?: string; completedAt?: string; output?: unknown; error?: string; }
 export interface NexusEvidence { id: string; executionId: string; type: "event" | "artifact" | "decision" | "audit" | "knowledge"; summary: string; payload: unknown; createdAt: string; }
 export interface NexusEvent { id: string; source: string; type: string; correlationId: string; actorId?: string; projectId?: string; resourceId?: string; payload: unknown; createdAt: string; externalId?: string; }
