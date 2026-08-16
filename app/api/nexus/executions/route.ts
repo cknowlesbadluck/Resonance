@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { composeDemoIntent, nexusAdapters } from "../../../../src/nexus/runtime";
-import { NexusExecutor } from "../../../../src/nexus/executor";
+import { NexusExecutor, type ExecutionSink } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
-import type { NexusIntent } from "../../../../src/nexus/types";
+import type { NexusIntent, NexusEvidence } from "../../../../src/nexus/types";
 
 const executions: unknown[] = [];
 const evidence: unknown[] = [];
 const persistence = createNexusPersistenceFromEnv();
-const sink = {
-  recordEvidence: async (item: Parameters<NonNullable<ConstructorParameters<typeof NexusExecutor>[1]>["recordEvidence"]>[0]) => {
-    evidence.unshift(item);
-    if (persistence) await persistence.saveEvidence(item, currentProjectId);
-  },
-};
-let currentProjectId = "demo";
+
+function createSink(projectId: string): ExecutionSink {
+  return {
+    recordEvidence: async (item: NexusEvidence) => {
+      evidence.unshift(item);
+      if (persistence) await persistence.saveEvidence(item, projectId);
+    },
+  };
+}
 
 export async function GET() {
   return NextResponse.json({ executions, evidence, persistenceConfigured: Boolean(persistence) });
@@ -33,12 +35,11 @@ export async function POST(request: Request) {
     requirements: body.requirements,
     contextRefs: body.contextRefs ?? [],
   };
-  currentProjectId = intent.projectId;
 
   try {
     const plan = composeDemoIntent(intent);
     if (plan.approvalRequired) return NextResponse.json({ intent, plan, status: "approval_required" }, { status: 202 });
-    const result = await new NexusExecutor(nexusAdapters, sink).execute(plan);
+    const result = await new NexusExecutor(nexusAdapters, createSink(intent.projectId)).execute(plan);
     executions.unshift(result.execution);
     if (persistence) await persistence.saveExecution(result.execution, intent.projectId);
     return NextResponse.json({ intent, plan, ...result, persistenceConfigured: Boolean(persistence) }, { status: result.execution.status === "completed" ? 201 : 422 });
