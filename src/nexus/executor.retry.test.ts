@@ -32,4 +32,23 @@ describe("NexusExecutor retry semantics", () => {
     expect(attempts).toBe(3);
     expect(result.execution.status).toBe("completed");
   });
+
+  it("retries transient adapter exceptions and completes", async () => {
+    let attempts = 0;
+    const adapter: NexusAdapter = {
+      id: "flaky",
+      kind: "test",
+      async describe() { return { identity: { id: "flaky", type: "connector", name: "Flaky" }, capabilities: [] }; },
+      async invoke() {
+        attempts += 1;
+        if (attempts < 3) throw new Error("temporary exception");
+        return { ok: true, output: "done" };
+      },
+    };
+
+    const result = await new NexusExecutor([adapter], { recordEvidence: async () => undefined }).execute(plan);
+
+    expect(attempts).toBe(3);
+    expect(result.execution.status).toBe("completed");
+  });
 });
