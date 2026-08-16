@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,3 +17,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test ResonanceCore
+        run: swift test --package-path ios
