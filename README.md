@@ -1,90 +1,118 @@
 # Resonance
 
-**Provider-neutral AI composition fabric.**
+**The provider-neutral integration and intelligence Nexus.**
 
-Resonance lets agents, skills, MCP tools, and fully-equipped plugins form temporary, goal-aligned working spaces (Chambers) under explicit policy, then dissolve cleanly while preserving artifacts and audit.
+Resonance is a plane that bridges **AI models, agents, skills, tools, connectors, plugins, applications, resources, and people** so they can discover capabilities, exchange appropriately scoped context, and cooperate under explicit policy.
 
-It is a governed, overpowered evolution of MCP.
+> **Integration without domination.**
 
-## Core Idea
+Resonance does not replace the systems it connects. It composes them. Connected systems retain their identity and autonomy; connection does not imply authority.
 
-- An **Agenda** (goal + constraints + success criteria) organizes the work.
-- A **Chamber** is the temporary shared execution space bound to that Agenda.
-- **Agents** are transported from their origins into the Chamber (they keep identity and permissions).
-- A live **Toolkit** of fully-equipped plugins is seeded and can grow via controlled pulls.
-- A scoped **Context Plane** provides shared memory with filtered views.
-- When the Agenda is satisfied (or the run ends), the Chamber **dissolves**. Agents return to origin. Artifacts and audit remain.
+## What Resonance is
 
-## Canonical stack
+- **Nexus:** the integration layer across heterogeneous ecosystems.
+- **Capability graph:** what participants can do, what resources they expose, and under what constraints.
+- **Adapters:** provider-specific bridges that translate into normalized Nexus contracts.
+- **Context fabric:** scoped working context plus durable knowledge.
+- **Composition:** match intent to capabilities and compatible participants.
+- **Policy:** explicit authority, approvals, least privilege, and auditability.
+- **Execution:** direct or coordinated; a Chamber is one execution mechanism, not the product boundary.
+- **Evidence:** events, artifacts, decisions, and knowledge survive temporary execution.
 
-- **GitHub** — source control, issues, pull requests, Actions
-- **Supabase** — operational database, auth, realtime, Edge Functions
-- **Linear** — project and delivery tracking
-- **Figma** — design source of truth
-- **OpenAI** — initial AI provider behind a provider-neutral agent layer
-- **Brainbase** — agent runtime/management where appropriate
-- **MCP** — permissioned tool/resource interoperability
-- **SwiftUI** — native iOS control cockpit
-- **Next.js** — current web control plane and API boundary
+## MCP's place
 
-## Architecture (short)
+MCP is one interoperability mechanism available to Resonance. It is not Resonance itself and it does not define the core domain model.
 
+Resonance can bridge MCP, APIs, webhooks, SDKs, native integrations, and future protocols through adapters that expose the same normalized capability model.
+
+## Architecture
+
+```text
+External ecosystem
+  AI / agents / skills / tools / MCP / APIs / plugins / apps / resources / humans
+                              ↓
+                     Integration adapters
+                              ↓
+                    Identity + capability graph
+                              ↓
+                   Discovery / compatibility
+                              ↓
+                   Context + resource fabric
+                              ↓
+                    Intent / composition engine
+                              ↓
+                 ┌────────────┴────────────┐
+                 │                         │
+              Chamber                  Workflow
+                 │                         │
+                 └────────────┬────────────┘
+                              ↓
+                    Policy-controlled execution
+                              ↓
+                    Events / evidence / artifacts
+                              ↓
+                    Persistent knowledge/state
+                              ↓
+                         Control surfaces
 ```
-Control Plane (Web + iOS cockpit)
-        ↓
-   Resonance API
-        ↓
- Identity + Projects + Policy
-        ↓
- Chamber / Workflow Runtime
-        ↓
- Capability Policy Gate
-        ↓
- Connectors + Skills + Agents + MCP
-        ↓
- Provider Adapters
-        ↓
- Event Bus + Artifacts + Audit → Supabase
-```
 
-See `docs/ARCHITECTURE.md` for the full contract.
+## Existing foundation
 
-## Current status
+The current codebase already provides useful foundations that are being expanded rather than discarded:
 
-Foundation + composition domain is being established:
+- Agenda and Chamber contracts
+- Chamber participants and toolkit snapshots
+- Context Plane
+- capability levels and policy gate
+- integration descriptors
+- event ingestion
+- Supabase migrations and RLS
+- Next.js control plane
 
-- Domain types for Agenda, Chamber, Toolkit, Context Plane, fully-equipped plugins
-- Schema migration for Chambers and Agendas
-- Chamber runtime contracts
-- Updated architecture and roadmap
+## Domain independence
 
-The system evolves the original control-plane foundation rather than replacing it.
+Resonance and Quicksilver are **separate projects**. Quicksilver may later be used as one proving ground, but no Resonance core primitive is designed around it.
 
-## Local development
+The test is simple:
+
+> **Would this abstraction still make sense if Quicksilver did not exist?**
+
+If not, it does not belong in Resonance core.
+
+## Current Nexus proof
+
+Nexus v1 now contains provider-neutral capability registration/discovery, policy-aware composition, scoped context primitives, normalized event/audit primitives, an MCP adapter boundary, an HTTP adapter boundary, direct execution, Chamber-capable composition, Nexus API surfaces, and a heterogeneous bridge fixture. See `docs/NEXUS_PROOF.md`.
+
+The external bridge fixtures prove the architecture; they are not claims of production credentials or external-service connectivity.
+
+## Development
 
 ```bash
 npm install
 cp .env.example .env.local
 npm run dev
+npm run typecheck
+npm test
+npm run build
 ```
 
-Required environment variables are documented in `.env.example`. Never commit provider secrets.
+Never commit provider secrets. GitHub is the engineering source of truth; Linear is the durable planning/decision companion.
+
+## Governance
+
+### Two-Key Reformation Rule
+
+No critical reformation of Resonance may be executed without two separate explicit approvals from Christopher. Critical reformations include changes to core identity, domain semantics, fundamental architecture, source-of-truth hierarchy, irreversible migrations, major subsystem deletion/replacement, or major vendor lock-in.
+
+Approval 1 authorizes the proposed reformation. Approval 2 authorizes execution immediately before the critical change.
+
+Normal implementation, bug fixes, tests, documentation, and additive work do not require the two-key process unless they cross the critical threshold.
 
 ## Documentation
 
-- `docs/ARCHITECTURE.md` — system shape, domain, Chamber contract, invariants
-- `docs/ROADMAP.md` — phased execution plan
-- `src/domain/types.ts` — core TypeScript contracts
-- `src/chambers/runtime.ts` — Chamber runtime interfaces
-- `supabase/migrations/` — schema
-
-## Design invariants
-
-- Composition over central puppet-master orchestration
-- Agents keep origin identity; they are transported, never merged
-- Agenda is the primary organizing force
-- Toolkits are live and fully-equipped
-- Policy, capability scopes, and audit are unbypassable
-- Local-first with explicit bridges
-- Clean lifecycle (form → work → dissolve)
-- Control plane stays separate from execution runtime
+- `docs/ARCHITECTURE.md` — detailed architecture
+- `docs/ROADMAP.md` — execution path
+- `docs/NEXUS_PROOF.md` — heterogeneous bridge proof
+- `docs/superpowers/specs/2026-08-15-resonance-nexus-design.md` — validated Nexus design
+- `docs/superpowers/plans/2026-08-15-resonance-nexus-v1-plan.md` — implementation plan
+- `src/nexus/` — Nexus domain and runtime contracts
