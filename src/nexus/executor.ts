@@ -18,12 +18,13 @@ export class NexusExecutor {
         if (step.requiresApproval) { execution.status = "waiting"; execution.error = "Approval required before execution."; return { execution, evidence }; }
         const adapter = this.adapters.find((item) => item.id === step.adapterId);
         if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
-        let result;
+        let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
           result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
           if (result.ok || attempt === maxAttempts) break;
           await sleep(retry.backoffMs * attempt);
         }
+        if (!result) throw new Error(`Capability ${step.capabilityId} produced no invocation result.`);
         const item: NexusEvidence = { id: crypto.randomUUID(), executionId: execution.id, type: result.ok ? "event" : "audit", summary: result.ok ? `Capability ${step.capabilityId} completed.` : `Capability ${step.capabilityId} failed.`, payload: result.ok ? result.output : result.error, createdAt: new Date().toISOString() };
         evidence.push(item); await this.sink.recordEvidence(item);
         if (!result.ok) throw new Error(result.error ?? "Adapter invocation failed");
