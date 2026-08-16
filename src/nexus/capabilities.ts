@@ -1,6 +1,7 @@
 import type { CapabilityRequirement, CapabilityRisk, NexusCapability } from "./types";
 
 const riskRank: Record<CapabilityRisk, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+const availabilityRank: Record<NonNullable<NexusCapability["availability"]>, number> = { available: 0, degraded: 1, unavailable: 2 };
 
 export function capabilityMatches(capability: NexusCapability, requirement: CapabilityRequirement): boolean {
   if (capability.key !== requirement.key) return false;
@@ -13,5 +14,15 @@ export function capabilityMatches(capability: NexusCapability, requirement: Capa
 }
 
 export function sortCapabilities(candidates: NexusCapability[]): NexusCapability[] {
-  return [...candidates].sort((a, b) => riskRank[a.risk] - riskRank[b.risk] || (a.providerId ?? "").localeCompare(b.providerId ?? ""));
+  return [...candidates].sort((a, b) => {
+    const availability = availabilityRank[a.availability ?? "available"] - availabilityRank[b.availability ?? "available"];
+    if (availability) return availability;
+    const risk = riskRank[a.risk] - riskRank[b.risk];
+    if (risk) return risk;
+    const cost = (a.cost ?? Number.POSITIVE_INFINITY) - (b.cost ?? Number.POSITIVE_INFINITY);
+    if (cost) return cost;
+    const latency = (a.latencyMs ?? Number.POSITIVE_INFINITY) - (b.latencyMs ?? Number.POSITIVE_INFINITY);
+    if (latency) return latency;
+    return (a.providerId ?? "").localeCompare(b.providerId ?? "");
+  });
 }
