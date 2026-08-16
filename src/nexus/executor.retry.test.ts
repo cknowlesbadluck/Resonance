@@ -21,6 +21,7 @@ describe("NexusExecutor retry semantics", () => {
     let attempts = 0;
     const adapter: NexusAdapter = {
       id: "flaky",
+      kind: "test",
       async describe() { return { identity: { id: "flaky", type: "connector", name: "Flaky" }, capabilities: [] }; },
       async invoke() {
         attempts += 1;
