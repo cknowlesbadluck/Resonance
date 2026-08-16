@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, ArrowRight, Bot, CheckCircle2, CircleAlert, Network, Play, ShieldCheck, Sparkles, Workflow } from "lucide-react";
+import { Activity, ArrowRight, CheckCircle2, CircleAlert, Network, Play, ShieldCheck, Sparkles } from "lucide-react";
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
 type Capability = { id: string; key: string; name: string; adapterId?: string; risk: string; availability?: string; provenance?: string };
