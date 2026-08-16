@@ -3,9 +3,9 @@ import type { NexusExecutionPlan } from "../nexus/types";
 
 export function chamberRequestFromPlan(plan: NexusExecutionPlan): OpenChamberRequest {
   return {
-    projectId: "nexus",
+    projectId: plan.projectId,
     agenda: {
-      projectId: "nexus",
+      projectId: plan.projectId,
       goal: `Execute intent ${plan.intentId}`,
       constraints: [{ type: "approval", value: plan.approvalRequired, description: "Execution plan approval state" }],
       successCriteria: [{ id: "execution-complete", description: "All composed capability steps complete", required: true }],
