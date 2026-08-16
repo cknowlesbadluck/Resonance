@@ -2,6 +2,7 @@ import type { NexusAdapter, AdapterDescription, InvocationRequest, InvocationRes
 import type { NexusCapability } from "../types";
 
 type LemonadeChatResponse = { choices?: Array<{ message?: { content?: string } }> };
+type LemonadeErrorResponse = { error?: string };
 
 /** Optional desktop/local-AI adapter. Never imported by the iOS target. */
 export class LemonadeAdapter implements NexusAdapter {
@@ -15,20 +16,11 @@ export class LemonadeAdapter implements NexusAdapter {
 
   async describe(): Promise<AdapterDescription> {
     const capability: NexusCapability = {
-      id: `${this.id}.chat`,
-      key: "local.ai.chat",
-      name: "Lemonade Local Chat",
-      adapterId: this.id,
-      requiredPermissions: ["execute"],
-      risk: "low",
-      availability: "available",
-      provenance: "amd-lemonade",
+      id: `${this.id}.chat`, key: "local.ai.chat", name: "Lemonade Local Chat", adapterId: this.id,
+      requiredPermissions: ["execute"], risk: "low", availability: "available", provenance: "amd-lemonade",
       compatibility: ["desktop", "local-ai"],
     };
-    return {
-      identity: { id: this.id, type: "provider", name: "AMD Lemonade" },
-      capabilities: [capability],
-    };
+    return { identity: { id: this.id, type: "provider", name: "AMD Lemonade" }, capabilities: [capability] };
   }
 
   async invoke(request: InvocationRequest): Promise<InvocationResult> {
@@ -40,9 +32,12 @@ export class LemonadeAdapter implements NexusAdapter {
       headers: { "Content-Type": "application/json", ...(this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {}) },
       body: JSON.stringify({ model: this.model, messages: [...(input.system ? [{ role: "system", content: input.system }] : []), { role: "user", content: input.prompt }] }),
     });
-    const data = await response.json().catch(() => null) as LemonadeChatResponse | { error?: string } | null;
-    if (!response.ok) return { ok: false, error: typeof data === "object" && data && "error" in data ? String(data.error) : `Lemonade HTTP ${response.status}` };
-    const output = data?.choices?.[0]?.message?.content;
+    const data = await response.json().catch(() => null) as LemonadeChatResponse | LemonadeErrorResponse | null;
+    if (!response.ok) {
+      const error = data && "error" in data ? data.error : undefined;
+      return { ok: false, error: error ? String(error) : `Lemonade HTTP ${response.status}` };
+    }
+    const output = data && "choices" in data ? data.choices?.[0]?.message?.content : undefined;
     if (!output) return { ok: false, error: "Lemonade returned no completion content." };
     return { ok: true, output, evidence: { provider: "amd-lemonade", model: this.model } };
   }
