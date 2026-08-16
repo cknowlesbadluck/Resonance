@@ -27,11 +27,11 @@
 - Consumes: `NexusExecutor.execute(plan)` and `NexusAdapter.invoke()`.
 - Produces: regression coverage for approval gating, exhausted retries, missing adapters, and ordered multi-step execution.
 
-- [ ] **Step 1: Add an approval-gating test**
-- [ ] **Step 2: Add an exhausted-retry test**
-- [ ] **Step 3: Add a missing-adapter test**
-- [ ] **Step 4: Add a multi-step ordering test**
-- [ ] **Step 5: Run `npm test -- src/nexus/executor.retry.test.ts` and require all tests to pass.**
+- [x] Add approval-gating coverage.
+- [x] Add exhausted-retry coverage.
+- [x] Add missing-adapter coverage.
+- [x] Add multi-step ordering coverage.
+- [ ] Confirm focused tests pass in CI.
 
 ### Task 2: Make CI a real branch verification gate
 
@@ -42,23 +42,25 @@
 - Consumes: repository package scripts `typecheck`, `test`, and `build`.
 - Produces: GitHub Actions verification on branch pushes and pull requests.
 
-- [ ] **Step 1: Expand push coverage to all branches.**
-- [ ] **Step 2: Keep `npm install`, `npm run typecheck`, `npm test`, and `npm run build` explicit and ordered.**
-- [ ] **Step 3: Commit with `ci: verify all branch pushes`.**
+- [x] Expand push coverage to all branches.
+- [x] Keep `npm install`, `npm run typecheck`, `npm test`, and `npm run build` explicit and ordered.
+- [x] Remove the `setup-node` npm cache because the repository currently has no lockfile; the first CI run failed at setup before reaching project verification.
 
 ### Task 3: Run repository verification
 
-- [ ] Push sprint changes and confirm the workflow triggers.
-- [ ] Inspect typecheck, tests, and production build results.
+- [x] Trigger CI from the sprint branch.
+- [x] Inspect the initial workflow run and identify the lockfile-dependent cache failure.
+- [x] Fix the workflow without adding unnecessary dependencies.
+- [ ] Confirm the corrected workflow reaches typecheck, tests, and production build.
 - [ ] Fix only defects exposed by verification.
 - [ ] Re-run until the workflow is green.
 
 ### Task 4: Final quality gate
 
-- [ ] Confirm retry result failures and thrown exceptions behave consistently.
-- [ ] Confirm approval-required steps never invoke adapters.
-- [ ] Confirm missing adapters fail cleanly.
-- [ ] Confirm evidence is produced for final invocation failures.
-- [ ] Confirm multi-step output ordering.
+- [x] Confirm retry result failures and thrown exceptions have explicit coverage.
+- [x] Confirm approval-required steps never invoke adapters.
+- [x] Confirm missing adapters fail cleanly.
+- [x] Confirm evidence is produced for final invocation failures.
+- [x] Confirm multi-step output ordering is asserted.
 - [ ] Confirm typecheck, test suite, and production build all pass.
 - [ ] Only after the gate is green, resume feature development.
