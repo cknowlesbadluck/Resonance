@@ -5,63 +5,51 @@ public actor NexusAPI {
     private let session: URLSession
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
+    private let bearerToken: String
 
-    public init(baseURL: URL, session: URLSession = .shared) {
+    public init(baseURL: URL, bearerToken: String, session: URLSession = .shared) {
         self.baseURL = baseURL
+        self.bearerToken = bearerToken
         self.session = session
         self.decoder = JSONDecoder()
         self.encoder = JSONEncoder()
     }
 
-    public func capabilities() async throws -> [NexusCapability] {
-        try await request(path: "api/nexus/capabilities")
+    public func capabilities(projectId: String) async throws -> [NexusCapability] {
+        try await request(path: "api/nexus/capabilities?projectId=\(projectId)")
     }
 
-    public func submitIntent(_ request: IntentRequest) async throws -> Data {
-        try await requestData(path: "api/nexus/intents", method: "POST", body: request)
+    public func submitIntent(_ intent: IntentRequest, idempotencyKey: String) async throws -> NexusExecutionResponse {
+        try await requestData(path: "api/nexus/executions", method: "POST", body: intent, idempotencyKey: idempotencyKey)
     }
 
-    public func executions() async throws -> [NexusExecution] {
-        try await request(path: "api/nexus/executions")
+    public func executions(projectId: String) async throws -> [NexusExecution] {
+        let response: ExecutionListResponse = try await request(path: "api/nexus/executions?projectId=\(projectId)")
+        return response.executions
     }
 
     private func request<T: Decodable>(path: String) async throws -> T {
-        let data = try await requestData(path: path, method: "GET", body: Optional<EmptyBody>.none)
+        let data = try await requestData(path: path, method: "GET", body: Optional<EmptyBody>.none, idempotencyKey: nil)
         return try decoder.decode(T.self, from: data)
     }
 
-    private func requestData<B: Encodable>(
-        path: String,
-        method: String,
-        body: B?
-    ) async throws -> Data {
-        guard let url = URL(string: path, relativeTo: baseURL) else {
-            throw NexusError(message: "Invalid Nexus endpoint")
-        }
-
+    private func requestData<B: Encodable>(path: String, method: String, body: B?, idempotencyKey: String?) async throws -> Data {
+        guard let url = URL(string: path, relativeTo: baseURL) else { throw NexusError(message: "Invalid Nexus endpoint") }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-        if let body {
-            request.httpBody = try encoder.encode(body)
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        }
-
+        request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
+        if let idempotencyKey { request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key") }
+        if let body { request.httpBody = try encoder.encode(body); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw NexusError(message: "Invalid Nexus response")
-        }
-
+        guard let http = response as? HTTPURLResponse else { throw NexusError(message: "Invalid Nexus response") }
         guard (200..<300).contains(http.statusCode) else {
-            if let serverError = try? decoder.decode(NexusError.self, from: data) {
-                throw serverError
-            }
+            if let serverError = try? decoder.decode(NexusError.self, from: data) { throw serverError }
             throw NexusError(message: "Nexus request failed with HTTP \(http.statusCode)")
         }
-
         return data
     }
 
     private struct EmptyBody: Encodable {}
+    private struct ExecutionListResponse: Decodable { let executions: [NexusExecution]; let evidence: [NexusEvidence] }
 }
