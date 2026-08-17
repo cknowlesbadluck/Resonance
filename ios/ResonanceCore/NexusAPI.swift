@@ -13,8 +13,19 @@ public actor NexusAPI {
         self.encoder = JSONEncoder()
     }
 
-    public func capabilities() async throws -> [NexusCapability] {
-        try await request(path: "api/nexus/capabilities")
+    public func capabilities(ids: [String] = []) async throws -> [Capability] {
+        var path = "api/nexus/capabilities"
+        if !ids.isEmpty {
+            let query = ids.joined(separator: ",").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            path += "?ids=\(query)"
+        }
+        let response: CapabilityResponse = try await request(path: path)
+        return response.capabilities ?? response.resolved ?? []
+    }
+
+    public func resolveCapabilities(_ ids: [String]) async throws -> CapabilityResolution {
+        let path = "api/nexus/capabilities?ids=\((ids.joined(separator: ",")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        return try await request(path: path)
     }
 
     public func submitIntent(_ request: IntentRequest) async throws -> Data {
@@ -30,38 +41,28 @@ public actor NexusAPI {
         return try decoder.decode(T.self, from: data)
     }
 
-    private func requestData<B: Encodable>(
-        path: String,
-        method: String,
-        body: B?
-    ) async throws -> Data {
-        guard let url = URL(string: path, relativeTo: baseURL) else {
-            throw NexusError(message: "Invalid Nexus endpoint")
-        }
-
+    private func requestData<B: Encodable>(path: String, method: String, body: B?) async throws -> Data {
+        guard let url = URL(string: path, relativeTo: baseURL) else { throw NexusError(message: "Invalid Nexus endpoint") }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-
         if let body {
             request.httpBody = try encoder.encode(body)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
-
         let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw NexusError(message: "Invalid Nexus response")
-        }
-
+        guard let http = response as? HTTPURLResponse else { throw NexusError(message: "Invalid Nexus response") }
         guard (200..<300).contains(http.statusCode) else {
-            if let serverError = try? decoder.decode(NexusError.self, from: data) {
-                throw serverError
-            }
+            if let serverError = try? decoder.decode(NexusError.self, from: data) { throw serverError }
             throw NexusError(message: "Nexus request failed with HTTP \(http.statusCode)")
         }
-
         return data
     }
 
     private struct EmptyBody: Encodable {}
+
+    private struct CapabilityResponse: Decodable {
+        let capabilities: [Capability]?
+        let resolved: [Capability]?
+    }
 }
