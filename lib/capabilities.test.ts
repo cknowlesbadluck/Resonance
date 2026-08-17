@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import { listCapabilities, resolveCapabilities } from "./capabilities";
 
 describe("capability plane", () => {
