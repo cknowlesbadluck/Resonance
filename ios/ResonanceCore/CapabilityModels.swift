@@ -49,6 +49,24 @@ public struct Capability: Codable, Identifiable, Hashable, Sendable {
         self.dependencies = dependencies
         self.tags = tags
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, kind, provider, version, status, permissions, dependencies, tags
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        kind = try container.decode(CapabilityKind.self, forKey: .kind)
+        provider = try container.decode(String.self, forKey: .provider)
+        version = try container.decode(String.self, forKey: .version)
+        status = try container.decode(CapabilityStatus.self, forKey: .status)
+        permissions = try container.decodeIfPresent([String].self, forKey: .permissions) ?? []
+        dependencies = try container.decodeIfPresent([CapabilityDependency].self, forKey: .dependencies) ?? []
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+    }
 }
 
 public struct CapabilityResolution: Codable, Sendable {
