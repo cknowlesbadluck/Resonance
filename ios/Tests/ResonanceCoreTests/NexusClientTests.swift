@@ -33,6 +33,16 @@ final class NexusClientTests: XCTestCase {
         XCTAssertEqual(response.executions.count, 1)
         XCTAssertEqual(response.executions[0].status, "completed")
     }
+
+    func testCapabilityArraysAreOptionalInAPIPayloads() throws {
+        let payload = #"{"id":"cap-1","name":"GitHub","description":"Source control","kind":"tool","provider":"GitHub","version":"1.0.0","status":"available"}"#.data(using: .utf8)!
+        let capability = try JSONDecoder().decode(Capability.self, from: payload)
+
+        XCTAssertEqual(capability.id, "cap-1")
+        XCTAssertTrue(capability.permissions.isEmpty)
+        XCTAssertTrue(capability.dependencies.isEmpty)
+        XCTAssertTrue(capability.tags.isEmpty)
+    }
 }
 
 private struct StubTransport: NexusTransport {
