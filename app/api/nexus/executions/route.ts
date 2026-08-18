@@ -22,6 +22,33 @@ function dbClient() {
   return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
 }
 
+async function emitLifecycleEvent(db: ReturnType<typeof dbClient>, event: {
+  projectId: string;
+  source: string;
+  type: string;
+  status: string;
+  correlationId: string;
+  resourceType: string;
+  resourceId: string;
+  externalId: string;
+  payload?: Record<string, unknown>;
+}) {
+  if (!db) return;
+  const { error } = await db.from("events").upsert({
+    project_id: event.projectId,
+    source: event.source,
+    type: event.type,
+    status: event.status,
+    correlation_id: event.correlationId,
+    resource_type: event.resourceType,
+    resource_id: event.resourceId,
+    external_id: event.externalId,
+    payload: event.payload ?? {},
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "project_id,source,external_id" });
+  if (error) throw error;
+}
+
 export async function GET() { return NextResponse.json({ executions, evidence }); }
 
 export async function POST(request: Request) {
@@ -53,7 +80,7 @@ export async function POST(request: Request) {
     if (claim.error) {
       const { data: existing, error: lookupError } = await db
         .from("nexus_execution_requests")
-        .select("request_hash,response,status")
+        .select("request_hash,response,status,execution_id")
         .eq("project_id", intent.projectId)
         .eq("idempotency_key", idempotencyKey)
         .maybeSingle();
@@ -62,18 +89,37 @@ export async function POST(request: Request) {
       if (existing.request_hash !== hash) {
         return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
       }
-      return NextResponse.json(existing.response ?? { status: existing.status }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
+      return NextResponse.json(existing.response ?? { status: existing.status, executionId: existing.execution_id }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
     }
   }
 
+  const lifecycle = (type: string, status: string, resourceId: string, payload?: Record<string, unknown>) =>
+    emitLifecycleEvent(db, {
+      projectId: intent.projectId,
+      source: "nexus",
+      type,
+      status,
+      correlationId: intent.id,
+      resourceType: "execution",
+      resourceId,
+      externalId: `${intent.id}:${type}`,
+      payload,
+    });
+
+  await lifecycle("execution.accepted", "accepted", intent.id, { idempotencyKeyPresent: Boolean(idempotencyKey) });
+
   try {
     const plan = composeDemoIntent(intent);
+    await lifecycle("execution.planned", plan.approvalRequired ? "waiting" : "planned", intent.id, { planId: plan.id, stepCount: plan.steps.length });
+
     if (plan.approvalRequired) {
       const response = { intent, plan, status: "approval_required" };
       if (idempotencyKey && db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
+      await lifecycle("execution.waiting", "waiting", intent.id, { reason: "approval_required" });
       return NextResponse.json(response, { status: 202 });
     }
 
+    await lifecycle("execution.started", "running", intent.id, { planId: plan.id });
     const result = await new NexusExecutor(nexusAdapters, sink).execute(plan);
     executions.unshift(result.execution);
     if (persistence) await persistence.saveExecution(result.execution, intent.projectId);
@@ -83,8 +129,16 @@ export async function POST(request: Request) {
       await db.from("nexus_execution_requests").update({ execution_id: result.execution.id, status: result.execution.status, response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
     }
 
+    await lifecycle(
+      result.execution.status === "completed" ? "execution.completed" : "execution.failed",
+      result.execution.status,
+      result.execution.id,
+      { planId: plan.id, error: result.execution.error ?? null, evidenceCount: result.evidence.length },
+    );
+
     return NextResponse.json(response, { status: result.execution.status === "completed" ? 201 : 422 });
   } catch (error) {
+    await lifecycle("execution.failed", "failed", intent.id, { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
   }
 }
