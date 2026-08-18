@@ -5,18 +5,58 @@ import { Activity, ArrowRight, CheckCircle2, CircleAlert, Network, Play, ShieldC
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
 type Capability = { id: string; key: string; name: string; adapterId?: string; risk: string; availability?: string; provenance?: string };
+type ExecutionResponse = { status?: string; execution?: { status?: string; output?: unknown; error?: string }; plan?: { approvalRequired?: boolean } };
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
   const [loading, setLoading] = useState(true);
+  const [executing, setExecuting] = useState(false);
+  const [execution, setExecution] = useState<ExecutionResponse | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/events?limit=8").then((r) => r.ok ? r.json() : { events: [] }),
-      fetch("/api/nexus/capabilities").then((r) => r.ok ? r.json() : { capabilities: [] }),
-    ]).then(([eventData, capabilityData]) => { setEvents(eventData.events ?? []); setCapabilities(capabilityData.capabilities ?? []); }).finally(() => setLoading(false));
-  }, []);
+  async function load() {
+    setLoading(true);
+    try {
+      const [eventResponse, capabilityResponse] = await Promise.all([
+        fetch("/api/events?limit=8"),
+        fetch("/api/nexus/capabilities"),
+      ]);
+      const eventData = eventResponse.ok ? await eventResponse.json() : { events: [] };
+      const capabilityData = capabilityResponse.ok ? await capabilityResponse.json() : { capabilities: [] };
+      setEvents(eventData.events ?? []);
+      setCapabilities(capabilityData.capabilities ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { void load(); }, []);
+
+  async function composeIntent() {
+    const capability = capabilities[0];
+    if (!capability || executing) return;
+    setExecuting(true);
+    setExecution(null);
+    try {
+      const response = await fetch("/api/nexus/executions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          objective: `Demonstrate ${capability.name}`,
+          requestedBy: "web-user",
+          projectId: "demo",
+          requirements: [{ key: capability.key, requiredPermissions: capability.risk === "low" ? ["read"] : ["execute"], maxRisk: capability.risk }],
+        }),
+      });
+      const data = await response.json();
+      setExecution({ ...data, status: response.ok ? data.status ?? data.execution?.status : "error" });
+      await load();
+    } catch (error) {
+      setExecution({ status: "error", execution: { error: error instanceof Error ? error.message : "Execution failed" } });
+    } finally {
+      setExecuting(false);
+    }
+  }
 
   return (
     <main className="shell">
@@ -30,14 +70,15 @@ export default function Home() {
           <p className="eyebrow">NEXUS / FOUNDATION</p>
           <h1>Bridge the ecosystem.<br /><span>Amplify the whole.</span></h1>
           <p className="lede">Resonance connects AI, agents, skills, tools, connectors, plugins, applications, resources, and people without forcing them into one provider or runtime.</p>
-          <div className="hero-actions"><button className="primary"><Play size={16} /> Compose intent</button><button className="secondary"><ShieldCheck size={16} /> Policy</button></div>
+          <div className="hero-actions"><button className="primary" onClick={composeIntent} disabled={!capabilities.length || executing}><Play size={16} /> {executing ? "Executing…" : "Compose intent"}</button><button className="secondary"><ShieldCheck size={16} /> Policy</button></div>
+          {execution && <div className="execution-status"><strong>{execution.status === "approval_required" ? "Approval required" : execution.status === "error" ? "Execution error" : "Execution complete"}</strong><small>{execution.execution?.error ?? (execution.execution?.status ?? execution.status)}</small></div>}
         </div>
         <div className="pulse"><div className="pulse-ring" /><div className="pulse-core"><Network size={30} /><small>NEXUS</small></div></div>
       </section>
 
       <section className="stats">
         <div className="stat"><span>CAPABILITIES</span><strong>{capabilities.length}</strong><small>normalized surfaces</small></div>
-        <div className="stat"><span>BRIDGES</span><strong>{new Set(capabilities.map((c) => c.adapterId)).size}</strong><small>adapter paths</small></div>
+        <div className="stat"><span>BRIDGES</span><strong>{new Set(capabilities.map((c) => c.adapterId).filter(Boolean)).size}</strong><small>adapter paths</small></div>
         <div className="stat"><span>EVENTS</span><strong>{events.length}</strong><small>recent observations</small></div>
         <div className="stat"><span>PRINCIPLE</span><strong>1</strong><small>integration without domination</small></div>
       </section>
