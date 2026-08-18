@@ -16,6 +16,7 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Web Nexus surface is connected to the real execution endpoint rather than a cosmetic action.
 - Compose Intent invokes the Nexus execution API and reports completion, approval-required, or error states.
 - Spatial depth was strengthened around the central Nexus visualization and capability surfaces.
+- The policy indicator is informational rather than a fake action.
 
 ### Phase 3 — Backend/data
 - Resonance Supabase project `lfdynzionafcpddqipqc` is active and healthy.
@@ -23,7 +24,9 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Execution/capability telemetry migration has been applied.
 - Live schema inspection confirms RLS is enabled on `projects`, `providers`, `project_members`, and the Nexus graph tables.
 - Live Supabase security advisor currently reports **zero security lints**.
-- Durable execution/idempotency work remains a hardening target rather than being faked as complete.
+- Execution API now persists completed/failed execution records and evidence when Supabase environment configuration is present.
+- `RESONANCE_PROJECT_ID` is documented and defaults to the existing Resonance project UUID for local/demo execution.
+- Durable idempotency semantics remain a hardening target rather than being faked as complete.
 
 ### Phase 4 — Integration layer
 - HTTP and MCP remain behind provider-neutral adapter contracts.
@@ -50,13 +53,13 @@ Cloudflare is intentionally **not** being made a core dependency during this spr
 
 ## Resolved security hold
 
-The repository previously documented a security hold for `public.projects`, `public.providers`, and `public.project_members`. Live inspection of the Resonance Supabase project now confirms RLS is already enabled on those tables, and the security advisor reports zero lints. The old remediation block is therefore obsolete and has been removed from the active status record.
+The repository previously documented a security hold for `public.projects`, `public.providers`, and `public.project_members`. Live inspection of the Resonance Supabase project confirms RLS is already enabled on those tables, and the security advisor reports zero lints. The old remediation block is therefore obsolete and has been removed from the active status record.
 
 ## Current next gates
 
-1. Verify CI against the latest implementation commits.
+1. Obtain observed CI results for the latest commits.
 2. Replace remaining demo adapter registrations with production bridge contracts where credentials and endpoints exist.
-3. Add durable execution state and idempotency semantics.
+3. Add durable idempotency semantics for execution initiation.
 4. Complete lifecycle and failure-path tests.
 5. Complete native execution/result flow over the stable Nexus API.
-6. Run security, provider-isolation, RLS, and release verification.
+6. Run provider-isolation and release verification.
