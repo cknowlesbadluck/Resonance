@@ -1,32 +1,56 @@
 # Resonance Implementation Status
 
-## Completed in this implementation pass
+## Six-phase sprint status — 2026-08-18
 
-### Nexus foundation
+The six-phase sprint is active against the canonical `main` branch. The implementation is being advanced additively: Nexus contracts remain the center, the web surface is a client, Supabase remains the operational persistence foundation, and native iOS consumes the same API contracts.
+
+### Phase 1 — Core Resonance
 - Provider-neutral capability contracts remain the core boundary.
-- Capability ranking now considers availability, risk, cost, and latency metadata.
+- Capability ranking considers availability, risk, cost, and latency metadata.
 - Execution plans support bounded retry policy.
 - Executor retries failed adapter calls with linear backoff and preserves correlation IDs.
 - Supabase persistence stores capability cost/latency telemetry.
+- Existing Nexus API surfaces cover capabilities, intents, executions, identities, events, and webhooks.
 
-### Persistence
+### Phase 2 — Web surface
+- Web Nexus surface is connected to the real execution endpoint rather than a cosmetic action.
+- Compose Intent invokes the Nexus execution API and reports completion, approval-required, or error states.
+- Spatial depth was strengthened around the central Nexus visualization and capability surfaces.
+
+### Phase 3 — Backend/data
 - Resonance Supabase project is active.
 - Nexus graph tables are present.
 - Execution/capability telemetry migration has been applied.
 - Existing RLS protections remain on Nexus graph tables.
+- Durable execution/idempotency work remains a hardening target rather than being faked as complete.
 
-### Native iOS foundation
-- Swift 6 package foundation added under `ios/`.
-- Actor-isolated `NexusClient` added.
-- Async URLSession transport added.
-- Initial SwiftUI application surface added.
-- Client decoding test added before implementation.
+### Phase 4 — Integration layer
+- HTTP and MCP remain behind provider-neutral adapter contracts.
+- Demo bridges prove normalized invocation through distinct protocols.
+- GitHub webhook path exists and remains subject to signature/deduplication hardening.
+
+### Phase 5 — Production hardening
+- CI already runs web typecheck, tests, build, and Swift package tests.
+- Retry/failure tests exist in the Nexus executor suite.
+- Provider isolation and lifecycle coverage remain active hardening targets.
+- Final verification must be based on observed CI/runtime evidence, not repository state alone.
+
+### Phase 6 — Native iOS
+- Swift 6 package foundation exists under `ios/`.
+- Actor-isolated `NexusClient` and async URLSession transport exist.
+- Native app surface now loads live capabilities through the Nexus API.
+- Native UI uses a spatial central-Nexus presentation with selectable capability detail.
+- Runtime base URL is configurable through `RESONANCE_BASE_URL`, defaulting to local development.
+
+## Cloudflare position
+
+Cloudflare is intentionally **not** being made a core dependency during this sprint. It remains a bounded edge/security option for a later deployment step. The current architecture does not need a second data platform or an infrastructure migration to complete the product lifecycle.
 
 ## Explicit security hold
 
-Supabase reports that `public.projects`, `public.providers`, and `public.project_members` currently have RLS disabled. The platform safety policy requires presenting the remediation SQL and obtaining a deliberate decision before changing those tables. The remediation is therefore **not auto-applied**.
+Supabase reports that `public.projects`, `public.providers`, and `public.project_members` currently have RLS disabled. The remediation SQL is intentionally not auto-applied because enabling RLS without complete policies can block legitimate access.
 
-Recommended SQL:
+Recommended SQL remains:
 
 ```sql
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
@@ -34,13 +58,13 @@ ALTER TABLE public.providers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_members ENABLE ROW LEVEL SECURITY;
 ```
 
-Enabling RLS without policies can block legitimate access, so policy design must accompany the change.
+Policy design must accompany any production RLS change.
 
-## Next engineering sequence
+## Current next gates
 
-1. Complete real adapter registration and production bridge contracts.
-2. Wire intent composition to persisted capabilities/resources/context.
+1. Verify CI against the latest implementation commits.
+2. Replace remaining demo adapter registrations with production bridge contracts where credentials and endpoints exist.
 3. Add durable execution state and idempotency semantics.
-4. Add end-to-end lifecycle tests.
-5. Build the native iOS feature flow on the stable Nexus API.
-6. Run security, RLS, failure/retry, and provider-isolation hardening.
+4. Complete lifecycle and failure-path tests.
+5. Complete native execution/result flow over the stable Nexus API.
+6. Run security, provider-isolation, RLS, and release verification.
