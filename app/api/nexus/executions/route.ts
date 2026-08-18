@@ -44,18 +44,25 @@ export async function POST(request: Request) {
   const db = dbClient();
 
   if (idempotencyKey && db) {
-    const { data: existing, error } = await db
-      .from("nexus_execution_requests")
-      .select("request_hash,response,status")
-      .eq("project_id", intent.projectId)
-      .eq("idempotency_key", idempotencyKey)
-      .maybeSingle();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    if (existing) {
+    const claim = await db.from("nexus_execution_requests").insert({
+      project_id: intent.projectId,
+      idempotency_key: idempotencyKey,
+      request_hash: hash,
+      status: "accepted",
+    });
+    if (claim.error) {
+      const { data: existing, error: lookupError } = await db
+        .from("nexus_execution_requests")
+        .select("request_hash,response,status")
+        .eq("project_id", intent.projectId)
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle();
+      if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 500 });
+      if (!existing) return NextResponse.json({ error: claim.error.message }, { status: 500 });
       if (existing.request_hash !== hash) {
         return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
       }
-      return NextResponse.json(existing.response ?? { status: existing.status }, { status: 200, headers: { "X-Idempotent-Replay": "true" } });
+      return NextResponse.json(existing.response ?? { status: existing.status }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
     }
   }
 
@@ -63,7 +70,7 @@ export async function POST(request: Request) {
     const plan = composeDemoIntent(intent);
     if (plan.approvalRequired) {
       const response = { intent, plan, status: "approval_required" };
-      if (idempotencyKey && db) await db.from("nexus_execution_requests").insert({ project_id: intent.projectId, idempotency_key: idempotencyKey, request_hash: hash, status: "waiting", response });
+      if (idempotencyKey && db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
       return NextResponse.json(response, { status: 202 });
     }
 
@@ -73,14 +80,7 @@ export async function POST(request: Request) {
     const response = { intent, plan, ...result };
 
     if (idempotencyKey && db) {
-      await db.from("nexus_execution_requests").insert({
-        project_id: intent.projectId,
-        idempotency_key: idempotencyKey,
-        execution_id: result.execution.id,
-        request_hash: hash,
-        status: result.execution.status,
-        response,
-      });
+      await db.from("nexus_execution_requests").update({ execution_id: result.execution.id, status: result.execution.status, response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
     }
 
     return NextResponse.json(response, { status: result.execution.status === "completed" ? 201 : 422 });
