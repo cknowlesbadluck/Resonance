@@ -13,7 +13,7 @@ export class NexusExecutor {
 
   private async emitEvent(plan: NexusExecutionPlan, execution: NexusExecution, type: string, status: string, payload: unknown) {
     if (!this.sink.recordEvent) return;
-    await this.sink.recordEvent({
+    const event: NexusEvent = {
       id: crypto.randomUUID(),
       source: "resonance.executor",
       type,
@@ -24,7 +24,8 @@ export class NexusExecutor {
       resourceId: execution.id,
       payload,
       createdAt: new Date().toISOString(),
-    } as NexusEvent & { status: string });
+    };
+    await this.sink.recordEvent(event);
   }
 
   async execute(plan: NexusExecutionPlan): Promise<{ execution: NexusExecution; evidence: NexusEvidence[] }> {
