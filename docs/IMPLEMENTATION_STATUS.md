@@ -18,10 +18,11 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Spatial depth was strengthened around the central Nexus visualization and capability surfaces.
 
 ### Phase 3 — Backend/data
-- Resonance Supabase project is active.
-- Nexus graph tables are present.
+- Resonance Supabase project `lfdynzionafcpddqipqc` is active and healthy.
+- Nexus graph tables are present and populated with the current foundation records.
 - Execution/capability telemetry migration has been applied.
-- Existing RLS protections remain on Nexus graph tables.
+- Live schema inspection confirms RLS is enabled on `projects`, `providers`, `project_members`, and the Nexus graph tables.
+- Live Supabase security advisor currently reports **zero security lints**.
 - Durable execution/idempotency work remains a hardening target rather than being faked as complete.
 
 ### Phase 4 — Integration layer
@@ -30,8 +31,9 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - GitHub webhook path exists and remains subject to signature/deduplication hardening.
 
 ### Phase 5 — Production hardening
-- CI already runs web typecheck, tests, build, and Swift package tests.
+- CI is configured to run web typecheck, tests, build, and Swift package tests.
 - Retry/failure tests exist in the Nexus executor suite.
+- Live Supabase performance advisor currently reports only informational unused-index notices; no security lint is active.
 - Provider isolation and lifecycle coverage remain active hardening targets.
 - Final verification must be based on observed CI/runtime evidence, not repository state alone.
 
@@ -46,19 +48,9 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 
 Cloudflare is intentionally **not** being made a core dependency during this sprint. It remains a bounded edge/security option for a later deployment step. The current architecture does not need a second data platform or an infrastructure migration to complete the product lifecycle.
 
-## Explicit security hold
+## Resolved security hold
 
-Supabase reports that `public.projects`, `public.providers`, and `public.project_members` currently have RLS disabled. The remediation SQL is intentionally not auto-applied because enabling RLS without complete policies can block legitimate access.
-
-Recommended SQL remains:
-
-```sql
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.providers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.project_members ENABLE ROW LEVEL SECURITY;
-```
-
-Policy design must accompany any production RLS change.
+The repository previously documented a security hold for `public.projects`, `public.providers`, and `public.project_members`. Live inspection of the Resonance Supabase project now confirms RLS is already enabled on those tables, and the security advisor reports zero lints. The old remediation block is therefore obsolete and has been removed from the active status record.
 
 ## Current next gates
 
