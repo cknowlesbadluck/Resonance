@@ -46,6 +46,14 @@ const sink = {
 export async function GET() { return NextResponse.json({ executions, evidence }); }
 
 export async function POST(request: Request) {
+  const idempotencyKey = request.headers.get("Idempotency-Key");
+  if (!idempotencyKey || !idempotencyKey.trim()) {
+    return NextResponse.json(
+      { error: "Idempotency-Key header is required" },
+      { status: 400 }
+    );
+  }
+
   const body = await request.json().catch(() => null) as Partial<NexusIntent> | null;
   if (!body?.objective || !body.requestedBy || !Array.isArray(body.requirements)) {
     return NextResponse.json({ error: "objective, requestedBy and requirements are required" }, { status: 400 });
@@ -60,10 +68,9 @@ export async function POST(request: Request) {
     contextRefs: body.contextRefs ?? [],
     metadata: body.metadata ?? {},
   };
-  const idempotencyKey = request.headers.get("Idempotency-Key");
   const hash = hashExecutionRequest(intent);
 
-  if (idempotencyKey && db) {
+  if (db) {
     const claim = await db.from("nexus_execution_requests").insert({
       project_id: intent.projectId,
       idempotency_key: idempotencyKey,
@@ -90,7 +97,7 @@ export async function POST(request: Request) {
     const plan = composeDemoIntent(intent);
     if (plan.approvalRequired) {
       const response = { intent, plan, status: "approval_required" };
-      if (idempotencyKey && db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
+      if (db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
       return NextResponse.json(response, { status: 202 });
     }
 
@@ -99,7 +106,7 @@ export async function POST(request: Request) {
     if (persistence) await persistence.saveExecution(result.execution, intent.projectId);
     const response = { intent, plan, ...result };
 
-    if (idempotencyKey && db) {
+    if (db) {
       await db.from("nexus_execution_requests").update({ execution_id: result.execution.id, status: result.execution.status, response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
     }
 

@@ -28,7 +28,7 @@ describe("Nexus primitives", () => {
   });
   it("deduplicates external events", async () => {
     const store = new InMemoryEventStore(); const bus = new EventBus(store);
-    const event = { id: "1", source: "github", type: "push", correlationId: "c1", externalId: "e1", payload: {}, createdAt: new Date().toISOString() };
+    const event = { id: "1", source: "github", type: "push", status: "received", correlationId: "c1", externalId: "e1", payload: {}, createdAt: new Date().toISOString() };
     expect(await bus.publish(event)).toBe(true); expect(await bus.publish({ ...event, id: "2" })).toBe(false); expect(store.events).toHaveLength(1);
   });
 });
