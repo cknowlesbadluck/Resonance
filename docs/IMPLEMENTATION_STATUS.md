@@ -26,7 +26,7 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Live Supabase security advisor currently reports **zero security lints**.
 - Execution API now persists completed/failed execution records and evidence when Supabase environment configuration is present.
 - `RESONANCE_PROJECT_ID` is documented and defaults to the existing Resonance project UUID for local/demo execution.
-- Durable idempotency semantics remain a hardening target rather than being faked as complete.
+- Durable idempotency: `Idempotency-Key` header is now **required** (HTTP 400 if missing). DB unique index on `(project_id, idempotency_key)` is in place.
 
 ### Phase 4 — Integration layer
 - HTTP and MCP remain behind provider-neutral adapter contracts.
@@ -39,6 +39,7 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Live Supabase performance advisor currently reports only informational unused-index notices; no security lint is active.
 - Provider isolation and lifecycle coverage remain active hardening targets.
 - Final verification must be based on observed CI/runtime evidence, not repository state alone.
+- **Branch protection on `main` with required CI status checks is not yet enabled** (tracked).
 
 ### Phase 6 — Native iOS
 - Swift 6 package foundation exists under `ios/`.
@@ -46,6 +47,18 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Native app surface now loads live capabilities through the Nexus API.
 - Native UI uses a spatial central-Nexus presentation with selectable capability detail.
 - Runtime base URL is configurable through `RESONANCE_BASE_URL`, defaulting to local development.
+
+## Repository health metrics (session snapshot 2026-08-19)
+
+| Metric | Value | Signal |
+|--------|-------|--------|
+| Open PRs | 8 | High — stop net-new feature branches until merged or closed |
+| Total branches | ~33 | High |
+| Near-duplicate branches (event-lifecycle*) | ~20 | Critical — prune aggressively |
+| `main` protected | false | Critical — enable required status checks |
+| Required CI status checks | none | Critical |
+
+**Rule:** If open-PR count or duplicate-branch count is trending up, stop building and start merging/closing.
 
 ## Cloudflare position
 
@@ -57,9 +70,16 @@ The repository previously documented a security hold for `public.projects`, `pub
 
 ## Current next gates
 
-1. Obtain observed CI results for the latest commits.
-2. Replace remaining demo adapter registrations with production bridge contracts where credentials and endpoints exist.
-3. Add durable idempotency semantics for execution initiation.
-4. Complete lifecycle and failure-path tests.
-5. Complete native execution/result flow over the stable Nexus API.
-6. Run provider-isolation and release verification.
+1. Enable branch protection on `main` with required status checks (CI web + ios jobs).
+2. Obtain observed green CI results for the latest commits / this governance branch.
+3. Merge or close the 8 open PRs; prune the event-lifecycle duplicate branches.
+4. Replace remaining demo adapter registrations with production bridge contracts where credentials and endpoints exist.
+5. Complete lifecycle and failure-path tests (including mandatory Idempotency-Key paths).
+6. Complete native execution/result flow over the stable Nexus API.
+7. Run provider-isolation and release verification.
+
+## Governance process (active)
+
+- `docs/AGENT_LOG.md` — append-only session log. Every agent session must append.
+- Linear is the backlog (Resonance Integration Platform project). GitHub is execution only.
+- Two-Key exceptions for idempotency design, policy-deny refinements, and approval-resume endpoints are documented in `docs/ARCHITECTURE.md`.

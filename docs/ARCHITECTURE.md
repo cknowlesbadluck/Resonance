@@ -118,4 +118,35 @@ If the answer is no, move the concern outside Resonance core.
 
 ## Governance
 
-Critical reformation requires two explicit approvals. Approval 1 authorizes the proposal; Approval 2 authorizes execution immediately before the change. Normal additive implementation does not require this gate unless it crosses the critical threshold.
+### Two-Key Reformation Rule
+
+Critical reformation requires two explicit approvals from Christopher. Approval 1 authorizes the proposal; Approval 2 authorizes execution immediately before the change.
+
+Critical reformations include changes to:
+- core identity
+- domain semantics
+- fundamental architecture
+- source-of-truth hierarchy
+- irreversible migrations
+- major subsystem deletion/replacement
+- major vendor lock-in
+
+Normal additive implementation, bug fixes, tests, documentation, and non-critical work do **not** require the two-key process.
+
+### Explicitly pre-authorized as non-critical
+
+The following classes of change are pre-authorized and do **not** require Two-Key approval. Agents may implement them without stalling:
+
+1. **Idempotency design for execution initiation** — specifically the choice of required `Idempotency-Key` header + database unique index on `(project_id, idempotency_key)`. Rejecting requests that lack the header with HTTP 400 is authorized.
+2. **Policy-deny logic** — refinements to the existing policy gate that make deny/approval decisions more precise without expanding actor authority or removing the gate.
+3. **Approval-resume endpoint** — additive endpoint(s) that allow a previously paused (approval-required) execution to be resumed after explicit approval.
+
+Any change that expands the set of actors who can bypass policy, removes attribution, or alters the core meaning of Identity / Capability / Intent / Evidence remains critical and still requires Two-Key.
+
+### CI as source of truth
+
+Observed CI results (typecheck, test, build, Swift package tests) are the authoritative signal of merge readiness. Commit messages and branch names are not. Branch protection on `main` must require the CI status checks before merge.
+
+### Linear as backlog, GitHub as execution
+
+Durable planning and triage decisions live in Linear (Resonance Integration Platform project). GitHub holds code, PRs, and CI evidence.
