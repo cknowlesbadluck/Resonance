@@ -100,12 +100,7 @@ public actor NexusClient {
         var headers = defaultHeaders
         headers.idempotencyKey = resolvedKey
 
-        var payload = request
-        if payload.projectId == nil {
-            payload.projectId = defaultHeaders.projectId
-        }
-
-        let body = try encoder.encode(payload)
+        let body = try encoder.encode(request)
         let data = try await transport.post("/api/nexus/executions", body: body, headers: headers)
         return try decoder.decode(NexusExecutionResponse.self, from: data)
     }
