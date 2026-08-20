@@ -1,7 +1,12 @@
 import type { CapabilityRequirement, CapabilityRisk, NexusCapability } from "./types";
 
 const riskRank: Record<CapabilityRisk, number> = { low: 0, medium: 1, high: 2, critical: 3 };
-const availabilityRank: Record<NonNullable<NexusCapability["availability"]>, number> = { available: 0, degraded: 1, unavailable: 2 };
+const availabilityRank: Record<NonNullable<NexusCapability["availability"]>, number> = {
+  available: 0,
+  degraded: 1,
+  unavailable: 2,
+  planned: 3,
+};
 
 export function capabilityMatches(capability: NexusCapability, requirement: CapabilityRequirement): boolean {
   if (capability.key !== requirement.key) return false;
@@ -10,7 +15,7 @@ export function capabilityMatches(capability: NexusCapability, requirement: Capa
   if (requirement.maxRisk && riskRank[capability.risk] > riskRank[requirement.maxRisk]) return false;
   if (requirement.requiredPermissions?.some((p) => !capability.requiredPermissions.includes(p))) return false;
   if (requirement.tags?.some((tag) => !capability.tags?.includes(tag))) return false;
-  return capability.availability !== "unavailable";
+  return capability.availability !== "unavailable" && capability.availability !== "planned";
 }
 
 export function sortCapabilities(candidates: NexusCapability[]): NexusCapability[] {
