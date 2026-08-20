@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var selected: NexusCapability?
     @State private var errorMessage: String?
     @State private var isLoading = true
+    @State private var lastExecutionStatus: String?
 
     private var client: NexusClient {
         let configured = ProcessInfo.processInfo.environment["RESONANCE_BASE_URL"] ?? "http://localhost:3000"
@@ -86,8 +87,12 @@ struct ContentView: View {
             }
             .task { await load() }
             .sheet(item: $selected) { capability in
-                CapabilityDetail(capability: capability)
-                    .presentationDetents([.medium])
+                CapabilityDetail(
+                    capability: capability,
+                    lastStatus: lastExecutionStatus,
+                    onExecute: { await execute(capability) }
+                )
+                .presentationDetents([.medium, .large])
             }
             .overlay {
                 if isLoading {
@@ -114,10 +119,44 @@ struct ContentView: View {
             errorMessage = error.localizedDescription
         }
     }
+
+    private func execute(_ capability: NexusCapability) async {
+        lastExecutionStatus = "Running…"
+        do {
+            let response = try await client.execute(
+                NexusIntentRequest(
+                    objective: "Execute \(capability.name)",
+                    requestedBy: "ios-user",
+                    requirements: [NexusCapabilityRequirement(key: capability.key)]
+                ),
+                idempotencyKey: UUID().uuidString
+            )
+            if let status = response.status, status == "approval_required" {
+                lastExecutionStatus = "Approval required"
+            } else if let execution = response.execution {
+                lastExecutionStatus = "Execution \(execution.status)"
+            } else {
+                lastExecutionStatus = "Completed"
+            }
+        } catch let error as NexusClientError {
+            switch error {
+            case .httpStatus(let code, let message):
+                lastExecutionStatus = "HTTP \(code): \(message ?? "error")"
+            default:
+                lastExecutionStatus = String(describing: error)
+            }
+        } catch {
+            lastExecutionStatus = error.localizedDescription
+        }
+    }
 }
 
 private struct CapabilityDetail: View {
     let capability: NexusCapability
+    var lastStatus: String?
+    var onExecute: () async -> Void
+
+    @State private var isExecuting = false
 
     var body: some View {
         NavigationStack {
@@ -128,6 +167,31 @@ private struct CapabilityDetail: View {
                     .foregroundStyle(capability.availability == "available" ? .green : .orange)
                 Text(capability.description ?? "Provider-neutral capability exposed through the Resonance Nexus.")
                     .foregroundStyle(.secondary)
+
+                if let lastStatus {
+                    Text(lastStatus)
+                        .font(.footnote)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+                }
+
+                Button {
+                    Task {
+                        isExecuting = true
+                        await onExecute()
+                        isExecuting = false
+                    }
+                } label: {
+                    HStack {
+                        if isExecuting { ProgressView() }
+                        Text(isExecuting ? "Executing…" : "Execute via Nexus")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(isExecuting || capability.availability == "planned" || capability.availability == "unavailable")
+
                 Spacer()
             }
             .padding()
