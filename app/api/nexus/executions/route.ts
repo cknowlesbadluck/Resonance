@@ -70,7 +70,23 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
     }
   }
-  return NextResponse.json({ executions, evidence });
+
+  if (persistence && projectId) {
+    try {
+      const [durableExecutions, durableEvidence] = await Promise.all([
+        persistence.listExecutions(projectId),
+        persistence.listEvidence(projectId),
+      ]);
+      return NextResponse.json({ executions: durableExecutions, evidence: durableEvidence, source: "durable" });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : String(error) },
+        { status: 500 },
+      );
+    }
+  }
+
+  return NextResponse.json({ executions, evidence, source: "memory" });
 }
 
 export async function POST(request: Request) {
