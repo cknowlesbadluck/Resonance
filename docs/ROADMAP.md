@@ -1,101 +1,78 @@
-# Resonance Roadmap (Nexus Edition)
+# Resonance Roadmap
 
-## Guiding Principle
+Canonical product and engineering roadmap for `Cknowlesbadluck/resonance`.
+MasterDev / Linear track execution; this document defines sequence and definition of done.
 
-**Integration without domination.** Evolve the existing foundation rather than rewriting it. Resonance is the Nexus; Chambers are one execution mechanism inside it.
+## North star
 
-## Phase 0 — Ground truth (complete)
-- Repository and existing composition foundation audited.
-- Nexus vision and domain-independence rule established.
-- GitHub is engineering source of truth; Linear is durable planning reference.
+Resonance is a **provider-neutral integration and intelligence Nexus**.
+Control planes (web + native iOS) observe, decide, and approve.
+Runtime executes under policy. Adapters never bypass capability gates.
 
-## Phase 1 — Nexus foundation (in progress)
-- Provider-neutral identity and capability contracts.
-- Capability registry/graph.
-- Adapter/bridge contracts.
-- MCP adapter boundary.
-- HTTP/API adapter boundary.
-- Scoped context and resource fabric.
-- Policy-aware intent composition.
-- Direct execution plus Chamber bridge.
-- Normalized event/audit primitives.
-- Nexus API/control-plane surface.
+Quicksilver is **not** part of this product.
 
-## Phase 2 — Persistence and real bridges
-- Provision a dedicated Resonance Supabase project.
-- Persist Nexus identities, capabilities, resources, context, executions, and evidence.
-- Implement RLS and durable audit paths.
-- Replace fixtures with the first production adapters.
-- Verify webhook signature and event deduplication paths.
+## Phase map
 
-## Phase 3 — Capability discovery and composition
-- Rich capability graph.
-- Provider/resource compatibility.
-- Capability versioning and availability.
-- Cost/latency metadata where available.
-- Better context routing and provenance.
-- Human approval workflows.
+### P0 — Governance & CI truth (DONE)
+- [x] Branch protection / ruleset with required `web` + `ios`
+- [x] Mandatory `Idempotency-Key` on execution initiation
+- [x] `docs/AGENT_LOG.md` append-only session log
+- [x] Two-Key exceptions documented in `ARCHITECTURE.md`
+- [x] Linear as backlog; GitHub as execution
 
-## Phase 4 — Execution fabric
-- Mature direct execution.
-- Mature Chamber execution for coordinated work.
-- Workflow execution where it adds value.
-- Retry/idempotency semantics.
-- Durable execution history.
-- Artifact and knowledge promotion.
+### P1 — Hardened execution surface (IN PROGRESS)
+- [x] Auth helper (`src/auth/nexus-request.ts`) when Supabase configured
+- [x] Payload bounds on execution POST
+- [x] Idempotency contract tests (web)
+- [x] Native client sends Idempotency-Key + Bearer (PR #17)
+- [ ] Explicit `RESONANCE_AUTH_MODE=required|optional` (no accidental open prod)
+- [ ] Approval-resume endpoint for `approval_required` executions
+- [ ] Durable list executions/evidence via persistence (no process memory in prod paths)
 
-## Phase 5 — Ecosystem bridges
-- Production MCP bridges.
-- GitHub/Linear/Supabase/Figma/provider adapters as justified.
-- External agent participation through Brainbase/Outside Agent where useful.
-- Deployment/hosting bridges where they provide a concrete capability.
-- No connector expansion merely for completeness.
+### P2 — Capability plane convergence (ACTIVE)
+- [ ] Single domain model: extend **NexusCapability**, do not permanently fork `lib/capabilities`
+- [ ] Skills / tools / integrations as kinds or tags on NexusCapability
+- [ ] Dependency resolution with cycle detection under Nexus contracts
+- [ ] API list + resolve endpoints return Nexus-shaped payloads
+- [ ] iOS ResonanceCore models match server contracts (no parallel `Capability` long-term)
+- [ ] Persist via `nexus_capabilities` (migrate or dual-write then cut over)
+- [ ] Close or rewrite PR #13 / #18 under this plan
 
-## Phase 6 — Multi-domain proving
-- Quicksilver may be one proving ground, but remains separate.
-- Add at least one unrelated workload to validate domain independence.
-- Validate that the same Nexus primitives work across different domains.
+### P3 — Native execution loop
+- [ ] iOS can compose intent → execute with Idempotency-Key → show result/approval
+- [ ] Map 400 / 401 / 409 / 422 to user-visible states
+- [ ] Project-scoped capability load with Bearer when deployed
+- [ ] Spatial Nexus UI stays a client of the same API
 
-## Phase 7 — Intelligence layer
-- Optional model-assisted capability planning.
-- Provider/model selection.
-- Dynamic composition recommendations.
-- Learned reliability/capability metadata.
-- Human-in-the-loop for consequential decisions.
+### P4 — Integration & adapters
+- [ ] Replace demo adapter registrations with real bridges where credentials exist
+- [ ] GitHub webhook signature + dedupe hardening
+- [ ] MCP adapter remains behind adapter boundary (not core types)
+- [ ] Provider isolation tests
 
-## Phase 8 — Product surfaces
-- Web control plane.
-- Native iOS application.
-- MCP-facing control interface where useful.
-- External application/API clients.
+### P5 — Chamber / composition fabric
+- [ ] Agenda binding for coordinated runs
+- [ ] Temporary Chamber lifecycle (form → work → dissolve)
+- [ ] Toolkit seeding from capabilities + policy
+- [ ] Approval pauses for privileged steps
+- [ ] Evidence + audit survive dissolution
 
-## Phase 9 — Hardening
-- Security and threat-model review.
-- RLS audit.
-- End-to-end Nexus lifecycle tests.
-- Failure/retry testing.
-- Provider isolation testing.
-- Performance/observability.
-- Release and migration discipline.
+### P6 — Release readiness
+- [ ] Observed green CI on release candidate
+- [ ] Production smoke (auth, idempotent replay, deny paths, restart durability)
+- [ ] Branch entropy under control (no duplicate feature branches)
+- [ ] `IMPLEMENTATION_STATUS` health metrics green for two consecutive sessions
 
-## Nexus v1 success signal
+## Definition of done (global)
 
-```text
-Intent
-→ Capability discovery
-→ Provider/resource matching
-→ Scoped context
-→ Policy
-→ Direct or Chamber execution
-→ Adapter bridge
-→ Events / evidence / artifacts
-→ Persistent result
-```
+A phase is done only when:
+1. Code is on `main` via green PR (`web` + `ios`).
+2. Linear issue is Done with verification notes.
+3. AGENT_LOG entry records what was verified.
+4. No parallel domain model remains for that concern.
 
-The success signal is intentionally domain-neutral and does not require Quicksilver.
+## Explicit non-goals (near term)
 
-## Definition of done
-
-A feature is not complete because code exists. It must build, pass relevant tests, be exercised at runtime where possible, verify integration behavior, respect security boundaries, and have documentation match the running system.
-
-Critical reformation remains governed by the two-key approval rule.
+- Cloudflare as a core dependency
+- Quicksilver integration or shared core modules
+- Multi-tenant marketplace of arbitrary third-party agents without policy
