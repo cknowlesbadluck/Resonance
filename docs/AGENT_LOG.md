@@ -55,3 +55,26 @@ Format:
 
 **Verified:**
 - create_or_update_file succeeded on governance/ci-agent-log-idempotency after ruleset change.
+
+---
+
+## 2026-08-19 23:16 EDT — MasterDev / Grok
+
+**Checked:**
+- main has PR #15 + #16 (governance, auth, Idempotency-Key tests).
+- Open PR #13 capability plane (parallel lib/capabilities vs NexusCapability).
+- iOS NexusClient/URLSessionTransport did not send Idempotency-Key or Bearer.
+
+**Decided:**
+- CHR-33: converge on NexusCapability; do not merge #13 as parallel domain.
+- Ship iOS client header contract (PR #17).
+- masterdev skill is the orchestrator for Resonance (Quicksilver excluded).
+
+**Verified:**
+- Pushed sprint/ios-nexus-contract-headers with header-aware transport + tests.
+- Linear CHR-33 updated with architecture decision.
+
+**Next / Hand-off:**
+- Merge PR #17 when CI green.
+- Capability plane rewrite under NexusCapability.
+- Prune event-lifecycle* branches when delete path available.

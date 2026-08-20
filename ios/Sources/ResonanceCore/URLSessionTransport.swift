@@ -10,15 +10,15 @@ public struct URLSessionNexusTransport: NexusTransport {
         self.session = session
     }
 
-    public func get(_ path: String) async throws -> Data {
-        try await request(path: path, method: "GET", body: nil)
+    public func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data {
+        try await request(path: path, method: "GET", body: nil, headers: headers)
     }
 
-    public func post(_ path: String, body: Data) async throws -> Data {
-        try await request(path: path, method: "POST", body: body)
+    public func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data {
+        try await request(path: path, method: "POST", body: body, headers: headers)
     }
 
-    private func request(path: String, method: String, body: Data?) async throws -> Data {
+    private func request(path: String, method: String, body: Data?, headers: NexusRequestHeaders) async throws -> Data {
         guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
             throw URLError(.badURL)
         }
@@ -26,6 +26,9 @@ public struct URLSessionNexusTransport: NexusTransport {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        for (name, value) in headers.httpHeaders {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
         if let body {
             request.httpBody = body
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -35,8 +38,10 @@ public struct URLSessionNexusTransport: NexusTransport {
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
+
         guard 200..<300 ~= http.statusCode else {
-            throw URLError(.badServerResponse)
+            let message = String(data: data, encoding: .utf8)
+            throw NexusClientError.httpStatus(http.statusCode, message: message)
         }
         return data
     }
