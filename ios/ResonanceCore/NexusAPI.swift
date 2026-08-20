@@ -13,8 +13,19 @@ public actor NexusAPI {
         self.encoder = JSONEncoder()
     }
 
-    public func capabilities() async throws -> [NexusCapability] {
-        try await request(path: "api/nexus/capabilities")
+    public func capabilities(ids: [String] = []) async throws -> [Capability] {
+        var path = "api/nexus/capabilities"
+        if !ids.isEmpty {
+            let encoded = ids.joined(separator: ",").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            path += "?ids=\(encoded)"
+        }
+        let response: CapabilityListResponse = try await request(path: path)
+        return response.capabilities
+    }
+
+    public func resolveCapabilities(_ ids: [String]) async throws -> CapabilityResolution {
+        let encoded = ids.joined(separator: ",").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return try await request(path: "api/nexus/capabilities?ids=\(encoded)")
     }
 
     public func submitIntent(_ request: IntentRequest) async throws -> Data {
@@ -30,11 +41,7 @@ public actor NexusAPI {
         return try decoder.decode(T.self, from: data)
     }
 
-    private func requestData<B: Encodable>(
-        path: String,
-        method: String,
-        body: B?
-    ) async throws -> Data {
+    private func requestData<B: Encodable>(path: String, method: String, body: B?) async throws -> Data {
         guard let url = URL(string: path, relativeTo: baseURL) else {
             throw NexusError(message: "Invalid Nexus endpoint")
         }
@@ -52,15 +59,17 @@ public actor NexusAPI {
         guard let http = response as? HTTPURLResponse else {
             throw NexusError(message: "Invalid Nexus response")
         }
-
         guard (200..<300).contains(http.statusCode) else {
             if let serverError = try? decoder.decode(NexusError.self, from: data) {
                 throw serverError
             }
             throw NexusError(message: "Nexus request failed with HTTP \(http.statusCode)")
         }
-
         return data
+    }
+
+    private struct CapabilityListResponse: Decodable {
+        let capabilities: [Capability]
     }
 
     private struct EmptyBody: Encodable {}
