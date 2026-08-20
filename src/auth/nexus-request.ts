@@ -9,10 +9,18 @@ export function isUuid(value: unknown): value is string {
 }
 
 /**
- * Authenticate a Nexus API request.
- * Requires Bearer token + project membership.
- * Returns null when auth fails (caller maps to 401).
+ * RESONANCE_AUTH_MODE:
+ * - required: always demand Bearer + membership (fail closed if env incomplete)
+ * - optional: never demand auth
+ * - auto (default): demand auth when Supabase URL + service role are configured
  */
+export function authRequired(): boolean {
+  const mode = (process.env.RESONANCE_AUTH_MODE ?? "auto").toLowerCase();
+  if (mode === "required") return true;
+  if (mode === "optional") return false;
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+}
+
 export async function authenticateNexusRequest(
   request: Request,
   projectId: unknown,

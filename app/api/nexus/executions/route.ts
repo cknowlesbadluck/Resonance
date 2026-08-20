@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { composeDemoIntent, nexusAdapters } from "../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
@@ -64,8 +64,7 @@ export async function GET(request: Request) {
   const projectId = new URL(request.url).searchParams.get("projectId")
     ?? process.env.RESONANCE_PROJECT_ID
     ?? null;
-  const authRequired = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
-  if (authRequired) {
+  if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) {
       return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
@@ -97,9 +96,8 @@ export async function POST(request: Request) {
     ?? process.env.RESONANCE_PROJECT_ID
     ?? "00000000-0000-4000-8000-000000000001";
 
-  const authRequired = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
   let actorId = body.requestedBy;
-  if (authRequired) {
+  if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) {
       return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
@@ -119,7 +117,7 @@ export async function POST(request: Request) {
   if (!actorId) {
     return NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 });
   }
-  if (authRequired && !isUuid(projectId)) {
+  if (authRequired() && !isUuid(projectId)) {
     return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
   }
 
