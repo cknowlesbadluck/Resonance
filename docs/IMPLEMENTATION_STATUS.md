@@ -1,83 +1,67 @@
 # Resonance Implementation Status
 
-## Six-phase sprint status — updated 2026-08-20
+## Six-phase sprint status — updated 2026-08-21
 
 The six-phase sprint is active against the canonical `main` branch. The implementation is being advanced additively: Nexus contracts remain the center, the web surface is a client, Supabase remains the operational persistence foundation, and native iOS consumes the same API contracts.
 
 ### Phase 1 — Core Resonance
-- Provider-neutral capability contracts remain the core boundary.
+- Provider-neutral capability contracts remain the core boundary (`NexusCapability`).
+- Catalog plane (`lib/capabilities`) maps into Nexus via `capability-bridge` (CHR-33 interim).
 - Capability ranking considers availability, risk, cost, and latency metadata.
 - Execution plans support bounded retry policy.
 - Executor retries failed adapter calls with linear backoff and preserves correlation IDs.
 - Supabase persistence stores capability cost/latency telemetry.
-- Existing Nexus API surfaces cover capabilities, intents, executions, identities, events, and webhooks.
+- Nexus API surfaces cover capabilities, intents, executions, identities, events, and webhooks.
 
 ### Phase 2 — Web surface
-- Web Nexus surface is connected to the real execution endpoint rather than a cosmetic action.
+- Web Nexus surface is connected to the real execution endpoint.
 - Compose Intent invokes the Nexus execution API and reports completion, approval-required, or error states.
-- Spatial depth was strengthened around the central Nexus visualization and capability surfaces.
-- The policy indicator is informational rather than a fake action.
+- Spatial depth around central Nexus visualization and capability surfaces.
 
 ### Phase 3 — Backend/data
-- Resonance Supabase project `lfdynzionafcpddqipqc` is active and healthy.
-- Nexus graph tables are present and populated with the current foundation records.
-- Execution/capability telemetry migration has been applied.
-- Live schema inspection confirms RLS is enabled on `projects`, `providers`, `project_members`, and the Nexus graph tables.
-- Live Supabase security advisor currently reports **zero security lints**.
-- Execution API now persists completed/failed execution records and evidence when Supabase environment configuration is present.
-- `RESONANCE_PROJECT_ID` is documented and defaults to the existing Resonance project UUID for local/demo execution.
-- Durable idempotency: `Idempotency-Key` header is **required** (HTTP 400 if missing). DB unique index on `(project_id, idempotency_key)` is in place. **Merged 2026-08-20 (PR #15).**
+- Resonance Supabase project active; RLS enabled on core tables.
+- Durable idempotency: `Idempotency-Key` **required** (HTTP 400 if missing). Unique index on `(project_id, idempotency_key)`.
+- Durable-first execution + rate limit (30/min/project) + minimal Chamber primitive **merged** (PR #25).
 
 ### Phase 4 — Integration layer
-- HTTP and MCP remain behind provider-neutral adapter contracts.
-- Demo bridges prove normalized invocation through distinct protocols.
-- GitHub webhook path exists and remains subject to signature/deduplication hardening.
+- HTTP and MCP behind provider-neutral adapter contracts.
+- Demo bridges prove normalized invocation.
 
 ### Phase 5 — Production hardening
-- CI is configured to run web typecheck, tests, build, and Swift package tests.
-- Retry/failure tests exist in the Nexus executor suite.
-- Live Supabase performance advisor currently reports only informational unused-index notices; no security lint is active.
-- Provider isolation and lifecycle coverage remain active hardening targets.
-- Final verification must be based on observed CI/runtime evidence, not repository state alone.
-- **Branch protection is active** (repository-wide ruleset; verified 2026-08-19). Required status checks enforced.
+- CI: web typecheck/test/build + Swift package tests on macos-latest.
+- Branch protection + required status checks active.
 
 ### Phase 6 — Native iOS
-- Swift 6 package foundation exists under `ios/`.
-- Actor-isolated `NexusClient` and async URLSession transport exist.
-- Native app surface now loads live capabilities through the Nexus API.
-- Native UI uses a spatial central-Nexus presentation with selectable capability detail.
-- Runtime base URL is configurable through `RESONANCE_BASE_URL`, defaulting to local development.
+- Swift 6 package (`ios/`), actor-isolated `NexusClient`, header-aware transport.
+- App Intents: List / Compose / Execute / Open + `NexusCapabilityEntity` + Keychain token store **merged** (PR #27).
+- Spatial Nexus UI; SideStore-viable constraints documented.
 
-## Repository health metrics (2026-08-20 post-governance)
+## Repository health metrics (2026-08-21)
 
 | Metric | Value | Signal |
 |--------|-------|--------|
-| Open PRs | 2 (#9, #13) | Improving — was 8+ |
-| Total branches | ~33 | High — prune event-lifecycle* |
-| Near-duplicate branches (event-lifecycle*) | ~20 | Critical — prune |
+| Open PRs | 0 | Good |
+| Total branches | 2 (`main`, `develop`) | Good — pruned 36+ stale |
+| Near-duplicate branches | 0 | Good |
 | `main` protected | **true** | Good |
-| Required CI status checks | enforced by ruleset | Good |
+| Required CI status checks | enforced | Good |
 
 **Rule:** If open-PR count or duplicate-branch count is trending up, stop building and start merging/closing.
 
-## Cloudflare position
-
-Cloudflare is intentionally **not** being made a core dependency during this sprint. It remains a bounded edge/security option for a later deployment step.
-
 ## Current next gates
 
-1. ~~Enable branch protection~~ **Done**.
-2. ~~Land governance (mandatory Idempotency-Key, AGENT_LOG, Two-Key clarity)~~ **Done** (PR #15).
-3. Triage remaining open PRs #9 (production hardening) and #13 (capability plane / CHR-33) — rebase or close as superseded.
-4. Prune ~20 event-lifecycle duplicate branches.
-5. Replace remaining demo adapter registrations with production bridge contracts where credentials exist.
-6. Complete lifecycle and failure-path tests (including mandatory Idempotency-Key paths).
-7. Complete native execution/result flow over the stable Nexus API.
-8. Run provider-isolation and release verification.
+1. ~~Branch protection / governance / Idempotency-Key~~ **Done**.
+2. ~~Durable execution + Chamber primitive~~ **Done** (PR #25).
+3. ~~App Intents device agency~~ **Done** (PR #27).
+4. ~~Prune event-lifecycle* and stale sprint branches~~ **Done** (2026-08-21).
+5. **CHR-33 residual:** keep `NexusCapability` as sole public contract; treat `lib/capabilities` as internal catalog only (bridge already in place). Optionally thin/retire direct catalog exports from API routes.
+6. Replace remaining demo adapter registrations with production bridges where credentials exist.
+7. Complete lifecycle/failure-path tests; provider isolation verification.
+8. SideStore-loadable IPA + end-to-end Nexus path (issue #11).
 
 ## Governance process (active)
 
-- `docs/AGENT_LOG.md` — append-only session log. Every agent session must append.
-- Linear is the backlog (Resonance Integration Platform project). GitHub is execution only.
-- Two-Key exceptions for idempotency design, policy-deny refinements, and approval-resume endpoints are documented in `docs/ARCHITECTURE.md`.
+- `docs/AGENT_LOG.md` — append-only session log.
+- Linear is backlog; GitHub is execution.
+- Two-Key exceptions documented in `docs/ARCHITECTURE.md`.
 - Branch protection live repository-wide.
