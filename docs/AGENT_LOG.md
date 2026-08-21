@@ -105,3 +105,26 @@ Format:
 - Confirm App Intents metadata extraction when full Xcode app target is wired / SideStore build.
 - Optional follow-ups: AppEntity for NexusCapability, Keychain token helper, Live Activities for executions.
 - Continue hygiene: triage PR #25, prune event-lifecycle* branches.
+
+---
+
+## 2026-08-21 03:50 EDT — MasterDev / Grok
+
+**Checked:**
+- PR #26 (App Intents) open; PR #25 (durable execution + Chamber) open and mergeable (clean, deploy preview green).
+- ~20 codex/event-lifecycle* branches all share the same SHA (stale duplicates).
+- Additional stale branches: ci-verification, various codex/production, feature/capability-plane-finalization, etc.
+
+**Decided:**
+- Expand App Intents on PR #26: AppEntity + query, KeychainTokenStore, OpenNexusIntent, richer error dialogs, factory prefers Keychain.
+- Recommend merge PR #25 (durable-first, rate limit, minimal Chamber + tests) as non-critical stabilize work.
+- Recommend merge PR #26 after CI on the expanded commit.
+- Prune list prepared for event-lifecycle* and other clearly superseded branches (delete path currently limited from this agent).
+
+**Verified:**
+- Expansion commit pushed to sprint/ios-app-intents.
+
+**Next / Hand-off:**
+- Merge #25 then #26 when CI allows.
+- Manual prune of event-lifecycle* branches (all point to identical SHA).
+- Re-check dual ROADMAP docs and capability-plane (CHR-33) after stabilizes land.
