@@ -2,9 +2,11 @@ import Foundation
 
 /// Shared factory for constructing an authenticated `NexusClient`.
 ///
-/// Token and project configuration are read from environment / UserDefaults
-/// for demo and SideStore builds. Production clients should replace the
-/// token source with Keychain (never store long-lived secrets in UserDefaults).
+/// Resolution order for bearer token:
+/// 1. Explicit override
+/// 2. Keychain (`KeychainTokenStore`)
+/// 3. Process environment
+/// 4. UserDefaults (demo / SideStore convenience only)
 public enum NexusClientFactory {
 
     public static let defaultBaseURLString = "http://localhost:3000"
@@ -12,8 +14,6 @@ public enum NexusClientFactory {
     public static let projectIdKey = "RESONANCE_PROJECT_ID"
     public static let bearerTokenKey = "RESONANCE_BEARER_TOKEN"
 
-    /// Builds a client using the best available configuration.
-    /// - Parameter overrides: Optional one-off overrides (useful from App Intents).
     public static func makeClient(
         baseURL: URL? = nil,
         bearerToken: String? = nil,
@@ -25,6 +25,7 @@ public enum NexusClientFactory {
             ?? URL(string: defaultBaseURLString)!
 
         let resolvedToken = bearerToken
+            ?? KeychainTokenStore.load()
             ?? ProcessInfo.processInfo.environment[bearerTokenKey]
             ?? UserDefaults.standard.string(forKey: bearerTokenKey)
 

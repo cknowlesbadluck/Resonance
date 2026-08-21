@@ -20,7 +20,7 @@ struct ResonanceShortcuts: AppShortcutsProvider {
             phrases: [
                 "Execute \(\.$objective) in \(.applicationName)",
                 "Run \(\.$objective) with \(.applicationName)",
-                "Execute capability \(\.$capabilityKey) in \(.applicationName)"
+                "Execute capability with \(.applicationName)"
             ],
             shortTitle: "Execute",
             systemImageName: "play.fill"
@@ -35,6 +35,16 @@ struct ResonanceShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Capabilities",
             systemImageName: "square.stack.3d.up"
+        )
+
+        AppShortcut(
+            intent: OpenNexusIntent(),
+            phrases: [
+                "Open \(.applicationName)",
+                "Open Nexus in \(.applicationName)"
+            ],
+            shortTitle: "Open",
+            systemImageName: "circle.hexagongrid.fill"
         )
     }
 }

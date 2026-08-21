@@ -23,22 +23,22 @@ The project is designed to remain compatible with sideloaded distribution workfl
 
 ## App Intents
 
-The main app target exposes three primary App Intents (source under `App/AppIntents/`):
+Main app target sources live under `App/AppIntents/`:
 
-| Intent | Purpose |
-|--------|---------|
-| `ListCapabilitiesIntent` | Read-only inventory of Nexus capabilities |
-| `ComposeNexusIntent` | Objective → execution plan (no side effects) |
+| Intent / Type | Purpose |
+|---------------|---------|
+| `ListCapabilitiesIntent` | Read-only inventory |
+| `ComposeNexusIntent` | Objective → plan (no side effects) |
 | `ExecuteNexusPlanIntent` | Execute with mandatory non-blank `Idempotency-Key` |
+| `OpenNexusIntent` | Deep-link / open cockpit |
+| `NexusCapabilityEntity` | Rich capability picker for Siri / Shortcuts |
 
-`ResonanceShortcuts` registers Siri / Spotlight / Shortcuts phrases. Call `ResonanceShortcuts.updateAppShortcutParameters()` at app launch (already done in `ResonanceApp`).
+`ResonanceShortcuts` registers phrases. `ResonanceApp` calls `updateAppShortcutParameters()` at launch.
 
-**Important build note:** App Intent types that back App Shortcuts should be compiled into the **main app target**. Domain logic lives in the `ResonanceCore` package; intent structs live under `ios/App/AppIntents/`.
+**Token storage:** `KeychainTokenStore` (preferred) → environment → UserDefaults (demo only).
 
-Configuration (base URL, project ID, optional bearer token) is resolved by `NexusClientFactory` from environment variables or UserDefaults. Prefer Keychain for production tokens.
+**Build note:** App Intent types that back App Shortcuts must be compiled into the **main app target**. Domain logic stays in the `ResonanceCore` package.
 
 ## Planned first vertical slice
 
 Nexus connection → capability discovery → intent composition → policy/approval state → execution → live evidence → result.
-
-The slice should be usable without requiring the iOS client to own the underlying capability graph.
