@@ -63,3 +63,24 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge new App Intents PR on green CI.
 - Prune event-lifecycle* branches.
 - Resume CHR-33.
+
+---
+
+## 2026-08-21 08:05 EDT — MasterDev / Grok
+
+**Checked:**
+- PR #27 green (web + ios success), mergeable clean.
+- ~20 event-lifecycle* branches still present (identical SHA).
+
+**Decided / Done:**
+- Merged PR #27 (App Intents + Keychain + Entity + macOS CI platform).
+- Prune remains local/admin `gh` action.
+- CHR-33 next once branch hygiene improves.
+
+**Verified:**
+- main @ 30eaa231 includes App Intents.
+
+**Next / Hand-off:**
+- Prune event-lifecycle* cluster.
+- Update IMPLEMENTATION_STATUS metrics.
+- Orient CHR-33 (feature/capability-plane-finalization vs NexusCapability).
