@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "name": "typecheck",
+      "run": "npm run typecheck",
+      "role": "gate",
+      "timeout": 120,
+      "remote": true
+    },
+    {
+      "name": "test",
+      "run": "npm test",
+      "role": "gate",
+      "timeout": 300,
+      "remote": true
+    },
+    {
+      "name": "build",
+      "run": "npm run build",
+      "role": "gate",
+      "timeout": 300,
+      "remote": true
+    }
+  ],
+  "vcs": {
+    "org": "cknowlesbadluck",
+    "repo": "Resonance"
+  },
+  "environment": {
+    "stack": "node",
+    "setup": [
+      {
+        "name": "install",
+        "command": "npm install"
+      }
+    ],
+    "image": "cimg/node",
+    "image_version": "22.14"
+  }
+}
