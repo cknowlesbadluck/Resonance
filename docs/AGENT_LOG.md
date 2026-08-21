@@ -42,3 +42,24 @@ Append-only. Every agent session (chat or Code) must append an entry.
 **Next / Hand-off:**
 - Merge #25 on green CI.
 - Unify dual ROADMAP docs; prune event-lifecycle branches when API allows.
+
+---
+
+## 2026-08-21 07:40 EDT — MasterDev / Grok
+
+**Checked:**
+- PR #25 merged.
+- PR #26 dirty + iOS CI red (platforms / Keychain).
+
+**Decided:**
+- Close conflicted #26 path; open clean sprint/ios-app-intents-v2 from current main.
+- Package.swift: add macOS 14 for CI.
+- Full App Intents expansion retained.
+
+**Verified:**
+- Clean branch + files pushed.
+
+**Next / Hand-off:**
+- Merge new App Intents PR on green CI.
+- Prune event-lifecycle* branches.
+- Resume CHR-33.
