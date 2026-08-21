@@ -8,21 +8,25 @@ The iOS client is a presentation and control layer over Nexus. Capabilities, int
 
 ## Distribution constraint
 
-The project is designed to remain compatible with sideloaded distribution workflows, including SideStore. Avoid App Store-only assumptions in the core client. Keep signing, entitlements, network configuration, and dependencies explicit and minimal.
+Compatible with SideStore / sideloaded workflows. Avoid App Store-only assumptions.
 
 ## Engineering constraints
 
-- Swift 6.
-- Swift concurrency correctness is required.
-- Prefer native SwiftUI APIs.
-- Keep domain models value-oriented and Sendable where they cross isolation boundaries.
-- Keep network transport actor-isolated.
-- No API keys or secrets in the client.
-- Preserve a clean API boundary so Nexus evolves independently of UI.
-- Minimum supported iOS version currently follows `Package.swift`.
+- Swift 6, structured concurrency
+- Domain models Sendable where they cross isolation
+- No secrets in the client; Keychain preferred for tokens
+- Package platforms: iOS 17+, macOS 14+ (for CI)
 
-## Planned first vertical slice
+## App Intents
 
-Nexus connection → capability discovery → intent composition → policy/approval state → execution → live evidence → result.
+Sources under `App/AppIntents/` (main app target):
 
-The slice should be usable without requiring the iOS client to own the underlying capability graph.
+| Type | Purpose |
+|------|---------|
+| ListCapabilitiesIntent | Inventory |
+| ComposeNexusIntent | Objective → plan |
+| ExecuteNexusPlanIntent | Execute + Idempotency-Key |
+| OpenNexusIntent | Open cockpit |
+| NexusCapabilityEntity | Rich capability picker |
+
+`ResonanceShortcuts` registers Siri/Spotlight phrases. Token order: Keychain → env → UserDefaults.
