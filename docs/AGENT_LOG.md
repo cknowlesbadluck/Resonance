@@ -28,59 +28,37 @@ Append-only. Every agent session (chat or Code) must append an entry.
 
 ## 2026-08-20 00:05 EDT — MasterDev / Grok (aggressive stabilize)
 
-**Checked:**
-- PR #24 merged (bridge, durable lists, iOS execute, vision).
-- PR #23 requirements-as-strings would break CapabilityRequirement objects.
-
-**Decided:**
-- Close #23; ship corrected durable-first + rate limit + Chamber primitive (PR #25).
-- Memory fallback only when Supabase absent.
-
-**Verified:**
-- Branch sprint/stabilize-durable-execution pushed.
-
-**Next / Hand-off:**
-- Merge #25 on green CI.
-- Unify dual ROADMAP docs; prune event-lifecycle branches when API allows.
+**Checked:** PR #24 merged; PR #23 would break CapabilityRequirement objects.
+**Decided:** Ship durable-first + rate limit + Chamber (PR #25).
 
 ---
 
-## 2026-08-21 07:40 EDT — MasterDev / Grok
+## 2026-08-21 07:40–08:05 EDT — MasterDev / Grok
 
-**Checked:**
-- PR #25 merged.
-- PR #26 dirty + iOS CI red (platforms / Keychain).
-
-**Decided:**
-- Close conflicted #26 path; open clean sprint/ios-app-intents-v2 from current main.
-- Package.swift: add macOS 14 for CI.
-- Full App Intents expansion retained.
-
-**Verified:**
-- Clean branch + files pushed.
-
-**Next / Hand-off:**
-- Merge new App Intents PR on green CI.
-- Prune event-lifecycle* branches.
-- Resume CHR-33.
+**Checked:** PR #26 dirty after #25; iOS CI platform issue.
+**Decided:** Clean PR #27 with macOS 14 + App Intents expansion; merge on green.
+**Verified:** PR #27 merged.
 
 ---
 
-## 2026-08-21 08:05 EDT — MasterDev / Grok
+## 2026-08-21 09:20 EDT — MasterDev / Grok
 
 **Checked:**
-- PR #27 green (web + ios success), mergeable clean.
-- ~20 event-lifecycle* branches still present (identical SHA).
+- Stale branch cluster still present; open draft PR #29 on deleted head.
+- CHR-33: main already has `capability-bridge` (catalog → NexusCapability).
 
 **Decided / Done:**
-- Merged PR #27 (App Intents + Keychain + Entity + macOS CI platform).
-- Prune remains local/admin `gh` action.
-- CHR-33 next once branch hygiene improves.
+- Deleted 36+ stale branches (event-lifecycle*, codex/production*, sprint/* leftovers, docs/roadmap duplicates, feature/capability-plane-finalization).
+- Remaining branches: `main`, `develop` only.
+- Closed orphaned PR #29.
+- Updated IMPLEMENTATION_STATUS health metrics.
+- CHR-33 status: interim bridge is the accepted convergence; NexusCapability is public contract; lib/capabilities is internal catalog.
 
 **Verified:**
-- main @ 30eaa231 includes App Intents.
+- Branch list = main + develop.
+- Zero open PRs from this hygiene pass.
 
 **Next / Hand-off:**
-- Prune event-lifecycle* cluster.
-- Update IMPLEMENTATION_STATUS metrics.
-- Orient CHR-33 (feature/capability-plane-finalization vs NexusCapability).
+- Optional: further thin API routes to never export catalog types directly.
+- Production bridges / SideStore IPA gate (issues #8, #11, #12).
+- Keep open-PR and branch counts flat.
