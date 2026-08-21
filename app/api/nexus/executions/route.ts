@@ -5,16 +5,21 @@ import { composeDemoIntent, nexusAdapters } from "../../../../src/nexus/runtime"
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
-import type { NexusEvent, NexusEvidence, NexusIntent } from "../../../../src/nexus/types";
+import type { CapabilityRequirement, NexusEvent, NexusEvidence, NexusIntent } from "../../../../src/nexus/types";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_OBJECTIVE_LENGTH = 4_000;
 const MAX_REQUIREMENTS = 32;
 const MAX_CONTEXT_REFS = 64;
+const MAX_CONTEXT_REF_LENGTH = 500;
+const MAX_METADATA_KEYS = 32;
 const MAX_IDEMPOTENCY_LENGTH = 128;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 30;
 
-const executions: unknown[] = [];
-const evidence: unknown[] = [];
+/** Demo fallback only when durable store is absent. */
+const memoryExecutions: unknown[] = [];
+const memoryEvidence: unknown[] = [];
 const persistence = createNexusPersistenceFromEnv();
 
 function dbClient() {
@@ -24,10 +29,12 @@ function dbClient() {
 }
 
 const db = dbClient();
+const durable = Boolean(db && persistence);
+
 const sink = {
-  recordEvidence: async (item: NexusEvidence) => {
-    evidence.unshift(item);
-    if (persistence) await persistence.saveEvidence(item, process.env.RESONANCE_PROJECT_ID);
+  recordEvidence: async (item: NexusEvidence, projectId?: string) => {
+    memoryEvidence.unshift(item);
+    if (persistence) await persistence.saveEvidence(item, projectId ?? process.env.RESONANCE_PROJECT_ID);
   },
   recordEvent: async (event: NexusEvent) => {
     if (!db || !event.projectId) return;
@@ -60,10 +67,16 @@ async function readJson(request: Request): Promise<Partial<NexusIntent>> {
   return JSON.parse(text) as Partial<NexusIntent>;
 }
 
+function isRequirement(value: unknown): value is CapabilityRequirement {
+  if (!value || typeof value !== "object") return false;
+  const key = (value as CapabilityRequirement).key;
+  return typeof key === "string" && key.trim().length > 0 && key.length <= 256;
+}
+
 export async function GET(request: Request) {
-  const projectId = new URL(request.url).searchParams.get("projectId")
-    ?? process.env.RESONANCE_PROJECT_ID
-    ?? null;
+  const url = new URL(request.url);
+  const projectId = url.searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID ?? null;
+
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) {
@@ -73,11 +86,11 @@ export async function GET(request: Request) {
 
   if (persistence && projectId) {
     try {
-      const [durableExecutions, durableEvidence] = await Promise.all([
+      const [executions, evidence] = await Promise.all([
         persistence.listExecutions(projectId),
         persistence.listEvidence(projectId),
       ]);
-      return NextResponse.json({ executions: durableExecutions, evidence: durableEvidence, source: "durable" });
+      return NextResponse.json({ executions, evidence, source: "durable" });
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : String(error) },
@@ -86,16 +99,13 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ executions, evidence, source: "memory" });
+  return NextResponse.json({ executions: memoryExecutions, evidence: memoryEvidence, source: "memory" });
 }
 
 export async function POST(request: Request) {
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
   if (!idempotencyKey || idempotencyKey.length > MAX_IDEMPOTENCY_LENGTH) {
-    return NextResponse.json(
-      { error: "Idempotency-Key header is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Idempotency-Key header is required" }, { status: 400 });
   }
 
   let body: Partial<NexusIntent>;
@@ -127,13 +137,27 @@ export async function POST(request: Request) {
   if (!Array.isArray(body.requirements) || body.requirements.length === 0 || body.requirements.length > MAX_REQUIREMENTS) {
     return NextResponse.json({ error: "requirements must contain between 1 and 32 items." }, { status: 400 });
   }
-  if (body.contextRefs !== undefined && (!Array.isArray(body.contextRefs) || body.contextRefs.length > MAX_CONTEXT_REFS)) {
-    return NextResponse.json({ error: "contextRefs must contain at most 64 items." }, { status: 400 });
+  if (!body.requirements.every(isRequirement)) {
+    return NextResponse.json({ error: "each requirement must include a non-empty key string." }, { status: 400 });
+  }
+  if (
+    body.contextRefs !== undefined
+    && (!Array.isArray(body.contextRefs)
+      || body.contextRefs.length > MAX_CONTEXT_REFS
+      || body.contextRefs.some((item) => typeof item !== "string" || item.length > MAX_CONTEXT_REF_LENGTH))
+  ) {
+    return NextResponse.json({ error: "contextRefs must contain at most 64 strings of at most 500 characters." }, { status: 400 });
+  }
+  if (
+    body.metadata !== undefined
+    && (!body.metadata || typeof body.metadata !== "object" || Array.isArray(body.metadata) || Object.keys(body.metadata).length > MAX_METADATA_KEYS)
+  ) {
+    return NextResponse.json({ error: "metadata must be an object with at most 32 keys." }, { status: 400 });
   }
   if (!actorId) {
     return NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 });
   }
-  if (authRequired() && !isUuid(projectId)) {
+  if ((authRequired() || durable) && !isUuid(projectId)) {
     return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
   }
 
@@ -149,6 +173,20 @@ export async function POST(request: Request) {
   const hash = hashExecutionRequest(intent);
 
   if (db) {
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+    const { count: recentCount, error: rateError } = await db
+      .from("nexus_execution_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", intent.projectId)
+      .gte("created_at", windowStart);
+    if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
+    if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) {
+      return NextResponse.json(
+        { error: "Execution rate limit exceeded. Retry after the current window." },
+        { status: 429, headers: { "Retry-After": "60" } },
+      );
+    }
+
     const claim = await db.from("nexus_execution_requests").insert({
       project_id: intent.projectId,
       idempotency_key: idempotencyKey,
@@ -188,8 +226,12 @@ export async function POST(request: Request) {
       return NextResponse.json(response, { status: 202 });
     }
 
-    const result = await new NexusExecutor(nexusAdapters, sink).execute(plan);
-    executions.unshift(result.execution);
+    const result = await new NexusExecutor(nexusAdapters, {
+      recordEvidence: async (item: NexusEvidence) => sink.recordEvidence(item, intent.projectId),
+      recordEvent: sink.recordEvent,
+    }).execute(plan);
+
+    memoryExecutions.unshift(result.execution);
     if (persistence) await persistence.saveExecution(result.execution, intent.projectId);
     const response = { intent, plan, ...result };
 
@@ -204,6 +246,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response, { status: result.execution.status === "completed" ? 201 : 422 });
   } catch (error) {
+    if (db) {
+      await db.from("nexus_execution_requests").update({
+        status: "failed",
+        updated_at: new Date().toISOString(),
+      }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
+    }
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
   }
 }
