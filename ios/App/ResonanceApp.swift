@@ -1,8 +1,14 @@
 import SwiftUI
 import ResonanceCore
+import AppIntents
 
 @main
 struct ResonanceApp: App {
+    init() {
+        // Ensure App Shortcut parameters are refreshed after install / update.
+        ResonanceShortcuts.updateAppShortcutParameters()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -18,9 +24,7 @@ struct ContentView: View {
     @State private var lastExecutionStatus: String?
 
     private var client: NexusClient {
-        let configured = ProcessInfo.processInfo.environment["RESONANCE_BASE_URL"] ?? "http://localhost:3000"
-        let baseURL = URL(string: configured) ?? URL(string: "http://localhost:3000")!
-        return NexusClient(transport: URLSessionNexusTransport(baseURL: baseURL))
+        NexusClientFactory.makeClient()
     }
 
     var body: some View {
@@ -128,8 +132,7 @@ struct ContentView: View {
                     objective: "Execute \(capability.name)",
                     requestedBy: "ios-user",
                     requirements: [NexusCapabilityRequirement(key: capability.key)]
-                ),
-                idempotencyKey: UUID().uuidString
+                )
             )
             if let status = response.status, status == "approval_required" {
                 lastExecutionStatus = "Approval required"

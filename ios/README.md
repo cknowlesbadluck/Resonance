@@ -21,6 +21,22 @@ The project is designed to remain compatible with sideloaded distribution workfl
 - Preserve a clean API boundary so Nexus evolves independently of UI.
 - Minimum supported iOS version currently follows `Package.swift`.
 
+## App Intents
+
+The main app target exposes three primary App Intents (source under `App/AppIntents/`):
+
+| Intent | Purpose |
+|--------|---------|
+| `ListCapabilitiesIntent` | Read-only inventory of Nexus capabilities |
+| `ComposeNexusIntent` | Objective → execution plan (no side effects) |
+| `ExecuteNexusPlanIntent` | Execute with mandatory non-blank `Idempotency-Key` |
+
+`ResonanceShortcuts` registers Siri / Spotlight / Shortcuts phrases. Call `ResonanceShortcuts.updateAppShortcutParameters()` at app launch (already done in `ResonanceApp`).
+
+**Important build note:** App Intent types that back App Shortcuts should be compiled into the **main app target**. Domain logic lives in the `ResonanceCore` package; intent structs live under `ios/App/AppIntents/`.
+
+Configuration (base URL, project ID, optional bearer token) is resolved by `NexusClientFactory` from environment variables or UserDefaults. Prefer Keychain for production tokens.
+
 ## Planned first vertical slice
 
 Nexus connection → capability discovery → intent composition → policy/approval state → execution → live evidence → result.

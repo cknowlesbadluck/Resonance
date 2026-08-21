@@ -78,3 +78,30 @@ Format:
 - Merge PR #17 when CI green.
 - Capability plane rewrite under NexusCapability.
 - Prune event-lifecycle* branches when delete path available.
+
+---
+
+## 2026-08-21 03:40 EDT — MasterDev / Grok
+
+**Checked:**
+- Current iOS surface: spatial Nexus + capability orbit + basic execute.
+- NexusClient already guarantees non-blank Idempotency-Key and supports Bearer/project headers.
+- No prior App Intents / AppShortcutsProvider present.
+- Package is SPM (ResonanceCore); App/ holds main-target sources.
+
+**Decided:**
+- Sprint App Intents vertical slice for device agency (Siri, Shortcuts, Spotlight).
+- Three intents: ListCapabilities (read), Compose (plan only), Execute (with mandatory Idempotency-Key).
+- Shared NexusClientFactory (env/UserDefaults; Keychain path documented for production).
+- AppShortcutsProvider in main app target; intent sources under ios/App/AppIntents/.
+- Preserve SideStore viability and progressive disclosure for approval_required.
+
+**Verified:**
+- Branch sprint/ios-app-intents created from main.
+- Files pushed: factory, three intents, ResonanceShortcuts, updated ResonanceApp + README + AGENT_LOG.
+
+**Next / Hand-off:**
+- Open PR from sprint/ios-app-intents.
+- Confirm App Intents metadata extraction when full Xcode app target is wired / SideStore build.
+- Optional follow-ups: AppEntity for NexusCapability, Keychain token helper, Live Activities for executions.
+- Continue hygiene: triage PR #25, prune event-lifecycle* branches.
