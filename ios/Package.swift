@@ -9,7 +9,18 @@ let package = Package(
     ],
     products: [.library(name: "ResonanceCore", targets: ["ResonanceCore"])],
     targets: [
-        .target(name: "ResonanceCore"),
-        .testTarget(name: "ResonanceCoreTests", dependencies: ["ResonanceCore"])
+        .target(
+            name: "ResonanceCore",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
+        .testTarget(
+            name: "ResonanceCoreTests",
+            dependencies: ["ResonanceCore"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        )
     ]
 )

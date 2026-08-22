@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Resonance</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.resonance.cockpit</string>
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+  </dict>
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Resonance reaches your self-hosted Nexus on the local network when sideloaded through SideStore.</string>
+  <key>UILaunchScreen</key>
+  <dict/>
+</dict>
+</plist>

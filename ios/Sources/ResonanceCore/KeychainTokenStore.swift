@@ -5,6 +5,7 @@ import Security
 #endif
 
 /// Minimal Keychain helper for the Resonance bearer token.
+/// Works on sideloaded / SideStore installs; no App Store-only APIs.
 public enum KeychainTokenStore {
     public static let service = "com.resonance.nexus"
     public static let account = "bearer-token"

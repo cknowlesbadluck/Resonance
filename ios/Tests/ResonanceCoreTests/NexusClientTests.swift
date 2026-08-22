@@ -33,6 +33,7 @@ final class NexusClientTests: XCTestCase {
 
         XCTAssertEqual(response.executions.count, 1)
         XCTAssertEqual(response.executions[0].status, "completed")
+        XCTAssertEqual(response.executions[0].output, .object(["ok": .bool(true)]))
     }
 
     func testExecuteAlwaysSendsIdempotencyKeyHeader() async throws {
@@ -40,7 +41,7 @@ final class NexusClientTests: XCTestCase {
         let transport = CapturingTransport(postData: payload)
         let client = NexusClient(transport: transport)
 
-        _ = try await client.execute(
+        let result = try await client.execute(
             NexusIntentRequest(
                 objective: "Run",
                 requestedBy: "user-1",
@@ -49,8 +50,11 @@ final class NexusClientTests: XCTestCase {
             idempotencyKey: "test-key-123"
         )
 
-        XCTAssertEqual(transport.lastPostHeaders?.idempotencyKey, "test-key-123")
-        XCTAssertEqual(transport.lastPostPath, "/api/nexus/executions")
+        let headers = await transport.lastPostHeaders
+        let path = await transport.lastPostPath
+        XCTAssertEqual(result.idempotencyKey, "test-key-123")
+        XCTAssertEqual(headers?.idempotencyKey, "test-key-123")
+        XCTAssertEqual(path, "/api/nexus/executions")
     }
 
     func testExecuteGeneratesIdempotencyKeyWhenOmitted() async throws {
@@ -58,7 +62,7 @@ final class NexusClientTests: XCTestCase {
         let transport = CapturingTransport(postData: payload)
         let client = NexusClient(transport: transport)
 
-        _ = try await client.execute(
+        let result = try await client.execute(
             NexusIntentRequest(
                 objective: "Run",
                 requestedBy: "user-1",
@@ -66,9 +70,19 @@ final class NexusClientTests: XCTestCase {
             )
         )
 
-        let key = transport.lastPostHeaders?.idempotencyKey
-        XCTAssertNotNil(key)
-        XCTAssertFalse(key?.isEmpty ?? true)
+        let headers = await transport.lastPostHeaders
+        XCTAssertFalse(result.idempotencyKey.isEmpty)
+        XCTAssertEqual(headers?.idempotencyKey, result.idempotencyKey)
+    }
+
+    func testResumePostsToExecutionResumePath() async throws {
+        let payload = #"{"intent":{"id":"intent-1","projectId":"demo","objective":"Run","requestedBy":"user-1","requirements":[{"key":"demo.read"}],"contextRefs":[]},"plan":{"id":"plan-1","intentId":"intent-1","projectId":"demo","actorId":"user-1","mode":"direct","steps":[],"contextRefs":[],"approvalRequired":false,"rationale":[]},"execution":{"id":"exec-1","planId":"plan-1","status":"completed"}}"#.data(using: .utf8)!
+        let transport = CapturingTransport(postData: payload)
+        let client = NexusClient(transport: transport)
+        let response = try await client.resume(id: "test-key-123", projectId: "demo", approved: true)
+        let path = await transport.lastPostPath
+        XCTAssertEqual(path, "/api/nexus/executions/test-key-123/resume")
+        XCTAssertEqual(response.execution?.status, "completed")
     }
 }
 
@@ -83,24 +97,4 @@ private struct StubTransport: NexusTransport {
 
     func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { getData }
     func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data { postData }
-}
-
-private final class CapturingTransport: NexusTransport, @unchecked Sendable {
-    let getData: Data
-    let postData: Data
-    private(set) var lastPostPath: String?
-    private(set) var lastPostHeaders: NexusRequestHeaders?
-
-    init(getData: Data = Data(), postData: Data = Data()) {
-        self.getData = getData
-        self.postData = postData
-    }
-
-    func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { getData }
-
-    func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data {
-        lastPostPath = path
-        lastPostHeaders = headers
-        return postData
-    }
 }

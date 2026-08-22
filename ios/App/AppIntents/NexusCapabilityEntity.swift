@@ -27,24 +27,27 @@ struct NexusCapabilityEntity: AppEntity {
 
 struct NexusCapabilityEntityQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [NexusCapabilityEntity] {
-        let all = try await fetchAll()
+        let all = await fetchAll()
         return all.filter { identifiers.contains($0.id) }
     }
 
     func suggestedEntities() async throws -> [NexusCapabilityEntity] {
-        try await fetchAll()
+        await fetchAll()
     }
 
-    private func fetchAll() async throws -> [NexusCapabilityEntity] {
-        let client = NexusClientFactory.makeClient()
-        let capabilities = try await client.capabilities()
-        return capabilities.map(NexusCapabilityEntity.init(from:))
+    private func fetchAll() async -> [NexusCapabilityEntity] {
+        do {
+            let capabilities = try await NexusClientFactory.makeClient().capabilities()
+            return capabilities.map(NexusCapabilityEntity.init(from:))
+        } catch {
+            return []
+        }
     }
 }
 
 extension NexusCapabilityEntityQuery: EntityStringQuery {
     func entities(matching string: String) async throws -> [NexusCapabilityEntity] {
-        let all = try await fetchAll()
+        let all = await fetchAll()
         let q = string.lowercased()
         return all.filter {
             $0.name.lowercased().contains(q) || $0.key.lowercased().contains(q)

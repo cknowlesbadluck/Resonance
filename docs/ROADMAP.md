@@ -30,10 +30,12 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`.
 - [ ] Retire dual iOS Capability models long-term
 - [ ] `nexus_capabilities` cut-over / dual-write
 
-### P3 — Native execution loop
-- [ ] iOS compose → execute → result/approval UX
-- [ ] Typed HTTP error mapping in UI
-- [ ] Unified ResonanceCore package
+### P3 — Native execution loop (IN PROGRESS)
+- [x] iOS compose → plan → execute → evidence/result UX (SideStore-safe settings)
+- [x] Typed HTTP / network error mapping in UI
+- [x] `@MainActor` cockpit store over ResonanceCore
+- [ ] Xcode app target + SideStore IPA export on macOS CI (issue #11)
+- [ ] Physical-device end-to-end verification
 
 ### P4 — Integration & adapters
 - [ ] Real bridges, webhook hardening, provider isolation tests

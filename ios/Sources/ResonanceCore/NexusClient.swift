@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 public struct NexusRequestHeaders: Sendable, Equatable {
     public var authorizationBearer: String?
@@ -46,10 +47,24 @@ public extension NexusTransport {
     }
 }
 
-public enum NexusClientError: Error, Sendable, Equatable {
+public enum NexusClientError: Error, Sendable, Equatable, LocalizedError {
     case httpStatus(Int, message: String?)
     case decodingFailed
     case missingIdempotencyKey
+
+    public var errorDescription: String? {
+        NexusUserFacingError.map(self).message
+    }
+}
+
+public struct NexusResumeRequest: Codable, Sendable, Equatable {
+    public let projectId: String
+    public let approved: Bool
+
+    public init(projectId: String, approved: Bool) {
+        self.projectId = projectId
+        self.approved = approved
+    }
 }
 
 public actor NexusClient {
@@ -57,6 +72,7 @@ public actor NexusClient {
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
     private var defaultHeaders: NexusRequestHeaders
+    private let logger = Logger(subsystem: "com.resonance.nexus", category: "client")
 
     public init(transport: any NexusTransport, defaultHeaders: NexusRequestHeaders = NexusRequestHeaders()) {
         self.transport = transport
@@ -74,43 +90,92 @@ public actor NexusClient {
     }
 
     public func capabilities() async throws -> [NexusCapability] {
-        var path = "/api/nexus/capabilities"
-        if let projectId = defaultHeaders.projectId {
-            path += "?projectId=\(projectId)"
-        }
-        let data = try await transport.get(path, headers: defaultHeaders)
-        return try decoder.decode(NexusCapabilityResponse.self, from: data).capabilities
+        let data = try await getRetrying(queryPath("/api/nexus/capabilities"))
+        return try decode(NexusCapabilityResponse.self, from: data).capabilities
     }
 
     public func compose(_ request: NexusIntentRequest) async throws -> NexusIntentResponse {
         let body = try encoder.encode(request)
         let data = try await transport.post("/api/nexus/intents", body: body, headers: defaultHeaders)
-        return try decoder.decode(NexusIntentResponse.self, from: data)
+        return try decode(NexusIntentResponse.self, from: data)
     }
 
-    /// Creates an execution. Always sends a non-blank Idempotency-Key (generated if omitted).
+    @discardableResult
     public func execute(
         _ request: NexusIntentRequest,
         idempotencyKey: String? = nil
-    ) async throws -> NexusExecutionResponse {
-        let key = (idempotencyKey ?? defaultHeaders.idempotencyKey)?
+    ) async throws -> (response: NexusExecutionResponse, idempotencyKey: String) {
+        let trimmed = (idempotencyKey ?? defaultHeaders.idempotencyKey)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolvedKey = (key?.isEmpty == false) ? key! : UUID().uuidString
+        let resolvedKey: String
+        if let trimmed, !trimmed.isEmpty {
+            resolvedKey = trimmed
+        } else {
+            resolvedKey = UUID().uuidString
+        }
 
         var headers = defaultHeaders
         headers.idempotencyKey = resolvedKey
 
         let body = try encoder.encode(request)
         let data = try await transport.post("/api/nexus/executions", body: body, headers: headers)
-        return try decoder.decode(NexusExecutionResponse.self, from: data)
+        return (try decode(NexusExecutionResponse.self, from: data), resolvedKey)
+    }
+
+    public func resume(
+        id: String,
+        projectId: String,
+        approved: Bool
+    ) async throws -> NexusExecutionResponse {
+        let body = try encoder.encode(NexusResumeRequest(projectId: projectId, approved: approved))
+        let encodedID = Self.encodePath(id)
+        let data = try await transport.post("/api/nexus/executions/\(encodedID)/resume", body: body, headers: defaultHeaders)
+        return try decode(NexusExecutionResponse.self, from: data)
     }
 
     public func executions() async throws -> NexusExecutionsResponse {
-        var path = "/api/nexus/executions"
-        if let projectId = defaultHeaders.projectId {
-            path += "?projectId=\(projectId)"
+        let data = try await getRetrying(queryPath("/api/nexus/executions"))
+        return try decode(NexusExecutionsResponse.self, from: data)
+    }
+
+    private func queryPath(_ base: String) -> String {
+        guard let projectId = defaultHeaders.projectId, !projectId.isEmpty else { return base }
+        let encoded = projectId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? projectId
+        return "\(base)?projectId=\(encoded)"
+    }
+
+    private static func encodePath(_ raw: String) -> String {
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove(charactersIn: "/")
+        return raw.addingPercentEncoding(withAllowedCharacters: allowed) ?? raw
+    }
+
+    private func getRetrying(_ path: String) async throws -> Data {
+        do {
+            return try await transport.get(path, headers: defaultHeaders)
+        } catch let error as NexusClientError {
+            if case .httpStatus(let code, _) = error, (500...599).contains(code) {
+                logger.error("GET \(path, privacy: .public) failed with \(code); retrying once")
+                try await Task.sleep(for: .milliseconds(200))
+                return try await transport.get(path, headers: defaultHeaders)
+            }
+            throw error
+        } catch let error as URLError {
+            if error.code == .timedOut || error.code == .networkConnectionLost {
+                logger.error("GET \(path, privacy: .public) transport failure; retrying once")
+                try await Task.sleep(for: .milliseconds(200))
+                return try await transport.get(path, headers: defaultHeaders)
+            }
+            throw error
         }
-        let data = try await transport.get(path, headers: defaultHeaders)
-        return try decoder.decode(NexusExecutionsResponse.self, from: data)
+    }
+
+    private func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+        do {
+            return try decoder.decode(type, from: data)
+        } catch {
+            logger.error("Decoding \(String(describing: type), privacy: .public) failed")
+            throw NexusClientError.decodingFailed
+        }
     }
 }
