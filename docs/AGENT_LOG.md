@@ -103,3 +103,26 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Obtain actual CI evidence.
 - Exercise authenticated GitHub capability against a deployed environment.
 - Attack concurrency/idempotency/recovery behavior before declaring the vertical slice complete.
+
+---
+
+## 2026-08-22 15:40 EDT — MasterDev / Grok
+
+**Checked:** Open PRs #30 (iOS CHR-38, green then rebased) and #31 (execution hardening) conflicted with post-GitHub-adapter `main`. Issue #32 remaining gate is CI + failure/recovery, not more fixtures. Linear CHR-41/42/43 were still Todo.
+
+**Decided:** Do not merge conflicted #31 onto current `main`. Re-apply the non-conflicting hardening on a fresh branch from current `main`, plus the three Linear tickets.
+
+**Implemented on this branch:**
+- Canonical nested-key idempotency hashing (CHR-31 leftover / issue #32 recovery).
+- Executor persists running/waiting/completed/failed through `recordExecution`.
+- Explicit executor lifecycle/event-order tests.
+- Capability sort tie-breakers: latency → provider → id (CHR-42).
+- HTTP and MCP adapter invocation contract tests (CHR-41).
+- Web control plane: fetch errors are visible, capabilities are selectable, mutating compose sends `Idempotency-Key` (CHR-43).
+
+**Verification:** local `npm test` + `npm run typecheck` on this branch. Merge readiness still requires GitHub Actions `web` + `ios`.
+
+**Next:**
+- Merge PR #30 if rebase CI is green.
+- Close or supersede PR #31 after this branch lands.
+- Do not claim issue #32 complete until credential-backed GitHub execution evidence exists.

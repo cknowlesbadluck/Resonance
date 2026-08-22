@@ -5,7 +5,7 @@ import { composeNexusIntent, nexusAdapters } from "../../../../src/nexus/runtime
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
-import type { CapabilityRequirement, NexusEvent, NexusEvidence, NexusIntent } from "../../../../src/nexus/types";
+import type { CapabilityRequirement, NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../src/nexus/types";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_OBJECTIVE_LENGTH = 4_000;
@@ -16,7 +16,7 @@ const MAX_METADATA_KEYS = 32;
 const MAX_IDEMPOTENCY_LENGTH = 128;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
-const memoryExecutions: unknown[] = [];
+const memoryExecutions: NexusExecution[] = [];
 const memoryEvidence: unknown[] = [];
 const persistence = createNexusPersistenceFromEnv();
 
@@ -32,6 +32,12 @@ const sink = {
   recordEvidence: async (item: NexusEvidence, projectId?: string) => {
     memoryEvidence.unshift(item);
     if (persistence) await persistence.saveEvidence(item, projectId ?? process.env.RESONANCE_PROJECT_ID);
+  },
+  recordExecution: async (execution: NexusExecution, projectId?: string) => {
+    const index = memoryExecutions.findIndex((item) => item.id === execution.id);
+    if (index >= 0) memoryExecutions[index] = execution;
+    else memoryExecutions.unshift(execution);
+    if (persistence) await persistence.saveExecution(execution, projectId ?? process.env.RESONANCE_PROJECT_ID);
   },
   recordEvent: async (event: NexusEvent) => {
     if (!db || !event.projectId) return;
@@ -140,10 +146,9 @@ export async function POST(request: Request) {
 
     const result = await new NexusExecutor(nexusAdapters, {
       recordEvidence: async (item: NexusEvidence) => sink.recordEvidence(item, intent.projectId),
+      recordExecution: async (execution: NexusExecution) => sink.recordExecution(execution, intent.projectId),
       recordEvent: sink.recordEvent,
     }).execute(plan);
-    memoryExecutions.unshift(result.execution);
-    if (persistence) await persistence.saveExecution(result.execution, intent.projectId);
     const response = { intent, plan, ...result };
     if (db) await db.from("nexus_execution_requests").update({ execution_id: result.execution.id, status: result.execution.status, response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
     return NextResponse.json(response, { status: result.execution.status === "completed" ? 201 : 422 });

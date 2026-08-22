@@ -5,23 +5,46 @@ import { Activity, ArrowRight, CheckCircle2, CircleAlert, Network, Play, ShieldC
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
 type Capability = { id: string; key: string; name: string; adapterId?: string; risk: string; availability?: string; provenance?: string };
-type ExecutionResponse = { status?: string; execution?: { status?: string; output?: unknown; error?: string } };
+type ExecutionResponse = {
+  status?: string;
+  error?: string;
+  execution?: { status?: string; output?: unknown; error?: string };
+};
+
+function errorText(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") return fallback;
+  const error = (payload as { error?: unknown }).error;
+  return typeof error === "string" && error.trim() ? error : fallback;
+}
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [executing, setExecuting] = useState(false);
   const [execution, setExecution] = useState<ExecutionResponse | null>(null);
 
   async function load() {
     setLoading(true);
     try {
-      const [eventResponse, capabilityResponse] = await Promise.all([fetch("/api/events?limit=8"), fetch("/api/nexus/capabilities")]);
-      const eventData = eventResponse.ok ? await eventResponse.json() : { events: [] };
-      const capabilityData = capabilityResponse.ok ? await capabilityResponse.json() : { capabilities: [] };
-      setEvents(eventData.events ?? []);
-      setCapabilities(capabilityData.capabilities ?? []);
+      const [eventResponse, capabilityResponse] = await Promise.all([
+        fetch("/api/events?limit=8"),
+        fetch("/api/nexus/capabilities"),
+      ]);
+      const eventData = await eventResponse.json().catch(() => ({}));
+      const capabilityData = await capabilityResponse.json().catch(() => ({}));
+      const failures: string[] = [];
+      if (!eventResponse.ok) failures.push(`Events: ${errorText(eventData, `HTTP ${eventResponse.status}`)}`);
+      if (!capabilityResponse.ok) failures.push(`Capabilities: ${errorText(capabilityData, `HTTP ${capabilityResponse.status}`)}`);
+      setEvents(eventResponse.ok ? eventData.events ?? [] : []);
+      setCapabilities(capabilityResponse.ok ? capabilityData.capabilities ?? [] : []);
+      setLoadError(failures.length ? failures.join(" · ") : null);
+    } catch (error) {
+      setEvents([]);
+      setCapabilities([]);
+      setLoadError(error instanceof Error ? error.message : "Failed to reach the Nexus API.");
     } finally {
       setLoading(false);
     }
@@ -29,15 +52,17 @@ export default function Home() {
 
   useEffect(() => { void load(); }, []);
 
-  async function composeIntent() {
-    const capability = capabilities[0];
+  async function composeIntent(capability = capabilities.find((item) => item.key === selectedKey) ?? capabilities[0]) {
     if (!capability || executing) return;
     setExecuting(true);
     setExecution(null);
     try {
       const response = await fetch("/api/nexus/executions", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(),
+        },
         body: JSON.stringify({
           objective: `Demonstrate ${capability.name}`,
           requestedBy: "web-user",
@@ -45,8 +70,12 @@ export default function Home() {
           requirements: [{ key: capability.key, requiredPermissions: capability.risk === "low" ? ["read"] : ["execute"], maxRisk: capability.risk }],
         }),
       });
-      const data = await response.json();
-      setExecution({ ...data, status: response.ok ? data.status ?? data.execution?.status : "error" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok && response.status !== 202) {
+        setExecution({ status: "error", error: errorText(data, `HTTP ${response.status}`), execution: { error: errorText(data, "Execution failed") } });
+      } else {
+        setExecution({ ...data, status: data.status ?? data.execution?.status ?? (response.ok ? "completed" : "error") });
+      }
       await load();
     } catch (error) {
       setExecution({ status: "error", execution: { error: error instanceof Error ? error.message : "Execution failed" } });
@@ -54,6 +83,17 @@ export default function Home() {
       setExecuting(false);
     }
   }
+
+  const selected = capabilities.find((item) => item.key === selectedKey) ?? capabilities[0];
+  const executionLabel = execution?.status === "approval_required"
+    ? "Approval required"
+    : execution?.status === "waiting"
+      ? "Waiting for approval"
+      : execution?.status === "error" || execution?.status === "failed"
+        ? "Execution error"
+        : execution?.status === "completed"
+          ? "Execution complete"
+          : execution?.status ?? "Execution update";
 
   return (
     <main className="shell">
@@ -67,8 +107,24 @@ export default function Home() {
           <p className="eyebrow">NEXUS / FOUNDATION</p>
           <h1>Bridge the ecosystem.<br /><span>Amplify the whole.</span></h1>
           <p className="lede">Resonance connects AI, agents, skills, tools, connectors, plugins, applications, resources, and people without forcing them into one provider or runtime.</p>
-          <div className="hero-actions"><button className="primary" onClick={composeIntent} disabled={!capabilities.length || executing}><Play size={16} /> {executing ? "Executing…" : "Compose intent"}</button><div className="policy-badge"><ShieldCheck size={16} /> policy boundary active</div></div>
-          {execution && <div className="execution-status"><strong>{execution.status === "approval_required" ? "Approval required" : execution.status === "error" ? "Execution error" : "Execution complete"}</strong><small>{execution.execution?.error ?? (execution.execution?.status ?? execution.status)}</small></div>}
+          <div className="hero-actions">
+            <button className="primary" onClick={() => void composeIntent(selected)} disabled={!selected || executing}>
+              <Play size={16} /> {executing ? "Executing…" : selected ? `Compose ${selected.name}` : "Compose intent"}
+            </button>
+            <div className="policy-badge"><ShieldCheck size={16} /> policy boundary active</div>
+          </div>
+          {loadError && (
+            <div className="execution-status">
+              <strong>Nexus fetch error</strong>
+              <small>{loadError}</small>
+            </div>
+          )}
+          {execution && (
+            <div className="execution-status">
+              <strong>{executionLabel}</strong>
+              <small>{execution.error ?? execution.execution?.error ?? execution.execution?.status ?? execution.status}</small>
+            </div>
+          )}
         </div>
         <div className="pulse"><div className="pulse-ring" /><div className="pulse-core"><Network size={30} /><small>NEXUS</small></div></div>
       </section>
@@ -80,19 +136,29 @@ export default function Home() {
         <div className="stat"><span>PRINCIPLE</span><strong>1</strong><small>integration without domination</small></div>
       </section>
 
-      <section className="section-head"><div><p className="eyebrow">CAPABILITY GRAPH</p><h2>What the ecosystem can do</h2></div><span className="muted">Provider-neutral contracts. Explicit authority.</span></section>
+      <section className="section-head"><div><p className="eyebrow">CAPABILITY GRAPH</p><h2>What the ecosystem can do</h2></div><span className="muted">Select a capability, then compose. Connection is not authority.</span></section>
       <section className="grid integrations">
-        {capabilities.map((capability) => <article className="card" key={capability.id}>
-          <div className="card-icon"><Sparkles size={19} /></div>
-          <div><h3>{capability.name}</h3><p>{capability.key}</p><small>{capability.adapterId ?? "unbound"} · {capability.risk} risk</small></div>
-          <span className="connected"><CheckCircle2 size={15} /> {capability.availability ?? "available"}</span>
-        </article>)}
+        {capabilities.map((capability) => (
+          <article
+            className="card"
+            key={capability.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => setSelectedKey(capability.key)}
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedKey(capability.key); } }}
+            style={selected?.id === capability.id ? { borderColor: "#53e0b4" } : undefined}
+          >
+            <div className="card-icon"><Sparkles size={19} /></div>
+            <div><h3>{capability.name}</h3><p>{capability.key}</p><small>{capability.adapterId ?? "unbound"} · {capability.risk} risk</small></div>
+            <span className="connected"><CheckCircle2 size={15} /> {capability.availability ?? "available"}</span>
+          </article>
+        ))}
       </section>
 
       <section className="lower">
         <article className="panel">
           <div className="panel-head"><div><p className="eyebrow">LIVE STREAM</p><h2>Recent events</h2></div><Activity size={19} /></div>
-          {loading ? <p className="muted">Loading nexus stream…</p> : events.length ? events.map((event) => <div className="event" key={event.id}><span className="event-dot" /><div><strong>{event.type}</strong><small>{event.source}</small></div><span className="event-status">{event.status}</span></div>) : <div className="empty"><CircleAlert size={20} /><span>No external events yet. The nexus is ready for a bridge.</span></div>}
+          {loading ? <p className="muted">Loading nexus stream…</p> : loadError && !events.length ? <div className="empty"><CircleAlert size={20} /><span>{loadError}</span></div> : events.length ? events.map((event) => <div className="event" key={event.id}><span className="event-dot" /><div><strong>{event.type}</strong><small>{event.source}</small></div><span className="event-status">{event.status}</span></div>) : <div className="empty"><CircleAlert size={20} /><span>No external events yet. The nexus is ready for a bridge.</span></div>}
         </article>
         <article className="panel architecture">
           <p className="eyebrow">NEXUS MODEL</p><h2>Intent → cooperation</h2>
