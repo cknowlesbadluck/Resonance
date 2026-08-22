@@ -144,3 +144,27 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge this PR on green CI and attach the evidence artifact to issue #32.
 - Do not close #32 until the CI artifact exists. Production Netlify `GITHUB_TOKEN` remains an ops gate, not a core-architecture change.
 - No production claim.
+
+---
+
+## 2026-08-22 17:20 EDT — Grok Build (Lead Implementation)
+
+**Inspected:** `main` @ `31a5ae7` (CI green), open PR #35 (iOS P3, `ios` job failing), issues #8/#11/#32/#36, executor, GitHub adapter, policy, resume route, control plane.
+
+**Highest blockers found:**
+1. PR #35 iOS CI: duplicate `CapturingTransport` + actor isolation in XCTest.
+2. GitHub adapter had no timeout, leaked raw provider JSON, and only tested 200/404.
+3. `DefaultNexusPolicy` never denied.
+4. Resume interpolated untrusted ids into PostgREST `.or()`.
+5. Intents/capabilities routes lacked the auth/payload bounds used by executions.
+6. Web control plane used `projectId: "demo"` and fetched events without a project id.
+
+**Changed:**
+- Pushed iOS CI fix to `feature/ios-p3-execution-loop` (`cf09b9b`).
+- GitHub adapter: 8s timeout, structured failure codes, normalized repository output.
+- Policy deny for missing actor, unavailable/planned, and `blocked` tags.
+- Resume: parameterized lookup, persist cancel, record events/executions.
+- Auth + payload bounds on intents; auth on capability discovery.
+- Control plane uses UUID project id on events/capabilities/executions.
+
+**Verification:** local `npm test` / `npm run typecheck` on this branch (see following commit). No production claim. Physical SideStore IPA still external (issue #11). Netlify `GITHUB_TOKEN` still an ops gate (issue #32).

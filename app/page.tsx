@@ -11,6 +11,8 @@ type ExecutionResponse = {
   execution?: { status?: string; output?: unknown; error?: string };
 };
 
+const PROJECT_ID = process.env.NEXT_PUBLIC_RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
+
 function errorText(payload: unknown, fallback: string): string {
   if (!payload || typeof payload !== "object") return fallback;
   const error = (payload as { error?: unknown }).error;
@@ -30,8 +32,8 @@ export default function Home() {
     setLoading(true);
     try {
       const [eventResponse, capabilityResponse] = await Promise.all([
-        fetch("/api/events?limit=8"),
-        fetch("/api/nexus/capabilities"),
+        fetch(`/api/events?limit=8&projectId=${encodeURIComponent(PROJECT_ID)}`),
+        fetch(`/api/nexus/capabilities?projectId=${encodeURIComponent(PROJECT_ID)}`),
       ]);
       const eventData = await eventResponse.json().catch(() => ({}));
       const capabilityData = await capabilityResponse.json().catch(() => ({}));
@@ -66,7 +68,7 @@ export default function Home() {
         body: JSON.stringify({
           objective: `Demonstrate ${capability.name}`,
           requestedBy: "web-user",
-          projectId: "demo",
+          projectId: PROJECT_ID,
           requirements: [{ key: capability.key, requiredPermissions: capability.risk === "low" ? ["read"] : ["execute"], maxRisk: capability.risk }],
           metadata: {
             input: capability.key === "github.repository.read"

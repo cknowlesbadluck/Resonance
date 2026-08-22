@@ -62,11 +62,11 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 2. ~~Durable execution + Chamber primitive~~ **Done**.
 3. ~~App Intents device agency~~ **Done**.
 4. ~~Stale sprint branch pruning~~ **Done**.
-5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution now runs in required `web` CI (`GITHUB_VERTICAL_SLICE=1`) and writes `artifacts/github-vertical-slice.json`. Production Netlify still needs `GITHUB_TOKEN` before `github.repository.read` appears on the deployed control plane.
+5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution now runs in required `web` CI (`GITHUB_VERTICAL_SLICE=1`) and writes `artifacts/github-vertical-slice.json`. Adapter now normalizes 401/403/404/429/5xx/timeout/malformed/invalid-input. Production Netlify still needs `GITHUB_TOKEN` before `github.repository.read` appears on the deployed control plane.
 6. **CHR-33:** keep `NexusCapability` as sole public contract and prevent catalog/runtime divergence.
-7. **Failure matrix:** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery.
+7. **Failure matrix:** GitHub provider failures + policy deny landed this sprint. Remaining: concurrency races, persistence failure, process restart, retry exhaustion against a mutating capability.
 8. **Production deployment proof:** authenticated execution + durable evidence.
-9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11).
+9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11). PR #35 is the cockpit; iOS CI compile failure patched on the branch.
 
 ## Governance process (active)
 
