@@ -27,6 +27,11 @@ export type GitHubFailureCode =
   | "timeout"
   | "malformed_response";
 
+const GITHUB_FAILURE_CODES: ReadonlySet<GitHubFailureCode> = new Set([
+  "invalid_input", "unsupported_capability", "unauthorized", "forbidden", "not_found",
+  "rate_limited", "unavailable", "timeout", "malformed_response",
+]);
+
 interface RepositoryInput { owner: string; repo: string; }
 export interface GitHubAdapterOptions {
   fetchImpl?: typeof fetch;
@@ -86,9 +91,8 @@ export class GitHubAdapter implements NexusAdapter {
       const { owner, repo } = repositoryInput(request.input);
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), this.timeoutMs);
-      let response: Response;
       try {
-        response = await this.fetchImpl(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
+        const response = await this.fetchImpl(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
           headers: {
             Accept: "application/vnd.github+json",
             Authorization: `Bearer ${this.token}`,
@@ -98,51 +102,52 @@ export class GitHubAdapter implements NexusAdapter {
           cache: "no-store",
           signal: controller.signal,
         });
+
+        const raw = await response.text();
+        let body: unknown = null;
+        if (raw) {
+          try {
+            body = JSON.parse(raw);
+          } catch {
+            return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
+          }
+        }
+
+        if (!response.ok) {
+          const message = body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
+            ? (body as Record<string, unknown>).message as string
+            : `GitHub API returned HTTP ${response.status}`;
+          return fail(message, codeForStatus(response.status), { status: response.status });
+        }
+
+        if (!body || typeof body !== "object") {
+          return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
+        }
+
+        const record = body as Record<string, unknown>;
+        return {
+          ok: true,
+          output: {
+            provider: "github",
+            resourceType: "repository",
+            owner,
+            name: repo,
+            fullName: typeof record.full_name === "string" ? record.full_name : `${owner}/${repo}`,
+            private: Boolean(record.private),
+            htmlUrl: typeof record.html_url === "string" ? record.html_url : null,
+            defaultBranch: typeof record.default_branch === "string" ? record.default_branch : null,
+            description: typeof record.description === "string" ? record.description : null,
+          },
+          evidence: { provider: "github", capability: capability.id, correlationId: request.correlationId, code: "ok" },
+        };
       } finally {
         clearTimeout(timer);
       }
-
-      const raw = await response.text();
-      let body: unknown = null;
-      if (raw) {
-        try {
-          body = JSON.parse(raw);
-        } catch {
-          return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
-        }
-      }
-
-      if (!response.ok) {
-        const message = body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
-          ? (body as Record<string, unknown>).message as string
-          : `GitHub API returned HTTP ${response.status}`;
-        return fail(message, codeForStatus(response.status), { status: response.status });
-      }
-
-      if (!body || typeof body !== "object") {
-        return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
-      }
-
-      const record = body as Record<string, unknown>;
-      return {
-        ok: true,
-        output: {
-          provider: "github",
-          resourceType: "repository",
-          owner,
-          name: repo,
-          fullName: typeof record.full_name === "string" ? record.full_name : `${owner}/${repo}`,
-          private: Boolean(record.private),
-          htmlUrl: typeof record.html_url === "string" ? record.html_url : null,
-          defaultBranch: typeof record.default_branch === "string" ? record.default_branch : null,
-          description: typeof record.description === "string" ? record.description : null,
-        },
-        evidence: { provider: "github", capability: capability.id, correlationId: request.correlationId, code: "ok" },
-      };
     } catch (error) {
       if (isAbortError(error)) return fail("GitHub request timed out.", "timeout");
-      const code = error && typeof error === "object" && (error as { code?: GitHubFailureCode }).code
-        ? (error as { code: GitHubFailureCode }).code
+      const candidate = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+      const code: GitHubFailureCode = typeof candidate === "string" && GITHUB_FAILURE_CODES.has(candidate as GitHubFailureCode)
+        ? candidate as GitHubFailureCode
         : "unavailable";
       return fail(error instanceof Error ? error.message : String(error), code);
     }
