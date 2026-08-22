@@ -33,6 +33,14 @@ describe("DefaultNexusPolicy", () => {
     expect(policy.evaluate("u1", { ...read, tags: ["blocked"] }).allowed).toBe(false);
   });
 
+  it("denies unsupported permissions instead of defaulting to read", () => {
+    expect(policy.evaluate("u1", { ...read, requiredPermissions: ["future_permission"] })).toEqual({
+      allowed: false,
+      requiresApproval: false,
+      reason: "Capability declares unsupported permission: future_permission.",
+    });
+  });
+
   it("allows low-risk reads without approval", () => {
     expect(policy.evaluate("u1", read)).toEqual({ allowed: true, requiresApproval: false });
   });
