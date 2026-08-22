@@ -52,6 +52,16 @@ public enum NexusClientError: Error, Sendable, Equatable {
     case missingIdempotencyKey
 }
 
+public struct NexusResumeRequest: Codable, Sendable, Equatable {
+    public let projectId: String
+    public let approved: Bool
+
+    public init(projectId: String, approved: Bool) {
+        self.projectId = projectId
+        self.approved = approved
+    }
+}
+
 public actor NexusClient {
     private let transport: any NexusTransport
     private let decoder: JSONDecoder
@@ -79,20 +89,30 @@ public actor NexusClient {
             path += "?projectId=\(projectId)"
         }
         let data = try await transport.get(path, headers: defaultHeaders)
-        return try decoder.decode(NexusCapabilityResponse.self, from: data).capabilities
+        do {
+            return try decoder.decode(NexusCapabilityResponse.self, from: data).capabilities
+        } catch {
+            throw NexusClientError.decodingFailed
+        }
     }
 
     public func compose(_ request: NexusIntentRequest) async throws -> NexusIntentResponse {
         let body = try encoder.encode(request)
         let data = try await transport.post("/api/nexus/intents", body: body, headers: defaultHeaders)
-        return try decoder.decode(NexusIntentResponse.self, from: data)
+        do {
+            return try decoder.decode(NexusIntentResponse.self, from: data)
+        } catch {
+            throw NexusClientError.decodingFailed
+        }
     }
 
     /// Creates an execution. Always sends a non-blank Idempotency-Key (generated if omitted).
+    /// Returns the resolved key so the UI can resume an approval_required request.
+    @discardableResult
     public func execute(
         _ request: NexusIntentRequest,
         idempotencyKey: String? = nil
-    ) async throws -> NexusExecutionResponse {
+    ) async throws -> (response: NexusExecutionResponse, idempotencyKey: String) {
         let key = (idempotencyKey ?? defaultHeaders.idempotencyKey)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let resolvedKey = (key?.isEmpty == false) ? key! : UUID().uuidString
@@ -102,7 +122,27 @@ public actor NexusClient {
 
         let body = try encoder.encode(request)
         let data = try await transport.post("/api/nexus/executions", body: body, headers: headers)
-        return try decoder.decode(NexusExecutionResponse.self, from: data)
+        do {
+            let decoded = try decoder.decode(NexusExecutionResponse.self, from: data)
+            return (decoded, resolvedKey)
+        } catch {
+            throw NexusClientError.decodingFailed
+        }
+    }
+
+    public func resume(
+        id: String,
+        projectId: String,
+        approved: Bool
+    ) async throws -> NexusExecutionResponse {
+        let body = try encoder.encode(NexusResumeRequest(projectId: projectId, approved: approved))
+        let path = "/api/nexus/executions/\(id)/resume"
+        let data = try await transport.post(path, body: body, headers: defaultHeaders)
+        do {
+            return try decoder.decode(NexusExecutionResponse.self, from: data)
+        } catch {
+            throw NexusClientError.decodingFailed
+        }
     }
 
     public func executions() async throws -> NexusExecutionsResponse {
@@ -111,6 +151,10 @@ public actor NexusClient {
             path += "?projectId=\(projectId)"
         }
         let data = try await transport.get(path, headers: defaultHeaders)
-        return try decoder.decode(NexusExecutionsResponse.self, from: data)
+        do {
+            return try decoder.decode(NexusExecutionsResponse.self, from: data)
+        } catch {
+            throw NexusClientError.decodingFailed
+        }
     }
 }

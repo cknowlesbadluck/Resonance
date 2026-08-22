@@ -1,7 +1,7 @@
 import Foundation
 
 /// Shared factory for authenticated `NexusClient`.
-/// Token resolution: override → Keychain → env → UserDefaults.
+/// Token resolution: override → Keychain → env → UserDefaults (legacy read).
 /// Base URL is user-configurable so SideStore builds can target any Nexus host.
 public enum NexusClientFactory {
     public static let defaultBaseURLString = "http://localhost:3000"
@@ -52,8 +52,11 @@ public enum NexusClientFactory {
     }
 
     public static func persistBearerToken(_ value: String?) throws {
-        try KeychainTokenStore.save(value)
-        // Never mirror tokens into UserDefaults once Keychain is available.
+        if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            try KeychainTokenStore.save(value)
+        } else {
+            KeychainTokenStore.delete()
+        }
         UserDefaults.standard.removeObject(forKey: bearerTokenKey)
     }
 
