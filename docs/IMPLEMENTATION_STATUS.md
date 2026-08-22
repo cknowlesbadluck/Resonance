@@ -48,7 +48,7 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 
 | Metric | Value | Signal |
 |--------|-------|--------|
-| Open PRs | **3** (#41, #37, #35) | Watch — stop net-new until ≤2 |
+| Open PRs | **1** (#37) | Review queue |
 | Canonical branches | 2 (`main`, `develop`) | Good |
 | Feature / orphan branches | 6 (3 PR heads + 3 orphans) | Prune after PR land |
 | `main` protected | **true** | Good |
