@@ -126,3 +126,21 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge PR #30 if rebase CI is green.
 - Close or supersede PR #31 after this branch lands.
 - Do not claim issue #32 complete until credential-backed GitHub execution evidence exists.
+
+---
+
+## 2026-08-22 15:45 EDT — MasterDev / Grok
+
+**Checked:** PR #33 squash-merged to `main` (`2075f34`) after required `web` + `ios` succeeded. Linear CHR-41/42/43 marked Done. Issue #32 remaining gate is credential-backed GitHub execution + durable evidence, not more fixtures. Production Netlify currently exposes only demo capabilities (`GITHUB_TOKEN` unset).
+
+**Implemented:**
+- Live GitHub vertical-slice test: compose → policy (read/low, no approval) → `GitHubAdapter` → executor lifecycle persistence → evidence file.
+- Required `web` CI now sets `GITHUB_TOKEN` / `GITHUB_VERTICAL_SLICE=1` and uploads `github-vertical-slice-evidence`.
+- Control plane compose sends `metadata.input.owner/repo` for `github.repository.read`.
+
+**Verification:** local `npm test` 52 passed / 1 skipped; live slice against `cknowlesbadluck/Resonance` completed (`full_name` evidence, execution `420b2a28`). Merge still requires GitHub Actions `web` + `ios`.
+
+**Next:**
+- Merge this PR on green CI and attach the evidence artifact to issue #32.
+- Do not close #32 until the CI artifact exists. Production Netlify `GITHUB_TOKEN` remains an ops gate, not a core-architecture change.
+- No production claim.

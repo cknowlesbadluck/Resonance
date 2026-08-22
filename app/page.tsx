@@ -68,6 +68,14 @@ export default function Home() {
           requestedBy: "web-user",
           projectId: "demo",
           requirements: [{ key: capability.key, requiredPermissions: capability.risk === "low" ? ["read"] : ["execute"], maxRisk: capability.risk }],
+          metadata: {
+            input: capability.key === "github.repository.read"
+              ? {
+                  owner: process.env.NEXT_PUBLIC_GITHUB_OWNER ?? "cknowlesbadluck",
+                  repo: process.env.NEXT_PUBLIC_GITHUB_REPO ?? "Resonance",
+                }
+              : {},
+          },
         }),
       });
       const data = await response.json().catch(() => ({}));

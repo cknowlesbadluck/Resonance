@@ -47,6 +47,8 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 | Metric | Value | Signal |
 |--------|-------|--------|
 | Open PRs | 0 | Good |
+
+
 | Canonical branches | 2 (`main`, `develop`) | Good |
 | Near-duplicate branches | 0 | Good |
 | `main` protected | **true** | Good |
@@ -60,7 +62,7 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 2. ~~Durable execution + Chamber primitive~~ **Done**.
 3. ~~App Intents device agency~~ **Done**.
 4. ~~Stale sprint branch pruning~~ **Done**.
-5. **Real provider vertical slice:** GitHub repository-read capability implemented; deployment/credential-backed execution evidence remains required.
+5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution now runs in required `web` CI (`GITHUB_VERTICAL_SLICE=1`) and writes `artifacts/github-vertical-slice.json`. Production Netlify still needs `GITHUB_TOKEN` before `github.repository.read` appears on the deployed control plane.
 6. **CHR-33:** keep `NexusCapability` as sole public contract and prevent catalog/runtime divergence.
 7. **Failure matrix:** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery.
 8. **Production deployment proof:** authenticated execution + durable evidence.

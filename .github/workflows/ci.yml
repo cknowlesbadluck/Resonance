@@ -16,6 +16,11 @@ jobs:
   web:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_VERTICAL_SLICE: "1"
+      GITHUB_OWNER: ${{ github.repository_owner }}
+      GITHUB_REPO: ${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +29,12 @@ jobs:
       - run: npm install
       - run: npm run typecheck
       - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: github-vertical-slice-evidence
+          path: artifacts/github-vertical-slice.json
+          if-no-files-found: error
       - run: npm run build
 
   ios:
