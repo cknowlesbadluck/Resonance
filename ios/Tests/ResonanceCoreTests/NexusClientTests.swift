@@ -8,7 +8,8 @@ final class NexusClientTests: XCTestCase {
         let capabilities = try await client.capabilities()
         XCTAssertEqual(capabilities.count, 1)
         XCTAssertEqual(capabilities[0].key, "demo.read")
-        XCTAssertEqual(capabilities[0].availability, "available")
+        XCTAssertEqual(capabilities[0].availability, .available)
+        XCTAssertEqual(capabilities[0].risk, .low)
     }
 
     func testComposesIntentThroughPostEndpoint() async throws {
