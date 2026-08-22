@@ -8,9 +8,22 @@ export interface NexusPolicy { evaluate(actorId: string, capability: NexusCapabi
 
 export class DefaultNexusPolicy implements NexusPolicy {
   constructor(private readonly approvalThreshold: CapabilityLevel = "execute") {}
-  evaluate(_actorId: string, capability: NexusCapability): NexusPolicyDecision {
-    const highest = capability.requiredPermissions.reduce<CapabilityLevel>((max, permission) => rank[permission as CapabilityLevel] > rank[max] ? permission as CapabilityLevel : max, "read");
-    if (capability.risk === "critical" || rank[highest] >= rank[this.approvalThreshold]) return { allowed: true, requiresApproval: true, reason: "Capability requires explicit approval." };
+  evaluate(actorId: string, capability: NexusCapability): NexusPolicyDecision {
+    if (!actorId?.trim()) return { allowed: false, requiresApproval: false, reason: "Missing actor." };
+    if (capability.availability === "unavailable" || capability.availability === "planned") {
+      return { allowed: false, requiresApproval: false, reason: `Capability ${capability.id} is ${capability.availability}.` };
+    }
+    if (capability.tags?.includes("blocked")) {
+      return { allowed: false, requiresApproval: false, reason: "Capability is blocked by policy." };
+    }
+    const highest = capability.requiredPermissions.reduce<CapabilityLevel>((max, permission) => {
+      const current = rank[permission as CapabilityLevel];
+      if (current === undefined) return max;
+      return current > rank[max] ? permission as CapabilityLevel : max;
+    }, "read");
+    if (capability.risk === "critical" || rank[highest] >= rank[this.approvalThreshold]) {
+      return { allowed: true, requiresApproval: true, reason: "Capability requires explicit approval." };
+    }
     return { allowed: true, requiresApproval: false };
   }
 }

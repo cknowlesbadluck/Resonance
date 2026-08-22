@@ -18,11 +18,14 @@ function publicRepositoryFields(output: unknown) {
   if (!output || typeof output !== "object") return output;
   const body = output as Record<string, unknown>;
   return {
-    id: body.id,
-    full_name: body.full_name,
+    provider: body.provider,
+    resourceType: body.resourceType,
+    owner: body.owner,
+    name: body.name,
+    fullName: body.fullName ?? body.full_name,
     private: body.private,
-    html_url: body.html_url,
-    default_branch: body.default_branch,
+    htmlUrl: body.htmlUrl ?? body.html_url,
+    defaultBranch: body.defaultBranch ?? body.default_branch,
   };
 }
 
@@ -102,6 +105,6 @@ describe("GitHub authenticated vertical slice", () => {
     expect(result.evidence).toHaveLength(1);
     expect(events.map((event) => event.type)).toEqual(["execution.started", "execution.step.completed", "execution.completed"]);
     expect(executions.map((item) => item.status)).toEqual(["running", "completed"]);
-    expect(publicRepositoryFields(repository)).toEqual(expect.objectContaining({ full_name: `${owner}/${repo}` }));
+    expect(publicRepositoryFields(repository)).toEqual(expect.objectContaining({ fullName: `${owner}/${repo}`, provider: "github" }));
   });
 });

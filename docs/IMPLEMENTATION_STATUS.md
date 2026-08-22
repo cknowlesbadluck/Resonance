@@ -67,12 +67,12 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 1. ~~Branch protection / governance / Idempotency-Key~~ **Done**.
 2. ~~Durable execution + Chamber primitive~~ **Done**.
 3. ~~App Intents device agency~~ **Done**.
-4. ~~Stale sprint branch pruning (Aug 21)~~ **Done**; Aug 28 hygiene in progress.
+4. ~~Stale sprint branch pruning (Aug 21, Aug 28)~~ **Done**.
 5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution runs in required `web` CI when `GITHUB_VERTICAL_SLICE=1`. Production Netlify still needs `GITHUB_TOKEN`.
-6. **CHR-33 / P2:** keep `NexusCapability` as sole public contract; land #41 to retire dual iOS models.
-7. **Failure matrix (PR #37):** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery — resolve remaining review items then merge.
+6. **CHR-33 / P2:** `NexusCapability` is the sole public contract. #40/#41 (dual iOS model retirement) closed.
+7. **Failure matrix (PR #37):** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery. CHR-47/48/49 and all outstanding CodeRabbit findings resolved as of `f6c7c42`; CI green; awaiting merge.
 8. **Production deployment proof:** authenticated execution + durable evidence.
-9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11 / PR #35).
+9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11). PR #35 closed unmerged.
 
 ## Governance process (active)
 
