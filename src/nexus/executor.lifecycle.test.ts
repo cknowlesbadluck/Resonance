@@ -36,7 +36,7 @@ describe("NexusExecutor lifecycle semantics", () => {
 
     expect(result.execution.status).toBe("completed");
     expect(eventTypes(events)).toEqual(["execution.started", "execution.step.completed", "execution.completed"]);
-    expect(new Set(events.map((event) => event.correlationId))).toHaveLength(1);
+    expect(new Set(events.map((event) => event.correlationId)).size).toBe(1);
   });
 
   it("persists running and terminal states through the execution sink", async () => {
