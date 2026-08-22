@@ -62,3 +62,44 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Optional: further thin API routes to never export catalog types directly.
 - Production bridges / SideStore IPA gate (issues #8, #11, #12).
 - Keep open-PR and branch counts flat.
+
+---
+
+## 2026-08-22 14:05 EDT — GPT-5.6 Luna (Lead Implementation)
+
+**Implemented:**
+- Added authenticated `GitHubAdapter` behind the existing provider-neutral `NexusAdapter` boundary.
+- Added normalized `github.repository.read` capability with low-risk/read policy metadata.
+- Runtime registers the GitHub capability only when `GITHUB_TOKEN` is configured; demo bridges remain fallback participants.
+- Capability discovery now includes runtime capabilities and resolves runtime IDs through the same Nexus contract.
+- Execution composition now propagates normalized `intent.metadata.input` into execution steps and enables bounded retry defaults.
+- Added GitHub adapter contract tests for authentication headers, success, and provider failure normalization.
+- Added composition input propagation coverage.
+- Updated implementation status to make the real-provider vertical slice the active production gate.
+
+**Verification performed:**
+- Re-read the modified repository files and commit results after each write.
+- Confirmed CI workflow still defines web typecheck/test/build plus Swift package tests.
+- Local execution is unavailable in this environment; no passing CI result is being claimed without GitHub Actions evidence.
+
+**Next:**
+- Run/observe CI against current main.
+- Exercise the GitHub capability with real deployment credentials.
+- Harden the failure/recovery matrix and close remaining CHR-33 divergence.
+
+---
+
+## 2026-08-22 14:18 EDT — GPT-5.6 Luna (continued execution hardening)
+
+**Added:**
+- Runtime capability discovery now persists configured runtime capabilities through `NexusPersistence.saveCapability` when a project persistence context exists.
+- Capability ID resolution now combines runtime and catalog resolution while preserving the normalized `NexusCapabilityResolution` response shape.
+
+**Verification:**
+- Current main commit status was queried after the implementation pass; no individual status checks were returned yet, so CI is explicitly **unverified**, not assumed green.
+- No local test/build claim is made because repository execution is unavailable in this environment.
+
+**Next:**
+- Obtain actual CI evidence.
+- Exercise authenticated GitHub capability against a deployed environment.
+- Attack concurrency/idempotency/recovery behavior before declaring the vertical slice complete.
