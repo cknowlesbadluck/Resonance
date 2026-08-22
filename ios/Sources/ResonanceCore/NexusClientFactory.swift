@@ -1,10 +1,10 @@
 import Foundation
 
 /// Shared factory for authenticated `NexusClient`.
-/// Token resolution: override → Keychain → env → UserDefaults (legacy read).
-/// Base URL is user-configurable so SideStore builds can target any Nexus host.
+/// Token resolution: override → Keychain → env. Tokens are never read from UserDefaults.
 public enum NexusClientFactory {
     public static let defaultBaseURLString = "http://localhost:3000"
+    public static let defaultBaseURL = URL(string: defaultBaseURLString)!
     public static let baseURLKey = "RESONANCE_BASE_URL"
     public static let projectIdKey = "RESONANCE_PROJECT_ID"
     public static let bearerTokenKey = "RESONANCE_BEARER_TOKEN"
@@ -30,7 +30,6 @@ public enum NexusClientFactory {
     public static func resolvedBearerToken() -> String? {
         KeychainTokenStore.load()
             ?? ProcessInfo.processInfo.environment[bearerTokenKey]
-            ?? UserDefaults.standard.string(forKey: bearerTokenKey)
     }
 
     public static func persistBaseURL(_ value: String) {
@@ -65,14 +64,10 @@ public enum NexusClientFactory {
         bearerToken: String? = nil,
         projectId: String? = nil
     ) -> NexusClient {
-        let resolvedBase = baseURL
-            ?? URL(string: resolvedBaseURLString())
-            ?? URL(string: defaultBaseURLString)!
-
+        let resolvedBase = baseURL ?? URL(string: resolvedBaseURLString()) ?? defaultBaseURL
         var headers = NexusRequestHeaders()
         headers.authorizationBearer = bearerToken ?? resolvedBearerToken()
         headers.projectId = projectId ?? resolvedProjectId()
-
         let transport = URLSessionNexusTransport(baseURL: resolvedBase)
         return NexusClient(transport: transport, defaultHeaders: headers)
     }

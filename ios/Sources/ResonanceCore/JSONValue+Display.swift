@@ -18,8 +18,9 @@ extension JSONValue: CustomStringConvertible {
             return "[\n\(inner)\n\(pad)]"
         case .object(let object):
             if object.isEmpty { return "{}" }
-            let inner = object.keys.sorted().map { key in
-                "\(pad)  \(key): \(object[key]!.prettyPrinted(indent: indent + 1))"
+            let inner = object.keys.sorted().compactMap { key -> String? in
+                guard let value = object[key] else { return nil }
+                return "\(pad)  \(key): \(value.prettyPrinted(indent: indent + 1))"
             }.joined(separator: "\n")
             return "{\n\(inner)\n\(pad)}"
         }

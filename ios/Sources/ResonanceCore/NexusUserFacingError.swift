@@ -1,20 +1,33 @@
 import Foundation
 
-/// Presentation-safe error copy. Server remains authoritative; this only maps transport/client failures.
-public struct NexusUserFacingError: Error, Sendable, Equatable {
+public struct NexusUserFacingError: Error, Sendable, Equatable, LocalizedError {
     public let title: String
     public let message: String
     public let isRetryable: Bool
     public let statusCode: Int?
+    public let isCancellation: Bool
 
-    public init(title: String, message: String, isRetryable: Bool, statusCode: Int? = nil) {
+    public init(
+        title: String,
+        message: String,
+        isRetryable: Bool,
+        statusCode: Int? = nil,
+        isCancellation: Bool = false
+    ) {
         self.title = title
         self.message = message
         self.isRetryable = isRetryable
         self.statusCode = statusCode
+        self.isCancellation = isCancellation
     }
 
+    public var errorDescription: String? { message }
+    public var failureReason: String? { title }
+
     public static func map(_ error: Error) -> NexusUserFacingError {
+        if error is CancellationError {
+            return map(URLError(.cancelled))
+        }
         if let client = error as? NexusClientError {
             return map(client)
         }
@@ -59,6 +72,14 @@ public struct NexusUserFacingError: Error, Sendable, Equatable {
                     ?? "This request conflicted with an existing execution (idempotency or state).",
                 isRetryable: false,
                 statusCode: 409
+            )
+        case .httpStatus(422, let message):
+            return NexusUserFacingError(
+                title: "Rejected",
+                message: message?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty
+                    ?? "Nexus rejected this execution. Inspect the plan and evidence.",
+                isRetryable: false,
+                statusCode: 422
             )
         case .httpStatus(429, _):
             return NexusUserFacingError(
@@ -122,7 +143,8 @@ public struct NexusUserFacingError: Error, Sendable, Equatable {
             return NexusUserFacingError(
                 title: "Cancelled",
                 message: "The request was cancelled.",
-                isRetryable: true
+                isRetryable: true,
+                isCancellation: true
             )
         default:
             return NexusUserFacingError(
