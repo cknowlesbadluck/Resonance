@@ -131,7 +131,7 @@ Append-only. Every agent session (chat or Code) must append an entry.
 
 ## 2026-08-22 15:45 EDT — MasterDev / Grok
 
-**Checked:** PR #33 squash-merged to `main` (`2075f34`) after required `web` + `ios` succeeded. Linear CHR-41/42/43 marked Done. Issue #32 remaining gate is credential-backed GitHub execution + durable evidence, not more fixtures. Production Netlify currently exposes only demo capabilities (`GITHUB_TOKEN` unset).
+**Checked:** PR #33 squash-merged to `main` (`2075f34`) after required `web` + `ios` succeeded. Linear CHR-41/42/43 marked Done. Issue #32 remaining gate is credential-backed GitHub execution + durable evidence. Production Netlify currently exposes only demo capabilities (`GITHUB_TOKEN` unset).
 
 **Implemented:**
 - Live GitHub vertical-slice test: compose → policy (read/low, no approval) → `GitHubAdapter` → executor lifecycle persistence → evidence file.
@@ -144,3 +144,26 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge this PR on green CI and attach the evidence artifact to issue #32.
 - Do not close #32 until the CI artifact exists. Production Netlify `GITHUB_TOKEN` remains an ops gate, not a core-architecture change.
 - No production claim.
+
+---
+
+## 2026-08-22 16:18 EDT — Grok (ios-swift-engineering / SideStore)
+
+**Checked:** `ios/` cockpit, ROADMAP P3, issues #11/#12, SideStore distribution constraint.
+
+**Decided:** Advance P3 without App Store–only dependencies. Physical IPA remains issue #11.
+
+**Implemented on `feature/ios-p3-execution-loop`:**
+- `NexusUserFacingError` — typed HTTP/network mapping with SideStore reachability copy.
+- `NexusCockpitStore` — MainActor compose → plan → execute → evidence state.
+- Tabbed SwiftUI cockpit (Home / Intent / Capabilities / History / Settings).
+- Settings: configurable Base URL, project id, Keychain bearer token (no UserDefaults token write).
+- Package tests for error mapping.
+- Docs: `ios/README.md`, ROADMAP P3 checkboxes, this log entry.
+
+**Verification:** No local `swift test` in this environment. Merge requires GitHub Actions `ios` (+ `web` if touched). No IPA claim; SideStore device gate stays open (#11).
+
+**Next:**
+- Green CI → merge.
+- Xcode app target + Release IPA export for SideStore.
+- Physical iPhone: Base URL to deployed Nexus → compose → evidence IDs recorded on #11.

@@ -4,200 +4,447 @@ import AppIntents
 
 @main
 struct ResonanceApp: App {
+    @State private var store = NexusCockpitStore()
+
     init() {
         ResonanceShortcuts.updateAppShortcutParameters()
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CockpitRootView()
+                .environment(store)
+                .preferredColorScheme(.dark)
         }
     }
 }
 
-struct ContentView: View {
-    @State private var capabilities: [NexusCapability] = []
-    @State private var selected: NexusCapability?
-    @State private var errorMessage: String?
-    @State private var isLoading = true
-    @State private var lastExecutionStatus: String?
+enum CockpitTab: Hashable {
+    case home, compose, capabilities, history, settings
+}
 
-    private var client: NexusClient {
-        NexusClientFactory.makeClient()
-    }
+struct CockpitRootView: View {
+    @Environment(NexusCockpitStore.self) private var store
+    @State private var tab: CockpitTab = .home
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                GeometryReader { proxy in
-                    ZStack {
-                        Circle()
-                            .stroke(.purple.opacity(0.22), lineWidth: 1)
-                            .frame(width: min(proxy.size.width, proxy.size.height) * 0.72)
-                            .rotation3DEffect(.degrees(64), axis: (x: 1, y: 0, z: 0))
-                        Circle()
-                            .stroke(.teal.opacity(0.16), lineWidth: 1)
-                            .frame(width: min(proxy.size.width, proxy.size.height) * 0.48)
-                            .rotation3DEffect(.degrees(64), axis: (x: 1, y: 0, z: 0))
-                        Circle()
-                            .fill(.black)
-                            .overlay(Circle().stroke(.white.opacity(0.16), lineWidth: 1))
-                            .frame(width: 92, height: 92)
-                            .overlay {
-                                VStack(spacing: 5) {
-                                    Image(systemName: "point.3.connected.trianglepath.dotted")
-                                        .foregroundStyle(.purple)
-                                    Text("NEXUS").font(.caption2).tracking(2)
-                                }
-                            }
+        TabView(selection: $tab) {
+            NavigationStack {
+                HomeView(onCompose: { tab = .compose })
+            }
+            .tabItem { Label("Home", systemImage: "circle.grid.cross") }
+            .tag(CockpitTab.home)
 
-                        ForEach(Array(capabilities.enumerated()), id: \.element.id) { index, capability in
-                            let angle = Double(index) / Double(max(capabilities.count, 1)) * Double.pi * 2
-                            let radius = min(proxy.size.width, proxy.size.height) * 0.29
-                            Button {
-                                selected = capability
-                            } label: {
-                                VStack(spacing: 5) {
-                                    Image(systemName: "sparkles")
-                                        .frame(width: 34, height: 34)
-                                        .background(.white.opacity(0.05), in: Circle())
-                                    Text(capability.name)
-                                        .font(.caption2)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.center)
-                                        .frame(width: 92)
-                                }
-                                .foregroundStyle(.white)
-                            }
-                            .buttonStyle(.plain)
-                            .offset(x: cos(angle) * radius, y: sin(angle) * radius)
+            NavigationStack {
+                ComposeView()
+            }
+            .tabItem { Label("Intent", systemImage: "text.cursor") }
+            .tag(CockpitTab.compose)
+
+            NavigationStack {
+                CapabilitiesView()
+            }
+            .tabItem { Label("Capabilities", systemImage: "square.stack.3d.up") }
+            .tag(CockpitTab.capabilities)
+
+            NavigationStack {
+                HistoryView()
+            }
+            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+            .tag(CockpitTab.history)
+
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem { Label("Settings", systemImage: "gearshape") }
+            .tag(CockpitTab.settings)
+        }
+        .task {
+            await store.refreshCapabilities()
+        }
+    }
+}
+
+struct HomeView: View {
+    @Environment(NexusCockpitStore.self) private var store
+    var onCompose: () -> Void
+
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Resonance")
+                        .font(.largeTitle.bold())
+                    Text("Express an outcome. Review the plan. Execute under policy. Inspect evidence.")
+                        .foregroundStyle(.secondary)
+                    Button(action: onCompose) {
+                        Label("Compose intent", systemImage: "plus.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
+            }
+
+            if let error = store.bannerError {
+                Section("Status") {
+                    ErrorCard(error: error)
+                }
+            }
+
+            if let execution = store.lastExecution {
+                Section("Latest execution") {
+                    LabeledContent("ID", value: String(execution.id.prefix(8)) + "…")
+                    LabeledContent("Status", value: execution.status)
+                    if let error = execution.error {
+                        Text(error).foregroundStyle(.red)
+                    }
+                }
+            }
+
+            Section("Pending / recent") {
+                if store.history.isEmpty {
+                    Text("No local history yet. Compose an intent to start.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(store.history.prefix(5)) { execution in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(execution.status.capitalized)
+                                .font(.headline)
+                            Text(String(execution.id))
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .navigationTitle("Resonance")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await load() }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    .disabled(isLoading)
-                }
-            }
-            .task { await load() }
-            .sheet(item: $selected) { capability in
-                CapabilityDetail(
-                    capability: capability,
-                    lastStatus: lastExecutionStatus,
-                    onExecute: { await execute(capability) }
-                )
-                .presentationDetents([.medium, .large])
-            }
-            .overlay {
-                if isLoading {
-                    ProgressView("Connecting to Nexus…")
-                        .padding()
-                        .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
-                } else if let errorMessage {
-                    ContentUnavailableView("Unable to load", systemImage: "exclamationmark.triangle", description: Text(errorMessage))
-                } else if capabilities.isEmpty {
-                    ContentUnavailableView("No capabilities", systemImage: "square.stack.3d.up")
-                }
+
+            Section("SideStore") {
+                Text("This build targets sideloaded distribution. Configure Base URL and token under Settings so a physical device can reach your Nexus host.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
         }
-        .preferredColorScheme(.dark)
-    }
-
-    private func load() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            capabilities = try await client.capabilities()
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    private func execute(_ capability: NexusCapability) async {
-        lastExecutionStatus = "Running…"
-        do {
-            let response = try await client.execute(
-                NexusIntentRequest(
-                    objective: "Execute \(capability.name)",
-                    requestedBy: "ios-user",
-                    requirements: [NexusCapabilityRequirement(key: capability.key)]
-                )
-            )
-            if let status = response.status, status == "approval_required" {
-                lastExecutionStatus = "Approval required"
-            } else if let execution = response.execution {
-                lastExecutionStatus = "Execution \(execution.status)"
-            } else {
-                lastExecutionStatus = "Completed"
+        .navigationTitle("Nexus")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await store.refreshCapabilities() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
             }
-        } catch let error as NexusClientError {
-            switch error {
-            case .httpStatus(let code, let message):
-                lastExecutionStatus = "HTTP \(code): \(message ?? "error")"
-            default:
-                lastExecutionStatus = String(describing: error)
-            }
-        } catch {
-            lastExecutionStatus = error.localizedDescription
         }
     }
 }
 
-private struct CapabilityDetail: View {
-    let capability: NexusCapability
-    var lastStatus: String?
-    var onExecute: () async -> Void
-
-    @State private var isExecuting = false
+struct ComposeView: View {
+    @Environment(NexusCockpitStore.self) private var store
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(capability.name).font(.title2.bold())
-                Text(capability.key).font(.subheadline).foregroundStyle(.secondary)
-                Label(capability.availability?.rawValue ?? "unknown", systemImage: "circle.fill")
-                    .foregroundStyle(capability.availability == .available ? .green : .orange)
-                Text(capability.description ?? "Provider-neutral capability exposed through the Resonance Nexus.")
-                    .foregroundStyle(.secondary)
+        @Bindable var store = store
+        Form {
+            Section("Outcome") {
+                TextField("What should Nexus accomplish?", text: $store.objective, axis: .vertical)
+                    .lineLimit(3...8)
+            }
 
-                if let lastStatus {
-                    Text(lastStatus)
-                        .font(.footnote)
-                        .padding(10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
-                }
-
-                Button {
-                    Task {
-                        isExecuting = true
-                        await onExecute()
-                        isExecuting = false
+            Section("Capability (optional)") {
+                Picker("Capability", selection: $store.selectedCapabilityKey) {
+                    Text("Auto / none").tag(String?.none)
+                    ForEach(store.capabilities) { capability in
+                        Text("\(capability.name) (\(capability.key))").tag(Optional(capability.key))
                     }
+                }
+            }
+
+            if let error = store.bannerError {
+                Section {
+                    ErrorCard(error: error)
+                }
+            }
+
+            Section {
+                Button {
+                    Task { await store.compose() }
                 } label: {
                     HStack {
-                        if isExecuting { ProgressView() }
-                        Text(isExecuting ? "Executing…" : "Execute via Nexus")
+                        if store.isComposing { ProgressView() }
+                        Text(store.isComposing ? "Composing…" : "Compose plan")
                     }
-                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(isExecuting || capability.availability == .planned || capability.availability == .unavailable)
+                .disabled(store.isComposing || store.objective.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
-                Spacer()
+                Button {
+                    Task { await store.executePlan() }
+                } label: {
+                    HStack {
+                        if store.isExecuting { ProgressView() }
+                        Text(store.isExecuting ? "Executing…" : "Execute via Nexus")
+                    }
+                }
+                .disabled(store.isExecuting || store.objective.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .padding()
-            .navigationTitle("Capability")
+
+            if let plan = store.plan {
+                Section("Plan") {
+                    LabeledContent("Mode", value: plan.mode)
+                    LabeledContent("Steps", value: "\(plan.steps.count)")
+                    LabeledContent("Approval", value: plan.approvalRequired ? "Required" : "Not required")
+                    if !plan.rationale.isEmpty {
+                        ForEach(plan.rationale, id: \.self) { line in
+                            Text(line).font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    ForEach(plan.steps) { step in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(step.capabilityId).font(.subheadline.weight(.semibold))
+                            Text("Adapter \(step.adapterId)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if step.requiresApproval {
+                                Text("Requires approval")
+                                    .font(.caption2)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let execution = store.lastExecution {
+                Section("Result") {
+                    LabeledContent("Execution", value: execution.status)
+                    if let completed = execution.completedAt {
+                        LabeledContent("Completed", value: completed)
+                    }
+                    if let error = execution.error {
+                        Text(error).foregroundStyle(.red)
+                    }
+                }
+            }
+
+            if !store.lastEvidence.isEmpty {
+                Section("Evidence") {
+                    ForEach(store.lastEvidence) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.summary)
+                            Text("\(item.type.rawValue) · \(item.createdAt)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Intent")
+    }
+}
+
+struct CapabilitiesView: View {
+    @Environment(NexusCockpitStore.self) private var store
+    @State private var selected: NexusCapability?
+
+    var body: some View {
+        Group {
+            if store.isLoadingCapabilities && store.capabilities.isEmpty {
+                ProgressView("Loading capabilities…")
+            } else if store.capabilities.isEmpty {
+                ContentUnavailableView(
+                    "No capabilities",
+                    systemImage: "square.stack.3d.up.slash",
+                    description: Text("Pull to refresh, or check Base URL and token in Settings.")
+                )
+            } else {
+                List(store.capabilities) { capability in
+                    Button {
+                        selected = capability
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(capability.name).font(.headline)
+                            Text(capability.key).font(.caption.monospaced()).foregroundStyle(.secondary)
+                            HStack {
+                                Text(capability.availability?.rawValue ?? "unknown")
+                                    .font(.caption2)
+                                if capability.risk != .unknown("unspecified") {
+                                    Text("·")
+                                    Text(String(describing: capability.risk))
+                                        .font(.caption2)
+                                }
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                .refreshable { await store.refreshCapabilities() }
+            }
+        }
+        .navigationTitle("Capabilities")
+        .sheet(item: $selected) { capability in
+            NavigationStack {
+                CapabilityDetailView(capability: capability)
+            }
+            .presentationDetents([.medium, .large])
         }
     }
+}
+
+struct CapabilityDetailView: View {
+    @Environment(NexusCockpitStore.self) private var store
+    let capability: NexusCapability
+
+    var body: some View {
+        List {
+            Section {
+                Text(capability.name).font(.title2.bold())
+                Text(capability.key).font(.subheadline.monospaced()).foregroundStyle(.secondary)
+                Text(capability.description ?? "Provider-neutral capability exposed through the Resonance Nexus.")
+                    .foregroundStyle(.secondary)
+            }
+            Section("Metadata") {
+                LabeledContent("Availability", value: capability.availability?.rawValue ?? "unknown")
+                LabeledContent("Provider", value: capability.providerId ?? "—")
+                LabeledContent("Adapter", value: capability.adapterId ?? "—")
+                LabeledContent("Version", value: capability.version ?? "—")
+            }
+            if !capability.requiredPermissions.isEmpty {
+                Section("Permissions") {
+                    ForEach(capability.requiredPermissions, id: \.self) { Text($0) }
+                }
+            }
+            Section {
+                Button("Use in Intent") {
+                    store.selectedCapabilityKey = capability.key
+                    store.objective = store.objective.isEmpty ? "Execute \(capability.name)" : store.objective
+                }
+            }
+        }
+        .navigationTitle("Capability")
+    }
+}
+
+struct HistoryView: View {
+    @Environment(NexusCockpitStore.self) private var store
+
+    var body: some View {
+        List {
+            if let error = store.bannerError {
+                Section { ErrorCard(error: error) }
+            }
+            Section("Executions") {
+                if store.history.isEmpty {
+                    Text("No executions loaded.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(store.history) { execution in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(execution.status.capitalized).font(.headline)
+                                Spacer()
+                                Text(String(execution.id.prefix(8)) + "…")
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let started = execution.startedAt {
+                                Text(started).font(.caption2).foregroundStyle(.secondary)
+                            }
+                            if let error = execution.error {
+                                Text(error).font(.footnote).foregroundStyle(.red)
+                            }
+                        }
+                    }
+                }
+            }
+            if !store.historyEvidence.isEmpty {
+                Section("Evidence") {
+                    ForEach(store.historyEvidence) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.summary)
+                            Text("\(item.type.rawValue) · exec \(item.executionId.prefix(8))…")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("History")
+        .refreshable { await store.refreshHistory() }
+        .task { await store.refreshHistory() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await store.refreshHistory() }
+                } label: {
+                    if store.isLoadingHistory {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct SettingsView: View {
+    @Environment(NexusCockpitStore.self) private var store
+
+    var body: some View {
+        @Bindable var store = store
+        Form {
+            Section("Nexus connection") {
+                TextField("Base URL", text: $store.baseURLString)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                TextField("Project ID", text: $store.projectId)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                SecureField(store.hasStoredToken ? "Replace bearer token" : "Bearer token", text: $store.bearerTokenField)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button("Save connection") {
+                    store.saveConnectionSettings()
+                }
+            }
+
+            Section("SideStore / sideload") {
+                Text("No App Store–only services are required. Tokens stay in Keychain; Base URL must be reachable from the device (LAN HTTPS or tunnel), not only from a Mac simulator’s localhost.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                LabeledContent("Token stored", value: store.hasStoredToken ? "Yes" : "No")
+            }
+
+            Section("About") {
+                LabeledContent("Client", value: "Resonance iOS cockpit")
+                LabeledContent("Role", value: "Control surface over Nexus")
+            }
+        }
+        .navigationTitle("Settings")
+    }
+}
+
+struct ErrorCard: View {
+    let error: NexusUserFacingError
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(error.title).font(.headline)
+            Text(error.message).font(.footnote).foregroundStyle(.secondary)
+            if error.isRetryable {
+                Text("Retryable")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+#Preview("Home") {
+    CockpitRootView()
+        .environment(NexusCockpitStore())
 }
