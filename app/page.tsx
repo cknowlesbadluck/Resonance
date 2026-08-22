@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { Activity, ArrowRight, CheckCircle2, CircleAlert, Network, Play, ShieldCheck, Sparkles } from "lucide-react";
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
@@ -12,6 +13,21 @@ type ExecutionResponse = {
 };
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } })
+  : null;
+
+async function accessToken(): Promise<string | null> {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
+function authHeaders(token: string | null): HeadersInit {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 function errorText(payload: unknown, fallback: string): string {
   if (!payload || typeof payload !== "object") return fallback;
@@ -31,9 +47,11 @@ export default function Home() {
   async function load() {
     setLoading(true);
     try {
+      const token = await accessToken();
+      const headers = authHeaders(token);
       const [eventResponse, capabilityResponse] = await Promise.all([
-        fetch(`/api/events?limit=8&projectId=${encodeURIComponent(PROJECT_ID)}`),
-        fetch(`/api/nexus/capabilities?projectId=${encodeURIComponent(PROJECT_ID)}`),
+        fetch(`/api/events?limit=8&projectId=${encodeURIComponent(PROJECT_ID)}`, { headers }),
+        fetch(`/api/nexus/capabilities?projectId=${encodeURIComponent(PROJECT_ID)}`, { headers }),
       ]);
       const eventData = await eventResponse.json().catch(() => ({}));
       const capabilityData = await capabilityResponse.json().catch(() => ({}));
@@ -59,11 +77,13 @@ export default function Home() {
     setExecuting(true);
     setExecution(null);
     try {
+      const token = await accessToken();
       const response = await fetch("/api/nexus/executions", {
         method: "POST",
         headers: {
           "content-type": "application/json",
           "Idempotency-Key": crypto.randomUUID(),
+          ...authHeaders(token),
         },
         body: JSON.stringify({
           objective: `Demonstrate ${capability.name}`,
