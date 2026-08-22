@@ -16,11 +16,14 @@ export class DefaultNexusPolicy implements NexusPolicy {
     if (capability.tags?.includes("blocked")) {
       return { allowed: false, requiresApproval: false, reason: "Capability is blocked by policy." };
     }
-    const highest = capability.requiredPermissions.reduce<CapabilityLevel>((max, permission) => {
+    let highest: CapabilityLevel = "read";
+    for (const permission of capability.requiredPermissions) {
       const current = rank[permission as CapabilityLevel];
-      if (current === undefined) return max;
-      return current > rank[max] ? permission as CapabilityLevel : max;
-    }, "read");
+      if (current === undefined) {
+        return { allowed: false, requiresApproval: false, reason: `Capability declares unsupported permission: ${permission}.` };
+      }
+      if (current > rank[highest]) highest = permission as CapabilityLevel;
+    }
     if (capability.risk === "critical" || rank[highest] >= rank[this.approvalThreshold]) {
       return { allowed: true, requiresApproval: true, reason: "Capability requires explicit approval." };
     }
