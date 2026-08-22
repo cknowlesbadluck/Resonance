@@ -16,17 +16,27 @@ describe("capability bridge → NexusCapability", () => {
     expect(sample.kind).toBeDefined();
   });
 
-  it("resolves dependencies into NexusCapability list", () => {
-    const result = resolveNexusCapabilities(["skill.ios-swiftui"]);
-    expect(result.missing).toEqual([]);
-    expect(result.unavailable).toEqual([]);
-    expect(result.resolved.map((c) => c.key)).toEqual(["tool.github", "skill.ios-swiftui"]);
-    expect(result.resolved.every((c) => c.requiredPermissions)).toBe(true);
+  it("resolves dependencies into deterministic NexusCapability order", () => {
+    const first = resolveNexusCapabilities(["skill.ios-swiftui"]);
+    const second = resolveNexusCapabilities(["skill.ios-swiftui"]);
+    expect(first).toEqual(second);
+    expect(first.missing).toEqual([]);
+    expect(first.unavailable).toEqual([]);
+    expect(first.resolved.map((c) => c.key)).toEqual(["tool.github", "skill.ios-swiftui"]);
+    expect(first.resolved.every((c) => c.requiredPermissions)).toBe(true);
   });
 
-  it("preserves planned as availability", () => {
+  it("reports missing capabilities without throwing", () => {
+    const result = resolveNexusCapabilities(["capability.does-not-exist"]);
+    expect(result.resolved).toEqual([]);
+    expect(result.missing).toEqual(["capability.does-not-exist"]);
+    expect(result.unavailable).toEqual([]);
+  });
+
+  it("preserves planned as unavailable", () => {
     const result = resolveNexusCapabilities(["integration.kora"]);
     expect(result.resolved).toEqual([]);
+    expect(result.missing).toEqual([]);
     expect(result.unavailable).toEqual(["integration.kora"]);
   });
 });
