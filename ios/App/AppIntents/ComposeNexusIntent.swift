@@ -37,19 +37,9 @@ struct ComposeNexusIntent: AppIntent {
             Approval required: \(plan.approvalRequired ? "yes" : "no")
             """.trimmingCharacters(in: .whitespacesAndNewlines)
             return .result(dialog: IntentDialog(stringLiteral: summary))
-        } catch let error as NexusClientError {
-            return .result(dialog: dialog(for: error))
         } catch {
-            return .result(dialog: "Compose failed: \(error.localizedDescription)")
-        }
-    }
-
-    private func dialog(for error: NexusClientError) -> IntentDialog {
-        switch error {
-        case .httpStatus(401, _): return "Authentication required. Open Resonance and sign in."
-        case .httpStatus(let code, let message):
-            return IntentDialog(stringLiteral: "HTTP \(code): \(message ?? "error")")
-        default: return IntentDialog(stringLiteral: String(describing: error))
+            let mapped = NexusUserFacingError.map(error)
+            return .result(dialog: IntentDialog(stringLiteral: "\(mapped.title). \(mapped.message)"))
         }
     }
 }

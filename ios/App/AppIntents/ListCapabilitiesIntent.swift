@@ -17,26 +17,16 @@ struct ListCapabilitiesIntent: AppIntent {
                 return .result(dialog: "No capabilities are currently available.")
             }
             let lines = capabilities.prefix(12).map { cap in
-                "\(cap.name) (\(cap.key)) — \(cap.availability ?? "unknown")"
+                "\(cap.name) (\(cap.key)) — \(cap.availability?.rawValue ?? "unknown")"
             }
             var message = lines.joined(separator: "\n")
             if capabilities.count > 12 {
                 message += "\n… and \(capabilities.count - 12) more"
             }
             return .result(dialog: IntentDialog(stringLiteral: message))
-        } catch let error as NexusClientError {
-            return .result(dialog: dialog(for: error))
         } catch {
-            return .result(dialog: "Unable to list capabilities: \(error.localizedDescription)")
-        }
-    }
-
-    private func dialog(for error: NexusClientError) -> IntentDialog {
-        switch error {
-        case .httpStatus(401, _): return "Authentication required. Open Resonance and sign in."
-        case .httpStatus(let code, let message):
-            return IntentDialog(stringLiteral: "HTTP \(code): \(message ?? "error")")
-        default: return IntentDialog(stringLiteral: String(describing: error))
+            let mapped = NexusUserFacingError.map(error)
+            return .result(dialog: IntentDialog(stringLiteral: "\(mapped.title). \(mapped.message)"))
         }
     }
 }

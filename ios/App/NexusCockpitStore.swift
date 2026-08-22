@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import ResonanceCore
 
-/// UI-owned cockpit state. Nexus remains the source of truth for capabilities, plans, and executions.
 @MainActor
 @Observable
 final class NexusCockpitStore {
@@ -27,12 +26,10 @@ final class NexusCockpitStore {
     var hasStoredToken: Bool = NexusClientFactory.resolvedBearerToken() != nil
 
     var approvalPending: Bool {
-        lastStatus == "approval_required" || plan?.approvalRequired == true && lastExecution == nil
+        lastStatus == "approval_required" || (plan?.approvalRequired == true && lastExecution == nil)
     }
 
-    private var client: NexusClient {
-        NexusClientFactory.makeClient()
-    }
+    private var client = NexusClientFactory.makeClient()
 
     func selectCapability(_ capability: NexusCapability) {
         selectedCapabilityKey = capability.key
@@ -42,50 +39,46 @@ final class NexusCockpitStore {
     }
 
     func refreshCapabilities() async {
+        guard !isLoadingCapabilities else { return }
         isLoadingCapabilities = true
         defer { isLoadingCapabilities = false }
-        do {
+        await run {
             capabilities = try await client.capabilities()
             bannerError = nil
             if selectedCapabilityKey == nil {
                 selectedCapabilityKey = capabilities.first(where: { $0.availability == .available })?.key
                     ?? capabilities.first?.key
             }
-        } catch {
-            bannerError = NexusUserFacingError.map(error)
         }
     }
 
     func compose() async {
-        guard let request = makeIntentRequest() else { return }
+        guard !isComposing, let request = makeIntentRequest() else { return }
         isComposing = true
         defer { isComposing = false }
-        do {
+        await run {
             let response = try await client.compose(request)
             plan = response.plan
             lastExecution = nil
             lastEvidence = []
             lastStatus = response.plan.approvalRequired ? "approval_required" : "composed"
             bannerError = nil
-        } catch {
-            bannerError = NexusUserFacingError.map(error)
         }
     }
 
     func executePlan() async {
-        guard let request = makeIntentRequest() else { return }
+        guard !isExecuting, let request = makeIntentRequest() else { return }
         isExecuting = true
         defer { isExecuting = false }
-        do {
+        await run {
             let (response, key) = try await client.execute(request)
             applyExecution(response, idempotencyKey: key)
-        } catch {
-            bannerError = NexusUserFacingError.map(error)
         }
     }
 
     func resumeApproval(approved: Bool) async {
         let id = lastExecution?.id ?? lastIdempotencyKey
+        guard !isExecuting else { return }
         guard let id else {
             bannerError = NexusUserFacingError(
                 title: "Nothing to resume",
@@ -96,27 +89,22 @@ final class NexusCockpitStore {
         }
         isExecuting = true
         defer { isExecuting = false }
-        do {
+        await run {
             let response = try await client.resume(id: id, projectId: projectId, approved: approved)
             applyExecution(response, idempotencyKey: lastIdempotencyKey)
-            if !approved {
-                lastStatus = "cancelled"
-            }
-        } catch {
-            bannerError = NexusUserFacingError.map(error)
+            if !approved { lastStatus = "cancelled" }
         }
     }
 
     func refreshHistory() async {
+        guard !isLoadingHistory else { return }
         isLoadingHistory = true
         defer { isLoadingHistory = false }
-        do {
+        await run {
             let response = try await client.executions()
             history = response.executions
             historyEvidence = response.evidence
             bannerError = nil
-        } catch {
-            bannerError = NexusUserFacingError.map(error)
         }
     }
 
@@ -128,6 +116,7 @@ final class NexusCockpitStore {
             try NexusClientFactory.persistBearerToken(token.isEmpty ? nil : token)
             hasStoredToken = NexusClientFactory.resolvedBearerToken() != nil
             bearerTokenField = ""
+            client = NexusClientFactory.makeClient()
             bannerError = nil
         } catch {
             bannerError = NexusUserFacingError(
@@ -135,6 +124,18 @@ final class NexusCockpitStore {
                 message: "Keychain refused the write. On sideloaded builds, confirm the app still has Keychain access for this bundle id.",
                 isRetryable: true
             )
+        }
+    }
+
+    private func run(_ work: () async throws -> Void) async {
+        do {
+            try await work()
+        } catch is CancellationError {
+            return
+        } catch {
+            let mapped = NexusUserFacingError.map(error)
+            if mapped.isCancellation { return }
+            bannerError = mapped
         }
     }
 
