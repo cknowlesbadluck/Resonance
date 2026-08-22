@@ -10,5 +10,13 @@ export async function GET(request: Request) {
   const catalog = listNexusCapabilitiesFromCatalog();
   const merged = [...runtime, ...catalog.filter((catalogCapability) => !runtime.some((runtimeCapability) => runtimeCapability.id === catalogCapability.id))];
   if (ids.length === 0) return NextResponse.json({ capabilities: merged });
-  return NextResponse.json(resolveNexusCapabilities(ids));
+  const runtimeMatches = runtime.filter((capability) => ids.includes(capability.id));
+  const remainingIds = ids.filter((id) => !runtimeMatches.some((capability) => capability.id === id));
+  const catalogResolution = remainingIds.length > 0 ? resolveNexusCapabilities(remainingIds) : { requested: [], resolved: [], missing: [], unavailable: [] };
+  return NextResponse.json({
+    requested: ids,
+    resolved: [...runtimeMatches, ...catalogResolution.resolved],
+    missing: catalogResolution.missing,
+    unavailable: catalogResolution.unavailable,
+  });
 }
