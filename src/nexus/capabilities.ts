@@ -28,6 +28,8 @@ export function sortCapabilities(candidates: NexusCapability[]): NexusCapability
     if (cost) return cost;
     const latency = (a.latencyMs ?? Number.POSITIVE_INFINITY) - (b.latencyMs ?? Number.POSITIVE_INFINITY);
     if (latency) return latency;
-    return (a.providerId ?? "").localeCompare(b.providerId ?? "");
+    const provider = (a.providerId ?? "").localeCompare(b.providerId ?? "");
+    if (provider) return provider;
+    return a.id.localeCompare(b.id);
   });
 }
