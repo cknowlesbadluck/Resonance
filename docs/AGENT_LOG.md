@@ -86,3 +86,20 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Run/observe CI against current main.
 - Exercise the GitHub capability with real deployment credentials.
 - Harden the failure/recovery matrix and close remaining CHR-33 divergence.
+
+---
+
+## 2026-08-22 14:18 EDT — GPT-5.6 Luna (continued execution hardening)
+
+**Added:**
+- Runtime capability discovery now persists configured runtime capabilities through `NexusPersistence.saveCapability` when a project persistence context exists.
+- Capability ID resolution now combines runtime and catalog resolution while preserving the normalized `NexusCapabilityResolution` response shape.
+
+**Verification:**
+- Current main commit status was queried after the implementation pass; no individual status checks were returned yet, so CI is explicitly **unverified**, not assumed green.
+- No local test/build claim is made because repository execution is unavailable in this environment.
+
+**Next:**
+- Obtain actual CI evidence.
+- Exercise authenticated GitHub capability against a deployed environment.
+- Attack concurrency/idempotency/recovery behavior before declaring the vertical slice complete.
