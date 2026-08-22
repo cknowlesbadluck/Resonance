@@ -50,9 +50,11 @@ final class NexusClientTests: XCTestCase {
             idempotencyKey: "test-key-123"
         )
 
+        let headers = await transport.lastPostHeaders
+        let path = await transport.lastPostPath
         XCTAssertEqual(result.idempotencyKey, "test-key-123")
-        XCTAssertEqual(transport.lastPostHeaders?.idempotencyKey, "test-key-123")
-        XCTAssertEqual(transport.lastPostPath, "/api/nexus/executions")
+        XCTAssertEqual(headers?.idempotencyKey, "test-key-123")
+        XCTAssertEqual(path, "/api/nexus/executions")
     }
 
     func testExecuteGeneratesIdempotencyKeyWhenOmitted() async throws {
@@ -68,8 +70,9 @@ final class NexusClientTests: XCTestCase {
             )
         )
 
+        let headers = await transport.lastPostHeaders
         XCTAssertFalse(result.idempotencyKey.isEmpty)
-        XCTAssertEqual(transport.lastPostHeaders?.idempotencyKey, result.idempotencyKey)
+        XCTAssertEqual(headers?.idempotencyKey, result.idempotencyKey)
     }
 
     func testResumePostsToExecutionResumePath() async throws {
@@ -77,7 +80,8 @@ final class NexusClientTests: XCTestCase {
         let transport = CapturingTransport(postData: payload)
         let client = NexusClient(transport: transport)
         let response = try await client.resume(id: "test-key-123", projectId: "demo", approved: true)
-        XCTAssertEqual(transport.lastPostPath, "/api/nexus/executions/test-key-123/resume")
+        let path = await transport.lastPostPath
+        XCTAssertEqual(path, "/api/nexus/executions/test-key-123/resume")
         XCTAssertEqual(response.execution?.status, "completed")
     }
 }
@@ -93,24 +97,4 @@ private struct StubTransport: NexusTransport {
 
     func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { getData }
     func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data { postData }
-}
-
-private final class CapturingTransport: NexusTransport, @unchecked Sendable {
-    let getData: Data
-    let postData: Data
-    private(set) var lastPostPath: String?
-    private(set) var lastPostHeaders: NexusRequestHeaders?
-
-    init(getData: Data = Data(), postData: Data = Data()) {
-        self.getData = getData
-        self.postData = postData
-    }
-
-    func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { getData }
-
-    func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data {
-        lastPostPath = path
-        lastPostHeaders = headers
-        return postData
-    }
 }
