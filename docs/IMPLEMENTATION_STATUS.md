@@ -33,6 +33,7 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 - CI: web typecheck/test/build + Swift package tests on macos-latest.
 - Branch protection + required status checks active.
 - Execution input now propagates through normalized intent metadata into execution steps.
+- Event ingestion/query now has the same authentication/membership boundary as Nexus execution when auth is enabled, with bounded payloads.
 - Failure-path and provider-isolation verification is the immediate hardening target.
 
 ### Phase 6 — Native iOS
