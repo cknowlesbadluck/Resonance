@@ -1,12 +1,12 @@
 # Resonance Implementation Status
 
-## Six-phase sprint status — updated 2026-08-21
+## Six-phase sprint status — updated 2026-08-22
 
-The six-phase sprint is active against the canonical `main` branch. The implementation is being advanced additively: Nexus contracts remain the center, the web surface is a client, Supabase remains the operational persistence foundation, and native iOS consumes the same API contracts.
+The implementation is advancing additively against canonical `main`: Nexus contracts remain the center, web/iOS are clients, Supabase is the operational persistence foundation, and provider-specific behavior remains behind adapters.
 
 ### Phase 1 — Core Resonance
 - Provider-neutral capability contracts remain the core boundary (`NexusCapability`).
-- Catalog plane (`lib/capabilities`) maps into Nexus via `capability-bridge` (CHR-33 interim).
+- Catalog plane (`lib/capabilities`) maps into Nexus via `capability-bridge` (CHR-33 convergence remains tracked).
 - Capability ranking considers availability, risk, cost, and latency metadata.
 - Execution plans support bounded retry policy.
 - Executor retries failed adapter calls with linear backoff and preserves correlation IDs.
@@ -14,50 +14,56 @@ The six-phase sprint is active against the canonical `main` branch. The implemen
 - Nexus API surfaces cover capabilities, intents, executions, identities, events, and webhooks.
 
 ### Phase 2 — Web surface
-- Web Nexus surface is connected to the real execution endpoint.
+- Web Nexus surface is connected to the execution endpoint.
 - Compose Intent invokes the Nexus execution API and reports completion, approval-required, or error states.
-- Spatial depth around central Nexus visualization and capability surfaces.
+- Runtime capability discovery now includes configured provider adapters.
 
 ### Phase 3 — Backend/data
 - Resonance Supabase project active; RLS enabled on core tables.
-- Durable idempotency: `Idempotency-Key` **required** (HTTP 400 if missing). Unique index on `(project_id, idempotency_key)`.
-- Durable-first execution + rate limit (30/min/project) + minimal Chamber primitive **merged** (PR #25).
+- Durable idempotency: `Idempotency-Key` required (HTTP 400 if missing). Unique index on `(project_id, idempotency_key)`.
+- Durable-first execution + rate limit (30/min/project) + minimal Chamber primitive merged.
 
 ### Phase 4 — Integration layer
-- HTTP and MCP behind provider-neutral adapter contracts.
-- Demo bridges prove normalized invocation.
+- HTTP and MCP remain behind provider-neutral adapter contracts.
+- **GitHub repository adapter implemented** as the first real provider participant.
+- `github.repository.read` is exposed as a normalized Nexus capability when `GITHUB_TOKEN` is configured.
+- GitHub adapter contract tests cover authenticated headers, successful reads, and provider failures.
 
 ### Phase 5 — Production hardening
 - CI: web typecheck/test/build + Swift package tests on macos-latest.
 - Branch protection + required status checks active.
+- Execution input now propagates through normalized intent metadata into execution steps.
+- Failure-path and provider-isolation verification is the immediate hardening target.
 
 ### Phase 6 — Native iOS
 - Swift 6 package (`ios/`), actor-isolated `NexusClient`, header-aware transport.
-- App Intents: List / Compose / Execute / Open + `NexusCapabilityEntity` + Keychain token store **merged** (PR #27).
-- Spatial Nexus UI; SideStore-viable constraints documented.
+- App Intents: List / Compose / Execute / Open + `NexusCapabilityEntity` + Keychain token store merged.
+- Spatial Nexus UI; SideStore constraints documented.
+- Physical-device end-to-end verification remains outstanding.
 
-## Repository health metrics (2026-08-21)
+## Repository health metrics
 
 | Metric | Value | Signal |
 |--------|-------|--------|
 | Open PRs | 0 | Good |
-| Total branches | 2 (`main`, `develop`) | Good — pruned 36+ stale |
+| Canonical branches | 2 (`main`, `develop`) | Good |
 | Near-duplicate branches | 0 | Good |
 | `main` protected | **true** | Good |
 | Required CI status checks | enforced | Good |
 
-**Rule:** If open-PR count or duplicate-branch count is trending up, stop building and start merging/closing.
+**Rule:** If open-PR count or duplicate-branch count trends upward, stop building and start merging/closing.
 
-## Current next gates
+## Current execution gates
 
 1. ~~Branch protection / governance / Idempotency-Key~~ **Done**.
-2. ~~Durable execution + Chamber primitive~~ **Done** (PR #25).
-3. ~~App Intents device agency~~ **Done** (PR #27).
-4. ~~Prune event-lifecycle* and stale sprint branches~~ **Done** (2026-08-21).
-5. **CHR-33 residual:** keep `NexusCapability` as sole public contract; treat `lib/capabilities` as internal catalog only (bridge already in place). Optionally thin/retire direct catalog exports from API routes.
-6. Replace remaining demo adapter registrations with production bridges where credentials exist.
-7. Complete lifecycle/failure-path tests; provider isolation verification.
-8. SideStore-loadable IPA + end-to-end Nexus path (issue #11).
+2. ~~Durable execution + Chamber primitive~~ **Done**.
+3. ~~App Intents device agency~~ **Done**.
+4. ~~Stale sprint branch pruning~~ **Done**.
+5. **Real provider vertical slice:** GitHub repository-read capability implemented; deployment/credential-backed execution evidence remains required.
+6. **CHR-33:** keep `NexusCapability` as sole public contract and prevent catalog/runtime divergence.
+7. **Failure matrix:** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery.
+8. **Production deployment proof:** authenticated execution + durable evidence.
+9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11).
 
 ## Governance process (active)
 
