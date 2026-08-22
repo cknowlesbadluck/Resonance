@@ -55,30 +55,61 @@ export async function POST(
 
   const db = dbClient();
   const persistence = createNexusPersistenceFromEnv();
-  const existing = db && projectId ? await loadRequest(db, projectId, id) : null;
+  if (!db || !projectId) {
+    return NextResponse.json({ error: "Durable approval state is required to resume an execution." }, { status: 503 });
+  }
 
-  if (body.approved === false) {
-    if (db && projectId && existing) {
-      await db.from("nexus_execution_requests").update({
-        status: "cancelled",
-        response: { ...(typeof existing.response === "object" && existing.response ? existing.response : {}), status: "cancelled" },
-        updated_at: new Date().toISOString(),
-      }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
+  const existing = await loadRequest(db, projectId, id);
+  if (!existing) {
+    return NextResponse.json({ error: "No execution request found for id" }, { status: 404 });
+  }
+
+  if (body.approved !== true) {
+    if (body.approved === false && existing.status === "waiting") {
+      const { data: cancelled } = await db
+        .from("nexus_execution_requests")
+        .update({
+          status: "cancelled",
+          response: { ...(typeof existing.response === "object" && existing.response ? existing.response : {}), status: "cancelled" },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("project_id", projectId)
+        .eq("idempotency_key", existing.idempotency_key)
+        .eq("status", "waiting")
+        .select("id")
+        .maybeSingle();
+      if (cancelled) return NextResponse.json({ status: "cancelled", id }, { status: 200 });
     }
-    return NextResponse.json({ status: "cancelled", id }, { status: 200 });
+    return NextResponse.json({ error: "Explicit approval=true is required to resume this execution." }, { status: 409 });
+  }
+
+  if (existing.status !== "waiting") {
+    return NextResponse.json({ error: `Execution request is not awaiting approval (status: ${existing.status}).` }, { status: 409 });
+  }
+
+  // Claim the waiting request before composing or executing. A second concurrent
+  // resume sees no row because the conditional update requires status=waiting.
+  const { data: claimed } = await db
+    .from("nexus_execution_requests")
+    .update({ status: "accepted", updated_at: new Date().toISOString() })
+    .eq("project_id", projectId)
+    .eq("idempotency_key", existing.idempotency_key)
+    .eq("status", "waiting")
+    .select("id")
+    .maybeSingle();
+  if (!claimed) {
+    return NextResponse.json({ error: "Execution approval was already claimed or is no longer pending." }, { status: 409 });
   }
 
   let intent: NexusIntent | null = null;
-  if (existing?.response && typeof existing.response === "object") {
+  if (existing.response && typeof existing.response === "object") {
     const response = existing.response as { intent?: NexusIntent };
     if (response.intent) intent = response.intent;
   }
 
   if (!intent) {
-    return NextResponse.json(
-      { error: "No resumable approval_required intent found for id" },
-      { status: 404 },
-    );
+    await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
+    return NextResponse.json({ error: "No resumable approval_required intent found for id" }, { status: 404 });
   }
 
   try {
@@ -95,7 +126,7 @@ export async function POST(
       },
       recordEvent: async (event: NexusEvent) => {
         if (!db || !event.projectId) return;
-        await db.from("events").upsert({
+        const { error } = await db.from("events").upsert({
           id: event.id,
           project_id: event.projectId,
           source: event.source,
@@ -110,25 +141,25 @@ export async function POST(
           created_at: event.createdAt,
           updated_at: event.createdAt,
         }, { onConflict: "project_id,source,external_id" });
+        if (error) throw error;
       },
     };
 
     const result = await new NexusExecutor(nexusAdapters, sink).execute(plan);
 
-    if (db && projectId && existing) {
-      await db.from("nexus_execution_requests").update({
-        execution_id: result.execution.id,
-        status: result.execution.status,
-        response: { intent, plan, ...result, resumed: true },
-        updated_at: new Date().toISOString(),
-      }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
-    }
+    await db.from("nexus_execution_requests").update({
+      execution_id: result.execution.id,
+      status: result.execution.status,
+      response: { intent, plan, ...result, resumed: true },
+      updated_at: new Date().toISOString(),
+    }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
 
     return NextResponse.json(
       { intent, plan, ...result, resumed: true },
       { status: result.execution.status === "completed" ? 200 : 422 },
     );
   } catch (error) {
+    await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
       { status: 422 },
