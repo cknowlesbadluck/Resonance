@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "../../../../src/nexus/capability-bridge";
 import { listRuntimeCapabilities } from "../../../../src/nexus/runtime";
+import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 
 /** Capability discovery returns the normalized NexusCapability contract. */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.get("ids")?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
   const runtime = listRuntimeCapabilities();
+  const persistence = createNexusPersistenceFromEnv();
+  const projectId = searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID;
+  if (persistence && projectId) {
+    await Promise.all(runtime.map((capability) => persistence.saveCapability(capability, projectId)));
+  }
   const catalog = listNexusCapabilitiesFromCatalog();
   const merged = [...runtime, ...catalog.filter((catalogCapability) => !runtime.some((runtimeCapability) => runtimeCapability.id === catalogCapability.id))];
   if (ids.length === 0) return NextResponse.json({ capabilities: merged });
