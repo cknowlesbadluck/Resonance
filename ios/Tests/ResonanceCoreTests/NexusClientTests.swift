@@ -33,6 +33,7 @@ final class NexusClientTests: XCTestCase {
 
         XCTAssertEqual(response.executions.count, 1)
         XCTAssertEqual(response.executions[0].status, "completed")
+        XCTAssertEqual(response.executions[0].output, .object(["ok": .bool(true)]))
     }
 
     func testExecuteAlwaysSendsIdempotencyKeyHeader() async throws {
@@ -40,7 +41,7 @@ final class NexusClientTests: XCTestCase {
         let transport = CapturingTransport(postData: payload)
         let client = NexusClient(transport: transport)
 
-        _ = try await client.execute(
+        let result = try await client.execute(
             NexusIntentRequest(
                 objective: "Run",
                 requestedBy: "user-1",
@@ -49,6 +50,7 @@ final class NexusClientTests: XCTestCase {
             idempotencyKey: "test-key-123"
         )
 
+        XCTAssertEqual(result.idempotencyKey, "test-key-123")
         XCTAssertEqual(transport.lastPostHeaders?.idempotencyKey, "test-key-123")
         XCTAssertEqual(transport.lastPostPath, "/api/nexus/executions")
     }
@@ -58,7 +60,7 @@ final class NexusClientTests: XCTestCase {
         let transport = CapturingTransport(postData: payload)
         let client = NexusClient(transport: transport)
 
-        _ = try await client.execute(
+        let result = try await client.execute(
             NexusIntentRequest(
                 objective: "Run",
                 requestedBy: "user-1",
@@ -66,9 +68,17 @@ final class NexusClientTests: XCTestCase {
             )
         )
 
-        let key = transport.lastPostHeaders?.idempotencyKey
-        XCTAssertNotNil(key)
-        XCTAssertFalse(key?.isEmpty ?? true)
+        XCTAssertFalse(result.idempotencyKey.isEmpty)
+        XCTAssertEqual(transport.lastPostHeaders?.idempotencyKey, result.idempotencyKey)
+    }
+
+    func testResumePostsToExecutionResumePath() async throws {
+        let payload = #"{"intent":{"id":"intent-1","projectId":"demo","objective":"Run","requestedBy":"user-1","requirements":[{"key":"demo.read"}],"contextRefs":[]},"plan":{"id":"plan-1","intentId":"intent-1","projectId":"demo","actorId":"user-1","mode":"direct","steps":[],"contextRefs":[],"approvalRequired":false,"rationale":[]},"execution":{"id":"exec-1","planId":"plan-1","status":"completed"}}"#.data(using: .utf8)!
+        let transport = CapturingTransport(postData: payload)
+        let client = NexusClient(transport: transport)
+        let response = try await client.resume(id: "test-key-123", projectId: "demo", approved: true)
+        XCTAssertEqual(transport.lastPostPath, "/api/nexus/executions/test-key-123/resume")
+        XCTAssertEqual(response.execution?.status, "completed")
     }
 }
 

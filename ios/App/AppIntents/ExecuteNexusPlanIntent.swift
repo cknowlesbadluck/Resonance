@@ -28,31 +28,26 @@ struct ExecuteNexusPlanIntent: AppIntent {
                 requestedBy: "ios-app-intent",
                 requirements: requirements
             )
-            let response = try await client.execute(request)
+            let (response, _) = try await client.execute(request)
             if response.status == "approval_required" {
-                return .result(dialog: "Approval required. Open Resonance to review the plan.")
+                return .result(dialog: "Approval required. Open Resonance to review the plan and resume.")
             }
             if let execution = response.execution {
                 if let error = execution.error, !error.isEmpty {
                     return .result(dialog: "Execution \(execution.status): \(error)")
                 }
-                return .result(dialog: "Execution \(execution.id.prefix(8))… — \(execution.status)")
+                var dialog = "Execution \(execution.id.prefix(8))… — \(execution.status)"
+                if let output = execution.output {
+                    dialog += "\n\(output.prettyPrinted())"
+                }
+                return .result(dialog: IntentDialog(stringLiteral: dialog))
             }
             return .result(dialog: "Result: \(response.status ?? "completed")")
         } catch let error as NexusClientError {
-            return .result(dialog: dialog(for: error))
+            let mapped = NexusUserFacingError.map(error)
+            return .result(dialog: IntentDialog(stringLiteral: "\(mapped.title). \(mapped.message)"))
         } catch {
             return .result(dialog: "Execute failed: \(error.localizedDescription)")
-        }
-    }
-
-    private func dialog(for error: NexusClientError) -> IntentDialog {
-        switch error {
-        case .httpStatus(401, _): return "Authentication required. Open Resonance and sign in."
-        case .httpStatus(429, _): return "Rate limited. Try again in a minute."
-        case .httpStatus(let code, let message):
-            return IntentDialog(stringLiteral: "HTTP \(code): \(message ?? "error")")
-        default: return IntentDialog(stringLiteral: String(describing: error))
         }
     }
 }

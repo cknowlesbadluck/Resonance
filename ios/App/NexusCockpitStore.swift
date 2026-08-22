@@ -12,6 +12,8 @@ final class NexusCockpitStore {
     var plan: NexusExecutionPlan?
     var lastExecution: NexusExecution?
     var lastEvidence: [NexusEvidence] = []
+    var lastIdempotencyKey: String?
+    var lastStatus: String?
     var history: [NexusExecution] = []
     var historyEvidence: [NexusEvidence] = []
     var isLoadingCapabilities = false
@@ -24,8 +26,19 @@ final class NexusCockpitStore {
     var bearerTokenField: String = ""
     var hasStoredToken: Bool = NexusClientFactory.resolvedBearerToken() != nil
 
+    var approvalPending: Bool {
+        lastStatus == "approval_required" || plan?.approvalRequired == true && lastExecution == nil
+    }
+
     private var client: NexusClient {
         NexusClientFactory.makeClient()
+    }
+
+    func selectCapability(_ capability: NexusCapability) {
+        selectedCapabilityKey = capability.key
+        if objective.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            objective = "Execute \(capability.name)"
+        }
     }
 
     func refreshCapabilities() async {
@@ -44,33 +57,15 @@ final class NexusCockpitStore {
     }
 
     func compose() async {
-        let trimmed = objective.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            bannerError = NexusUserFacingError(
-                title: "Objective required",
-                message: "Describe the outcome you want Nexus to accomplish.",
-                isRetryable: false
-            )
-            return
-        }
-
+        guard let request = makeIntentRequest() else { return }
         isComposing = true
         defer { isComposing = false }
         do {
-            var requirements: [NexusCapabilityRequirement] = []
-            if let key = selectedCapabilityKey, !key.isEmpty {
-                requirements = [NexusCapabilityRequirement(key: key)]
-            }
-            let request = NexusIntentRequest(
-                projectId: projectId,
-                objective: trimmed,
-                requestedBy: "ios-cockpit",
-                requirements: requirements
-            )
             let response = try await client.compose(request)
             plan = response.plan
             lastExecution = nil
             lastEvidence = []
+            lastStatus = response.plan.approvalRequired ? "approval_required" : "composed"
             bannerError = nil
         } catch {
             bannerError = NexusUserFacingError.map(error)
@@ -78,37 +73,34 @@ final class NexusCockpitStore {
     }
 
     func executePlan() async {
-        let trimmed = objective.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
+        guard let request = makeIntentRequest() else { return }
         isExecuting = true
         defer { isExecuting = false }
         do {
-            var requirements: [NexusCapabilityRequirement] = []
-            if let key = selectedCapabilityKey, !key.isEmpty {
-                requirements = [NexusCapabilityRequirement(key: key)]
-            }
-            let request = NexusIntentRequest(
-                projectId: projectId,
-                objective: trimmed,
-                requestedBy: "ios-cockpit",
-                requirements: requirements
+            let (response, key) = try await client.execute(request)
+            applyExecution(response, idempotencyKey: key)
+        } catch {
+            bannerError = NexusUserFacingError.map(error)
+        }
+    }
+
+    func resumeApproval(approved: Bool) async {
+        let id = lastExecution?.id ?? lastIdempotencyKey
+        guard let id else {
+            bannerError = NexusUserFacingError(
+                title: "Nothing to resume",
+                message: "Execute first so Nexus can persist an approval_required request.",
+                isRetryable: false
             )
-            let response = try await client.execute(request)
-            plan = response.plan
-            lastExecution = response.execution
-            lastEvidence = response.evidence ?? []
-            if let execution = response.execution {
-                history.insert(execution, at: 0)
-            }
-            if response.status == "approval_required" {
-                bannerError = NexusUserFacingError(
-                    title: "Approval required",
-                    message: "Nexus composed a plan that needs explicit approval before execution continues.",
-                    isRetryable: false
-                )
-            } else {
-                bannerError = nil
+            return
+        }
+        isExecuting = true
+        defer { isExecuting = false }
+        do {
+            let response = try await client.resume(id: id, projectId: projectId, approved: approved)
+            applyExecution(response, idempotencyKey: lastIdempotencyKey)
+            if !approved {
+                lastStatus = "cancelled"
             }
         } catch {
             bannerError = NexusUserFacingError.map(error)
@@ -143,6 +135,49 @@ final class NexusCockpitStore {
                 message: "Keychain refused the write. On sideloaded builds, confirm the app still has Keychain access for this bundle id.",
                 isRetryable: true
             )
+        }
+    }
+
+    private func makeIntentRequest() -> NexusIntentRequest? {
+        let trimmed = objective.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            bannerError = NexusUserFacingError(
+                title: "Objective required",
+                message: "Describe the outcome you want Nexus to accomplish.",
+                isRetryable: false
+            )
+            return nil
+        }
+        var requirements: [NexusCapabilityRequirement] = []
+        if let key = selectedCapabilityKey, !key.isEmpty {
+            requirements = [NexusCapabilityRequirement(key: key)]
+        }
+        return NexusIntentRequest(
+            projectId: projectId,
+            objective: trimmed,
+            requestedBy: "ios-cockpit",
+            requirements: requirements
+        )
+    }
+
+    private func applyExecution(_ response: NexusExecutionResponse, idempotencyKey: String?) {
+        plan = response.plan
+        lastExecution = response.execution
+        lastEvidence = response.evidence ?? []
+        lastIdempotencyKey = idempotencyKey
+        lastStatus = response.status ?? response.execution?.status
+        if let execution = response.execution {
+            history.removeAll { $0.id == execution.id }
+            history.insert(execution, at: 0)
+        }
+        if response.status == "approval_required" {
+            bannerError = NexusUserFacingError(
+                title: "Approval required",
+                message: "Review the plan, then approve to resume or cancel. Policy stays on the server.",
+                isRetryable: false
+            )
+        } else {
+            bannerError = nil
         }
     }
 }
