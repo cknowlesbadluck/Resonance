@@ -21,7 +21,7 @@ struct NexusCapabilityEntity: AppEntity {
         self.id = capability.id
         self.key = capability.key
         self.name = capability.name
-        self.availability = capability.availability
+        self.availability = capability.availability?.rawValue
     }
 }
 
