@@ -1,11 +1,42 @@
 import Foundation
 
-@available(macOS 12.0, *)
+public enum NexusURLBuilder: Sendable {
+    public static func url(base: URL, path: String) throws -> URL {
+        let trimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        let parts = trimmed.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
+        let pathOnly = String(parts[0])
+        guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+            throw URLError(.badURL)
+        }
+        var basePath = components.path
+        if basePath.isEmpty { basePath = "/" }
+        if !basePath.hasSuffix("/") { basePath += "/" }
+        components.path = basePath + pathOnly
+        if parts.count == 2 {
+            components.percentEncodedQuery = String(parts[1])
+        }
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        return url
+    }
+}
+
 public struct URLSessionNexusTransport: NexusTransport {
     private let baseURL: URL
     private let session: URLSession
 
-    public init(baseURL: URL, session: URLSession = .shared) {
+    public static func makeSession() -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        configuration.waitsForConnectivity = true
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.httpShouldSetCookies = false
+        return URLSession(configuration: configuration)
+    }
+
+    public init(baseURL: URL, session: URLSession = URLSessionNexusTransport.makeSession()) {
         self.baseURL = baseURL
         self.session = session
     }
@@ -19,10 +50,7 @@ public struct URLSessionNexusTransport: NexusTransport {
     }
 
     private func request(path: String, method: String, body: Data?, headers: NexusRequestHeaders) async throws -> Data {
-        guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
-            throw URLError(.badURL)
-        }
-
+        let url = try NexusURLBuilder.url(base: baseURL, path: path)
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -38,8 +66,7 @@ public struct URLSessionNexusTransport: NexusTransport {
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-
-        guard 200..<300 ~= http.statusCode else {
+        guard (200..<300).contains(http.statusCode) else {
             let message = String(data: data, encoding: .utf8)
             throw NexusClientError.httpStatus(http.statusCode, message: message)
         }
