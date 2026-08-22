@@ -165,8 +165,8 @@ private struct CapabilityDetail: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text(capability.name).font(.title2.bold())
                 Text(capability.key).font(.subheadline).foregroundStyle(.secondary)
-                Label(capability.availability ?? "unknown", systemImage: "circle.fill")
-                    .foregroundStyle(capability.availability == "available" ? .green : .orange)
+                Label(capability.availability?.rawValue ?? "unknown", systemImage: "circle.fill")
+                    .foregroundStyle(capability.availability == .available ? .green : .orange)
                 Text(capability.description ?? "Provider-neutral capability exposed through the Resonance Nexus.")
                     .foregroundStyle(.secondary)
 
@@ -192,7 +192,7 @@ private struct CapabilityDetail: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isExecuting || capability.availability == "planned" || capability.availability == "unavailable")
+                .disabled(isExecuting || capability.availability == .planned || capability.availability == .unavailable)
 
                 Spacer()
             }
