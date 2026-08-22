@@ -32,7 +32,7 @@ struct CockpitRootView: View {
             NavigationStack {
                 HomeView(onCompose: { tab = .compose })
             }
-            .tabItem { Label("Home", systemImage: "circle.grid.cross") }
+            .tabItem { Label("Nexus", systemImage: "circle.grid.cross") }
             .tag(CockpitTab.home)
 
             NavigationStack {
@@ -50,7 +50,7 @@ struct CockpitRootView: View {
             NavigationStack {
                 HistoryView()
             }
-            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+            .tabItem { Label("Evidence", systemImage: "clock.arrow.circlepath") }
             .tag(CockpitTab.history)
 
             NavigationStack {
@@ -61,6 +61,7 @@ struct CockpitRootView: View {
         }
         .task {
             await store.refreshCapabilities()
+            await store.refreshHistory()
         }
     }
 }
@@ -68,73 +69,156 @@ struct CockpitRootView: View {
 struct HomeView: View {
     @Environment(NexusCockpitStore.self) private var store
     var onCompose: () -> Void
+    @State private var selected: NexusCapability?
 
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Resonance")
-                        .font(.largeTitle.bold())
-                    Text("Express an outcome. Review the plan. Execute under policy. Inspect evidence.")
-                        .foregroundStyle(.secondary)
+        ZStack {
+            Color.black.ignoresSafeArea()
+            SpatialNexusMap(capabilities: store.capabilities) { capability in
+                selected = capability
+                store.selectCapability(capability)
+            }
+
+            VStack {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("RESONANCE")
+                            .font(.caption.weight(.semibold))
+                            .tracking(3)
+                            .foregroundStyle(.white.opacity(0.7))
+                        Text(store.capabilities.isEmpty ? "No live capabilities" : "\(store.capabilities.count) capabilities")
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.55))
+                    }
+                    Spacer()
+                    Button {
+                        Task { await store.refreshCapabilities() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(store.isLoadingCapabilities)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+                Spacer()
+
+                if let error = store.bannerError {
+                    ErrorCard(error: error)
+                        .padding()
+                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 14))
+                        .padding(.horizontal)
+                }
+
+                HStack(spacing: 12) {
                     Button(action: onCompose) {
                         Label("Compose intent", systemImage: "plus.circle.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                }
-                .padding(.vertical, 4)
-                .listRowBackground(Color.clear)
-            }
 
-            if let error = store.bannerError {
-                Section("Status") {
-                    ErrorCard(error: error)
-                }
-            }
-
-            if let execution = store.lastExecution {
-                Section("Latest execution") {
-                    LabeledContent("ID", value: String(execution.id.prefix(8)) + "…")
-                    LabeledContent("Status", value: execution.status)
-                    if let error = execution.error {
-                        Text(error).foregroundStyle(.red)
+                    if let execution = store.lastExecution {
+                        Text(execution.status.uppercased())
+                            .font(.caption.monospaced())
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(.white.opacity(0.08), in: Capsule())
                     }
                 }
-            }
-
-            Section("Pending / recent") {
-                if store.history.isEmpty {
-                    Text("No local history yet. Compose an intent to start.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(store.history.prefix(5)) { execution in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(execution.status.capitalized)
-                                .font(.headline)
-                            Text(String(execution.id))
-                                .font(.caption.monospaced())
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-
-            Section("SideStore") {
-                Text("This build targets sideloaded distribution. Configure Base URL and token under Settings so a physical device can reach your Nexus host.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                .padding(20)
             }
         }
-        .navigationTitle("Nexus")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await store.refreshCapabilities() }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .sheet(item: $selected) { capability in
+            NavigationStack {
+                CapabilityDetailView(capability: capability)
+            }
+            .presentationDetents([.medium, .large])
+        }
+        .overlay {
+            if store.isLoadingCapabilities && store.capabilities.isEmpty {
+                ProgressView("Connecting to Nexus…")
+                    .padding()
+                    .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
+            }
+        }
+    }
+}
+
+struct SpatialNexusMap: View {
+    let capabilities: [NexusCapability]
+    var onSelect: (NexusCapability) -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let extent = min(proxy.size.width, proxy.size.height)
+            ZStack {
+                Circle()
+                    .stroke(.purple.opacity(0.22), lineWidth: 1)
+                    .frame(width: extent * 0.72)
+                    .rotation3DEffect(.degrees(64), axis: (x: 1, y: 0, z: 0))
+                Circle()
+                    .stroke(.teal.opacity(0.16), lineWidth: 1)
+                    .frame(width: extent * 0.48)
+                    .rotation3DEffect(.degrees(64), axis: (x: 1, y: 0, z: 0))
+                Circle()
+                    .fill(.black)
+                    .overlay(Circle().stroke(.white.opacity(0.16), lineWidth: 1))
+                    .frame(width: 92, height: 92)
+                    .overlay {
+                        VStack(spacing: 5) {
+                            Image(systemName: "point.3.connected.trianglepath.dotted")
+                                .foregroundStyle(.purple)
+                            Text("NEXUS").font(.caption2).tracking(2)
+                        }
+                    }
+                    .accessibilityLabel("Nexus")
+
+                ForEach(Array(capabilities.enumerated()), id: \.element.id) { index, capability in
+                    let angle = Double(index) / Double(max(capabilities.count, 1)) * Double.pi * 2
+                    let radius = extent * 0.29
+                    Button {
+                        onSelect(capability)
+                    } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: symbol(for: capability))
+                                .frame(width: 34, height: 34)
+                                .background(availabilityColor(capability).opacity(0.22), in: Circle())
+                            Text(capability.name)
+                                .font(.caption2)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+                                .frame(width: 92)
+                        }
+                        .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.plain)
+                    .offset(x: cos(angle) * radius, y: sin(angle) * radius)
+                    .accessibilityLabel(capability.name)
+                    .accessibilityHint(capability.key)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private func availabilityColor(_ capability: NexusCapability) -> Color {
+        switch capability.availability {
+        case .available: return .green
+        case .degraded: return .orange
+        case .unavailable, .planned: return .red
+        default: return .white
+        }
+    }
+
+    private func symbol(for capability: NexusCapability) -> String {
+        switch capability.kind {
+        case .skill: return "brain.head.profile"
+        case .tool: return "wrench.and.screwdriver"
+        case .integration: return "link"
+        case .resource: return "externaldrive"
+        default: return "sparkles"
         }
     }
 }
@@ -148,11 +232,12 @@ struct ComposeView: View {
             Section("Outcome") {
                 TextField("What should Nexus accomplish?", text: $store.objective, axis: .vertical)
                     .lineLimit(3...8)
+                    .accessibilityLabel("Objective")
             }
 
-            Section("Capability (optional)") {
+            Section("Capability") {
                 Picker("Capability", selection: $store.selectedCapabilityKey) {
-                    Text("Auto / none").tag(String?.none)
+                    Text("Let Nexus compose"  ).tag(String?.none)
                     ForEach(store.capabilities) { capability in
                         Text("\(capability.name) (\(capability.key))").tag(Optional(capability.key))
                     }
@@ -160,9 +245,7 @@ struct ComposeView: View {
             }
 
             if let error = store.bannerError {
-                Section {
-                    ErrorCard(error: error)
-                }
+                Section { ErrorCard(error: error) }
             }
 
             Section {
@@ -174,7 +257,7 @@ struct ComposeView: View {
                         Text(store.isComposing ? "Composing…" : "Compose plan")
                     }
                 }
-                .disabled(store.isComposing || store.objective.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(store.isComposing)
 
                 Button {
                     Task { await store.executePlan() }
@@ -184,7 +267,23 @@ struct ComposeView: View {
                         Text(store.isExecuting ? "Executing…" : "Execute via Nexus")
                     }
                 }
-                .disabled(store.isExecuting || store.objective.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(store.isExecuting)
+            }
+
+            if store.approvalPending {
+                Section("Policy") {
+                    Text("This plan requires explicit approval. The server remains authoritative.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Button("Approve and resume") {
+                        Task { await store.resumeApproval(approved: true) }
+                    }
+                    .disabled(store.isExecuting)
+                    Button("Cancel", role: .destructive) {
+                        Task { await store.resumeApproval(approved: false) }
+                    }
+                    .disabled(store.isExecuting)
+                }
             }
 
             if let plan = store.plan {
@@ -203,12 +302,16 @@ struct ComposeView: View {
                             Text("Adapter \(step.adapterId)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                            Text(step.input.prettyPrinted())
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
                             if step.requiresApproval {
                                 Text("Requires approval")
                                     .font(.caption2)
                                     .foregroundStyle(.orange)
                             }
                         }
+                        .accessibilityElement(children: .combine)
                     }
                 }
             }
@@ -216,8 +319,14 @@ struct ComposeView: View {
             if let execution = store.lastExecution {
                 Section("Result") {
                     LabeledContent("Execution", value: execution.status)
+                    LabeledContent("ID", value: execution.id)
                     if let completed = execution.completedAt {
                         LabeledContent("Completed", value: completed)
+                    }
+                    if let output = execution.output {
+                        Text(output.prettyPrinted())
+                            .font(.footnote.monospaced())
+                            .textSelection(.enabled)
                     }
                     if let error = execution.error {
                         Text(error).foregroundStyle(.red)
@@ -233,6 +342,12 @@ struct ComposeView: View {
                             Text("\(item.type.rawValue) · \(item.createdAt)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
+                            if let payload = item.payload {
+                                Text(payload.prettyPrinted())
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
+                            }
                         }
                     }
                 }
@@ -245,6 +360,15 @@ struct ComposeView: View {
 struct CapabilitiesView: View {
     @Environment(NexusCockpitStore.self) private var store
     @State private var selected: NexusCapability?
+    @State private var query = ""
+
+    var filtered: [NexusCapability] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !q.isEmpty else { return store.capabilities }
+        return store.capabilities.filter {
+            $0.name.lowercased().contains(q) || $0.key.lowercased().contains(q)
+        }
+    }
 
     var body: some View {
         Group {
@@ -257,7 +381,7 @@ struct CapabilitiesView: View {
                     description: Text("Pull to refresh, or check Base URL and token in Settings.")
                 )
             } else {
-                List(store.capabilities) { capability in
+                List(filtered) { capability in
                     Button {
                         selected = capability
                     } label: {
@@ -267,20 +391,19 @@ struct CapabilitiesView: View {
                             HStack {
                                 Text(capability.availability?.rawValue ?? "unknown")
                                     .font(.caption2)
-                                if capability.risk != .unknown("unspecified") {
-                                    Text("·")
-                                    Text(String(describing: capability.risk))
-                                        .font(.caption2)
-                                }
+                                Text(riskLabel(capability.risk))
+                                    .font(.caption2)
                             }
                             .foregroundStyle(.secondary)
                         }
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("\(capability.name), \(capability.availability?.rawValue ?? "unknown")")
                 }
                 .refreshable { await store.refreshCapabilities() }
             }
         }
+        .searchable(text: $query)
         .navigationTitle("Capabilities")
         .sheet(item: $selected) { capability in
             NavigationStack {
@@ -289,10 +412,21 @@ struct CapabilitiesView: View {
             .presentationDetents([.medium, .large])
         }
     }
+
+    private func riskLabel(_ risk: CapabilityRisk) -> String {
+        switch risk {
+        case .low: return "low risk"
+        case .medium: return "medium risk"
+        case .high: return "high risk"
+        case .critical: return "critical risk"
+        case .unknown(let raw): return raw
+        }
+    }
 }
 
 struct CapabilityDetailView: View {
     @Environment(NexusCockpitStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
     let capability: NexusCapability
 
     var body: some View {
@@ -314,10 +448,24 @@ struct CapabilityDetailView: View {
                     ForEach(capability.requiredPermissions, id: \.self) { Text($0) }
                 }
             }
+            if let dependencies = capability.dependencies, !dependencies.isEmpty {
+                Section("Dependencies") {
+                    ForEach(dependencies, id: \.capabilityKey) { dep in
+                        Text(dep.capabilityKey)
+                    }
+                }
+            }
             Section {
                 Button("Use in Intent") {
-                    store.selectedCapabilityKey = capability.key
-                    store.objective = store.objective.isEmpty ? "Execute \(capability.name)" : store.objective
+                    store.selectCapability(capability)
+                    dismiss()
+                }
+                Button("Execute now") {
+                    store.selectCapability(capability)
+                    Task {
+                        await store.executePlan()
+                        dismiss()
+                    }
                 }
             }
         }
@@ -343,12 +491,19 @@ struct HistoryView: View {
                             HStack {
                                 Text(execution.status.capitalized).font(.headline)
                                 Spacer()
-                                Text(String(execution.id.prefix(8)) + "…")
+                                Text(execution.id)
                                     .font(.caption.monospaced())
                                     .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
                             }
                             if let started = execution.startedAt {
                                 Text(started).font(.caption2).foregroundStyle(.secondary)
+                            }
+                            if let output = execution.output {
+                                Text(output.prettyPrinted())
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
                             }
                             if let error = execution.error {
                                 Text(error).font(.footnote).foregroundStyle(.red)
@@ -362,17 +517,21 @@ struct HistoryView: View {
                     ForEach(store.historyEvidence) { item in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.summary)
-                            Text("\(item.type.rawValue) · exec \(item.executionId.prefix(8))…")
+                            Text("\(item.type.rawValue) · exec \(item.executionId)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
+                            if let payload = item.payload {
+                                Text(payload.prettyPrinted())
+                                    .font(.caption.monospaced())
+                                    .textSelection(.enabled)
+                            }
                         }
                     }
                 }
             }
         }
-        .navigationTitle("History")
+        .navigationTitle("Evidence")
         .refreshable { await store.refreshHistory() }
-        .task { await store.refreshHistory() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -384,6 +543,7 @@ struct HistoryView: View {
                         Image(systemName: "arrow.clockwise")
                     }
                 }
+                .accessibilityLabel("Refresh evidence")
             }
         }
     }
@@ -411,11 +571,12 @@ struct SettingsView: View {
                 }
             }
 
-            Section("SideStore / sideload") {
-                Text("No App Store–only services are required. Tokens stay in Keychain; Base URL must be reachable from the device (LAN HTTPS or tunnel), not only from a Mac simulator’s localhost.")
+            Section("Distribution") {
+                Text("SideStore / sideload is supported. That does not remove App Intents, plan review, approval resume, evidence, or authenticated Nexus calls. Avoid App Store–only services (StoreKit, CloudKit identity, required push). Point Base URL at a device-reachable Nexus host.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 LabeledContent("Token stored", value: store.hasStoredToken ? "Yes" : "No")
+                LabeledContent("App Intents", value: "Compose, Execute, List, Open")
             }
 
             Section("About") {
