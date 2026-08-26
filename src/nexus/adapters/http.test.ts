@@ -45,6 +45,23 @@ describe("HttpAdapter invocation contract", () => {
       correlationId: "corr-1",
     });
 
-    expect(result).toEqual({ ok: false, error: "upstream timeout" });
+    expect(result).toEqual({ ok: false, error: "upstream timeout", evidence: { error: "Error: upstream timeout" } });
+  });
+
+  it("times out if the bridge takes too long", async () => {
+    const adapter = new HttpAdapter("http-demo", {
+      describe: async () => description,
+      invoke: async () => new Promise((resolve) => setTimeout(() => resolve("done"), 100)),
+    }, 10); // 10ms timeout
+
+    const result = await adapter.invoke({
+      capabilityId: "demo.read",
+      input: {},
+      actorId: "actor-1",
+      correlationId: "corr-1",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("timed out");
   });
 });

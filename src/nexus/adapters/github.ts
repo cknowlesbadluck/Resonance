@@ -31,7 +31,7 @@ export class GitHubAdapter implements NexusAdapter {
   readonly id = "github";
   readonly kind = "github";
 
-  constructor(private readonly token: string) {
+  constructor(private readonly token: string, private readonly timeoutMs: number = 10000) {
     if (!token.trim()) throw new Error("GitHub adapter requires GITHUB_TOKEN.");
   }
 
@@ -46,6 +46,9 @@ export class GitHubAdapter implements NexusAdapter {
     if (request.capabilityId !== capability.id) return { ok: false, error: `Unsupported GitHub capability: ${request.capabilityId}` };
     try {
       const { owner, repo } = repositoryInput(request.input);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
       const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
         headers: {
           Accept: "application/vnd.github+json",
@@ -54,7 +57,10 @@ export class GitHubAdapter implements NexusAdapter {
           "User-Agent": "Resonance-Nexus",
         },
         cache: "no-store",
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       const body = await response.json().catch(() => null);
       if (!response.ok) {
         const message = body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
@@ -64,7 +70,10 @@ export class GitHubAdapter implements NexusAdapter {
       }
       return { ok: true, output: body, evidence: { provider: "github", capability: capability.id, correlationId: request.correlationId } };
     } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      if (error instanceof Error && error.name === 'AbortError') {
+        return { ok: false, error: `GitHub API timed out after ${this.timeoutMs}ms`, evidence: { provider: "github", error: 'Timeout' } };
+      }
+      return { ok: false, error: error instanceof Error ? error.message : String(error), evidence: { provider: "github", error: String(error) } };
     }
   }
 }

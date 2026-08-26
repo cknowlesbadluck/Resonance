@@ -44,6 +44,23 @@ describe("McpAdapter invocation contract", () => {
       correlationId: "corr-1",
     });
 
-    expect(result).toEqual({ ok: false, error: "tool not found" });
+    expect(result).toEqual({ ok: false, error: "tool not found", evidence: { error: "Error: tool not found" } });
+  });
+
+  it("times out if the bridge takes too long", async () => {
+    const adapter = new McpAdapter("mcp-demo", {
+      describe: async () => description,
+      callTool: async () => new Promise((resolve) => setTimeout(() => resolve("done"), 100)),
+    }, 10); // 10ms timeout
+
+    const result = await adapter.invoke({
+      capabilityId: "demo.read",
+      input: {},
+      actorId: "actor-1",
+      correlationId: "corr-1",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("timed out");
   });
 });
