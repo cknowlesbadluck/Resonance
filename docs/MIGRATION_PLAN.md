@@ -127,7 +127,7 @@ Build a native SwiftUI client that consumes the API. Prioritize:
 9. artifacts
 10. settings/diagnostics
 
-The iOS app is a control cockpit, not a replacement for the backend runtime.
+The iOS app is a control Nexus, not a replacement for the backend runtime.
 
 ## Stage 8 — Verification
 

@@ -97,6 +97,6 @@ Current verified gates:
 - Automatic LLM-based capability planning.
 - Marketplace/discovery economy.
 - Multi-tenant enterprise authorization productization.
-- iOS cockpit implementation.
+- iOS Nexus implementation.
 - Provider-specific production adapters beyond the proof set.
 - Quicksilver-specific integration. It remains an independent future proving ground.

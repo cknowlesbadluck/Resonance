@@ -26,7 +26,7 @@ Sources under `App/AppIntents/` (main app target):
 | ListCapabilitiesIntent | Inventory |
 | ComposeNexusIntent | Objective → plan |
 | ExecuteNexusPlanIntent | Execute + Idempotency-Key |
-| OpenNexusIntent | Open cockpit |
+| OpenNexusIntent | Open Nexus |
 | NexusCapabilityEntity | Rich capability picker |
 
 `ResonanceShortcuts` registers Siri/Spotlight phrases. Token order: Keychain → env → UserDefaults.

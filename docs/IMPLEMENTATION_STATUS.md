@@ -1,3 +1,5 @@
+Updated 2026-08-26: Terminology purged, architecture stabilized. "Cockpit", "Twilio", and "Vercel" removed as they are misaligned with Resonance Nexus.
+
 # Resonance Implementation Status
 
 ## Six-phase sprint status — updated 2026-08-22

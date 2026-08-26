@@ -1,4 +1,4 @@
-# Resonance iOS Cockpit
+# Resonance iOS Nexus
 
 ## Purpose
 

@@ -62,7 +62,7 @@ Resonance Core
         |
   Persistence / Audit / Observability
         |
-  Web Control Plane + Native iOS Control Cockpit
+  Web Control Plane + Native iOS Control Nexus
 ```
 
 ## Important design decisions
@@ -74,7 +74,7 @@ Resonance Core
 5. Workflows are persisted definitions rather than UI-only state.
 6. Runs are idempotent and emit immutable events.
 7. Project membership is the boundary for runtime data access.
-8. The iOS application is a control cockpit: observe, approve, control, inspect — not a duplicate of the backend.
+8. The iOS application is a control Nexus: observe, approve, control, inspect — not a duplicate of the backend.
 
 ## Migration strategy
 
