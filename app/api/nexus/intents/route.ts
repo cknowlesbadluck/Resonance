@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authRequired, authenticateNexusRequest } from "../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { composeNexusIntent } from "../../../../src/nexus/runtime";
 import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/types";
 
@@ -24,8 +24,11 @@ export async function POST(request: Request) {
   })();
   if (!body) return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
 
-  const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? "demo";
-  let actorId = body.requestedBy;
+  const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? null;
+  if (!projectId || !isUuid(projectId)) {
+    return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
+  }
+  let actorId: string | undefined = typeof body.requestedBy === "string" ? body.requestedBy.trim() : undefined;
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
   if (typeof body.objective !== "string" || !body.objective.trim() || body.objective.length > MAX_OBJECTIVE_LENGTH) {
     return NextResponse.json({ error: "objective is required and must be at most 4000 characters." }, { status: 400 });
   }
-  if (!actorId) return NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 });
+  if (!actorId) return NextResponse.json({ error: "requestedBy is required and must be a non-empty string when auth is not configured" }, { status: 400 });
   if (!Array.isArray(body.requirements) || body.requirements.length === 0 || body.requirements.length > MAX_REQUIREMENTS || !body.requirements.every(isRequirement)) {
     return NextResponse.json({ error: "requirements must contain between 1 and 32 items with a key." }, { status: 400 });
   }

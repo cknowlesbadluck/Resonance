@@ -105,26 +105,34 @@ export class GitHubAdapter implements NexusAdapter {
 
         const raw = await response.text();
         let body: unknown = null;
+        let parseFailed = false;
         if (raw) {
           try {
             body = JSON.parse(raw);
           } catch {
-            return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
+            parseFailed = true;
           }
         }
 
         if (!response.ok) {
-          const message = body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
+          // Classify by HTTP status first. A non-OK response with a non-JSON body
+          // (HTML error page, empty 503, etc.) must still surface unauthorized /
+          // forbidden / rate_limited / unavailable — not get masked as
+          // malformed_response before the status is ever inspected.
+          const message = !parseFailed && body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
             ? (body as Record<string, unknown>).message as string
             : `GitHub API returned HTTP ${response.status}`;
           return fail(message, codeForStatus(response.status), { status: response.status });
         }
 
-        if (!body || typeof body !== "object") {
+        if (parseFailed || !body || typeof body !== "object") {
           return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
         }
 
         const record = body as Record<string, unknown>;
+        if (typeof record.full_name !== "string" || typeof record.private !== "boolean") {
+          return fail("GitHub API returned repository metadata with an unexpected shape.", "malformed_response", { status: response.status });
+        }
         return {
           ok: true,
           output: {
@@ -132,8 +140,8 @@ export class GitHubAdapter implements NexusAdapter {
             resourceType: "repository",
             owner,
             name: repo,
-            fullName: typeof record.full_name === "string" ? record.full_name : `${owner}/${repo}`,
-            private: Boolean(record.private),
+            fullName: record.full_name,
+            private: record.private,
             htmlUrl: typeof record.html_url === "string" ? record.html_url : null,
             defaultBranch: typeof record.default_branch === "string" ? record.default_branch : null,
             description: typeof record.description === "string" ? record.description : null,

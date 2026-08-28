@@ -8,6 +8,11 @@ import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../
 
 const MAX_ID_LENGTH = 128;
 
+interface StoredPlan {
+  approvalRequired?: boolean;
+  steps?: Array<{ requiresApproval?: boolean }>;
+}
+
 function dbClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -102,9 +107,11 @@ export async function POST(
   }
 
   let intent: NexusIntent | null = null;
+  let originalPlan: StoredPlan | null = null;
   if (existing.response && typeof existing.response === "object") {
-    const response = existing.response as { intent?: NexusIntent };
+    const response = existing.response as { intent?: NexusIntent; plan?: StoredPlan };
     if (response.intent) intent = response.intent;
+    if (response.plan) originalPlan = response.plan;
   }
 
   if (!intent) {
@@ -114,21 +121,39 @@ export async function POST(
 
   try {
     const plan = composeNexusIntent(intent);
+
+    // The human approved the plan that was originally shown to them (recorded in
+    // `originalPlan` at compose time). Recomposing here must not silently escalate
+    // beyond that: if the fresh composition now requires approval on a step that
+    // wasn't already flagged as requiring it originally (e.g. a policy or
+    // capability change since the request was created), that's a *new* approval
+    // requirement this specific `approved: true` call never covered. Reject rather
+    // than clearing it (CHR-48).
+    const originalStepApproval = new Map((originalPlan?.steps ?? []).map((step, index) => [index, Boolean(step.requiresApproval)]));
+    const escalated = plan.steps.some((step, index) => step.requiresApproval && !(originalStepApproval.get(index) ?? false));
+    if (!originalPlan || escalated) {
+      await db.from("nexus_execution_requests").update({ status: "waiting", response: { intent, plan, status: "approval_required" }, updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
+      return NextResponse.json({ error: "Plan requirements changed since approval was requested; re-approval is required.", intent, plan }, { status: 409 });
+    }
+
     plan.approvalRequired = false;
     for (const step of plan.steps) step.requiresApproval = false;
 
     const sink = {
       recordEvidence: async (item: NexusEvidence) => {
-        if (persistence) await persistence.saveEvidence(item, intent!.projectId);
+        // Always scope to the authenticated, request-validated projectId — never the
+        // deserialized intent.projectId, which is stored data and must not be trusted
+        // as an authorization boundary (CHR-49).
+        if (persistence) await persistence.saveEvidence(item, projectId);
       },
       recordExecution: async (execution: NexusExecution) => {
-        if (persistence) await persistence.saveExecution(execution, intent!.projectId);
+        if (persistence) await persistence.saveExecution(execution, projectId);
       },
       recordEvent: async (event: NexusEvent) => {
-        if (!db || !event.projectId) return;
+        if (!db) return;
         const { error } = await db.from("events").upsert({
           id: event.id,
-          project_id: event.projectId,
+          project_id: projectId,
           source: event.source,
           type: event.type,
           status: event.status,

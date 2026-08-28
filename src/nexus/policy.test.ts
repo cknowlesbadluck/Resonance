@@ -41,6 +41,21 @@ describe("DefaultNexusPolicy", () => {
     });
   });
 
+  it("denies inherited Object.prototype keys instead of treating them as a supported permission (CHR-47)", () => {
+    // "toString", "constructor", and "__proto__" all resolve through Object.prototype
+    // rather than being own properties of the rank map. Before the own-property
+    // check, these bypassed the undefined guard and left `highest` at "read",
+    // letting a capability execute without approval.
+    for (const inherited of ["toString", "constructor", "__proto__", "hasOwnProperty"]) {
+      const result = policy.evaluate("u1", { ...read, requiredPermissions: [inherited as never] });
+      expect(result).toEqual({
+        allowed: false,
+        requiresApproval: false,
+        reason: `Capability declares unsupported permission: ${inherited}.`,
+      });
+    }
+  });
+
   it("allows low-risk reads without approval", () => {
     expect(policy.evaluate("u1", read)).toEqual({ allowed: true, requiresApproval: false });
   });

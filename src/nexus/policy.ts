@@ -18,10 +18,10 @@ export class DefaultNexusPolicy implements NexusPolicy {
     }
     let highest: CapabilityLevel = "read";
     for (const permission of capability.requiredPermissions) {
-      const current = rank[permission as CapabilityLevel];
-      if (current === undefined) {
+      if (!Object.prototype.hasOwnProperty.call(rank, permission)) {
         return { allowed: false, requiresApproval: false, reason: `Capability declares unsupported permission: ${permission}.` };
       }
+      const current = rank[permission as CapabilityLevel];
       if (current > rank[highest]) highest = permission as CapabilityLevel;
     }
     if (capability.risk === "critical" || rank[highest] >= rank[this.approvalThreshold]) {

@@ -80,8 +80,41 @@ describe("GitHubAdapter", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("normalizes malformed JSON", async () => {
+  it("normalizes malformed JSON on a 200 response", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("<html>nope</html>", { status: 200 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "malformed_response" }),
+    }));
+  });
+
+  it("classifies a non-JSON 503 by HTTP status instead of masking it as malformed_response", async () => {
+    // Regression for the status-before-parse ordering bug: a non-OK response with
+    // an unparseable body (HTML error page from a proxy/LB, empty 503, etc.) must
+    // still surface the status-derived failure code.
+    const fetchMock = vi.fn().mockResolvedValue(new Response("<html>Service Unavailable</html>", { status: 503 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "unavailable", status: 503 }),
+    }));
+  });
+
+  it("classifies a non-JSON 401 by HTTP status instead of masking it as malformed_response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("Unauthorized", { status: 401 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "unauthorized", status: 401 }),
+    }));
+  });
+
+  it("rejects a successful response with wrong-typed repository metadata", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      full_name: 12345, // should be a string
+      private: "no", // should be a boolean
+    }), { status: 200 })) as typeof fetch;
     const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
     expect(result).toEqual(expect.objectContaining({
       ok: false,
