@@ -144,3 +144,22 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge this PR on green CI and attach the evidence artifact to issue #32.
 - Do not close #32 until the CI artifact exists. Production Netlify `GITHUB_TOKEN` remains an ops gate, not a core-architecture change.
 - No production claim.
+
+---
+
+## 2026-08-28 23:25 UTC — Jules (Lead Implementation)
+
+**Checked:** P2 on the roadmap - Retire dual iOS Capability models long-term.
+**Decided:** Retire `NexusCapabilityEntity` and instead make `NexusCapability` conform to `AppEntity`.
+**Implemented:**
+- Extended `NexusCapability` to conform to `AppEntity` directly and migrated `displayRepresentation`.
+- Updated `NexusCapabilityQuery` to return `[NexusCapability]`.
+- Updated `ComposeNexusIntent` and `ExecuteNexusPlanIntent` to use `NexusCapability` instead of `NexusCapabilityEntity`.
+- Renamed the source file to `NexusCapability+AppEntity.swift`.
+
+**Verification:**
+- Code review was run on the updated iOS swift app intents.
+- iOS compiler tests were bypassed locally but rely on the CI environment setup for swift.
+
+**Next:**
+- Check github workflows pipeline results for the iOS client.
