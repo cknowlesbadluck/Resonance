@@ -1,7 +1,7 @@
 import type { CapabilityLevel } from "../domain/types";
 import type { NexusCapability } from "./types";
 
-const rank: Record<CapabilityLevel, number> = { read: 0, analyze: 1, write: 2, execute: 3, commit: 4, create_pr: 5, merge: 6, deploy: 7, admin: 8 };
+const rank: Record<CapabilityLevel, number> = { read: 0, analyze: 1, modify: 2, execute: 3, commit: 4, create_pr: 5, merge: 6, deploy: 7, admin: 8 };
 
 export interface NexusPolicyDecision { allowed: boolean; requiresApproval: boolean; reason?: string; }
 export interface NexusPolicy { evaluate(actorId: string, capability: NexusCapability): NexusPolicyDecision; }
