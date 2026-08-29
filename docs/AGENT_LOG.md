@@ -250,3 +250,13 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verification:**
 - Typecheck clean (`npm run typecheck`).
 - Tests passing (`npm test`: 74 passed, 1 skipped). New unit tests added for the GitHub rate limit logic.
+
+
+## 2026-08-29 — CI Failure Fix (Jules)
+
+**Implemented:**
+- **Gemini CI Workflow Fix**: Changed the model identifier in `.github/workflows/gemini.yml` from `gemini-1.5-pro` to `gemini-1.5-flash` to resolve a 404 error during CI.
+
+**Verification:**
+- Typecheck clean (`npm run typecheck`).
+- Tests passing (`npm test`: 74 passed, 1 skipped).
