@@ -6,3 +6,9 @@ node_modules
 .vercel
 artifacts/
 tsconfig.tsbuildinfo
+
+# gemini-cli settings
+.gemini/
+
+# GitHub App credentials
+gha-creds-*.json
