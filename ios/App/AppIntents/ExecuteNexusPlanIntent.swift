@@ -13,7 +13,7 @@ struct ExecuteNexusPlanIntent: AppIntent {
     var projectId: String
 
     @Parameter(title: "Capability")
-    var capability: NexusCapabilityEntity?
+    var capability: NexusCapability?
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         do {
