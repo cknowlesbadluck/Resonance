@@ -260,3 +260,13 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verification:**
 - Typecheck clean (`npm run typecheck`).
 - Tests passing (`npm test`: 74 passed, 1 skipped).
+
+
+## 2026-08-29 — CI Failure Fix 2 (Jules)
+
+**Implemented:**
+- **Gemini CI Workflow Quota Fix**: Added `continue-on-error: true` to the Gemini CLI workflow step because the API hit the free-tier quota (20 requests/day). This ensures that the non-critical review step does not block the required check suite.
+
+**Verification:**
+- Typecheck clean (`npm run typecheck`).
+- Tests passing (`npm test`: 74 passed, 1 skipped).

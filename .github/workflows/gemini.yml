@@ -25,6 +25,7 @@ jobs:
 
       - name: Run Gemini CLI
         uses: google-github-actions/run-gemini-cli@v0.1.22
+        continue-on-error: true
         env:
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
