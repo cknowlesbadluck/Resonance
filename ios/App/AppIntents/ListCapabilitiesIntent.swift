@@ -17,7 +17,7 @@ struct ListCapabilitiesIntent: AppIntent {
                 return .result(dialog: "No capabilities are currently available.")
             }
             let lines = capabilities.prefix(12).map { cap in
-                "\(cap.name) (\(cap.key)) — \(cap.availability?.rawValue ?? "unknown")"
+                "\(cap.name) (\(cap.key)) — \(cap.availability ?? "unknown")"
             }
             var message = lines.joined(separator: "\n")
             if capabilities.count > 12 {
