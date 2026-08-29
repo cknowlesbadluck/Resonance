@@ -42,8 +42,10 @@ function repositoryInput(value: unknown): RepositoryInput {
   if (!value || typeof value !== "object") throw Object.assign(new Error("GitHub repository input must be an object."), { code: "invalid_input" as const });
   const owner = (value as Record<string, unknown>).owner;
   const repo = (value as Record<string, unknown>).repo;
-  if (typeof owner !== "string" || !/^[A-Za-z0-9_.-]{1,100}$/.test(owner)) throw Object.assign(new Error("GitHub owner is invalid."), { code: "invalid_input" as const });
-  if (typeof repo !== "string" || !/^[A-Za-z0-9_.-]{1,100}$/.test(repo)) throw Object.assign(new Error("GitHub repository name is invalid."), { code: "invalid_input" as const });
+  const isValidSegment = (v: unknown): v is string =>
+    typeof v === "string" && /^[A-Za-z0-9_.-]{1,100}$/.test(v) && v !== "." && v !== "..";
+  if (!isValidSegment(owner)) throw Object.assign(new Error("GitHub owner is invalid."), { code: "invalid_input" as const });
+  if (!isValidSegment(repo)) throw Object.assign(new Error("GitHub repository name is invalid."), { code: "invalid_input" as const });
   return { owner, repo };
 }
 

@@ -26,6 +26,7 @@ async function loadRequest(db: NonNullable<ReturnType<typeof dbClient>>, project
     .eq("project_id", projectId)
     .eq("idempotency_key", id)
     .maybeSingle();
+  if (byKey.error) throw byKey.error;
   if (byKey.data) return byKey.data;
   const byExecution = await db
     .from("nexus_execution_requests")
@@ -33,6 +34,7 @@ async function loadRequest(db: NonNullable<ReturnType<typeof dbClient>>, project
     .eq("project_id", projectId)
     .eq("execution_id", id)
     .maybeSingle();
+  if (byExecution.error) throw byExecution.error;
   return byExecution.data ?? null;
 }
 
@@ -64,7 +66,13 @@ export async function POST(
     return NextResponse.json({ error: "Durable approval state is required to resume an execution." }, { status: 503 });
   }
 
-  const existing = await loadRequest(db, projectId, id);
+  let existing: Awaited<ReturnType<typeof loadRequest>>;
+  try {
+    existing = await loadRequest(db, projectId, id);
+  } catch (error) {
+    console.error("resume: failed to load execution request", error);
+    return NextResponse.json({ error: "Failed to load execution request." }, { status: 500 });
+  }
   if (!existing) {
     return NextResponse.json({ error: "No execution request found for id" }, { status: 404 });
   }

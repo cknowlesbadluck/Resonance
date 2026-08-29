@@ -214,7 +214,7 @@ Append-only. Every agent session (chat or Code) must append an entry.
 **Other CodeRabbit findings resolved on this pass:**
 - `intents/route.ts`: removed the non-UUID `"demo"` `projectId` fallback (now requires a valid UUID, 400 otherwise); `actorId` now validated as a non-empty trimmed string rather than any truthy value.
 - `github.ts` adapter: HTTP status is now classified *before* a parse failure can short-circuit into `malformed_response` — a non-JSON 401/429/5xx now correctly returns its status-derived failure code. Success-path metadata (`full_name`, `private`) is now type-validated rather than silently defaulted.
-- `supabase/migrations/20260822190000_execution_request_cancelled.sql`: constraint now added `NOT VALID` to avoid a table-scanning `ACCESS EXCLUSIVE` lock; validation deferred to `20260827220000_validate_execution_request_status_check.sql`.
+- `supabase/migrations/20260822190000_execution_request_cancelled.sql`: constraint now added `NOT VALID`, which skips the row-scanning table walk (and the bulk of the `ACCESS EXCLUSIVE` hold time that scan would otherwise cause) — the catalog update itself still briefly takes `ACCESS EXCLUSIVE`, but it's near-instant rather than proportional to table size. Row validation deferred to `20260827220000_validate_execution_request_status_check.sql`, which only needs `SHARE UPDATE EXCLUSIVE`.
 - `page.tsx` Bearer-auth-on-capabilities-fetch finding was already resolved on this branch before the rebase — no change needed.
 
 **Verification (local `vitest` run, not sourced from CI output):** `npm run typecheck` clean. `npm test`: 71 passed, 1 skipped (vertical slice, gated on `GITHUB_VERTICAL_SLICE=1`) — up from 67 passed on this branch pre-fix. 4 new test cases added: 1 in `policy.test.ts` covering CHR-47 inherited-key denial (loops `toString`/`constructor`/`__proto__`/`hasOwnProperty`), 3 in `src/nexus/adapters/github.test.ts` covering status-before-parse ordering (non-JSON 503 and 401) and success-path metadata-shape validation.
@@ -222,3 +222,20 @@ Append-only. Every agent session (chat or Code) must append an entry.
 **Linear:** CHR-47/48/49 moved Todo → In Progress, cross-linked.
 
 **Does not close:** #32 (Netlify `GITHUB_TOKEN`), #11 (SideStore IPA), #8 (durable-only execution fallback).
+
+## 2026-08-28 (cont.) — Second round: fixes from CodeRabbit's review of the fix commit itself
+
+CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on all previously-flagged lines). It surfaced 5 new findings against the fix commit. Triaged and fixed the well-scoped ones in this pass; deferred the larger design items to Linear rather than rushing them:
+
+**Fixed:**
+- `resume/route.ts`: `loadRequest`'s two `maybeSingle()` calls previously discarded `.error` and treated any failure identically to "not found." A real database error now propagates and returns 500, distinct from a genuine 404.
+- `github.ts`: owner/repo validation accepted the literal strings `"."` and `".."` (they pass the character-class regex). Both are now explicitly rejected as reserved path segments.
+- `intents/route.ts`: `body.id`, `body.contextRefs`, and `body.metadata` flowed from `JSON.parse` straight into the composed intent with no shape check — a client could send `id: {}` or `metadata: [1,2,3]`. All three now validated before composition.
+- Wording/doc nits: clarified that migration `NOT VALID` still takes a brief `ACCESS EXCLUSIVE` for the catalog update (skips the row-scan, not the lock entirely); minor wordiness and capitalization fixes CodeRabbit's LanguageTool pass flagged.
+
+**Deferred to follow-up tickets, not fixed in this pass:**
+- **Claimed-request lease/recovery** (`resume/route.ts`): if the handler is interrupted after a request moves `waiting` → `accepted` but before the final status write, the row is stuck permanently and can never be resumed or retried. This is a real gap, flagged across two review rounds now, but fixing it properly means a lease/expiry model and reconciliation logic — a design change, not a quick patch. Rushing this under the same pass as the P1 security fix risked introducing a new bug in exchange for closing an old one.
+- **GitHub adapter 403 rate-limit heuristic**: GitHub sometimes returns `403` (not `429`) for secondary rate limits, distinguishable via `x-ratelimit-remaining: 0` / `Retry-After` / message content. Current code classifies all `403`s as `forbidden`. Not a security bypass either way (both deny), so lower priority than the resume-lease gap.
+- **`external_id` derivation on emitted events**: minor correctness nit (should prefer `event.externalId` with fallback to `event.id` instead of deriving from `correlationId`/`type`), not a security issue.
+
+**Verification (local, not CI-sourced):** `npm run typecheck` clean. `npm test`: 72 passed, 1 skipped (up from 71 — added 1 test for the `.`/`..` rejection; `loadRequest` error-propagation fix has no dedicated test yet since no existing test file mocks the Supabase client chain for this route — noted as a real coverage gap rather than forcing a fragile mock under time pressure).

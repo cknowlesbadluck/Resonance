@@ -80,6 +80,16 @@ describe("GitHubAdapter", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("rejects the reserved path segments '.' and '..' as owner or repo even though they pass the character-class check", async () => {
+    const fetchMock = vi.fn() as typeof fetch;
+    for (const bad of [{ owner: ".", repo: "repo" }, { owner: "..", repo: "repo" }, { owner: "octo", repo: "." }, { owner: "octo", repo: ".." }]) {
+      const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), bad);
+      expect(result.ok).toBe(false);
+      expect(result.evidence).toEqual(expect.objectContaining({ code: "invalid_input" }));
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("normalizes malformed JSON on a 200 response", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("<html>nope</html>", { status: 200 })) as typeof fetch;
     const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));

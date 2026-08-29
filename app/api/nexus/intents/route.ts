@@ -6,6 +6,7 @@ import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/t
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_OBJECTIVE_LENGTH = 4_000;
 const MAX_REQUIREMENTS = 32;
+const MAX_ID_LENGTH = 128;
 
 function isRequirement(value: unknown): value is CapabilityRequirement {
   if (!value || typeof value !== "object") return false;
@@ -40,6 +41,16 @@ export async function POST(request: Request) {
   if (!actorId) return NextResponse.json({ error: "requestedBy is required and must be a non-empty string when auth is not configured" }, { status: 400 });
   if (!Array.isArray(body.requirements) || body.requirements.length === 0 || body.requirements.length > MAX_REQUIREMENTS || !body.requirements.every(isRequirement)) {
     return NextResponse.json({ error: "requirements must contain between 1 and 32 items with a key." }, { status: 400 });
+  }
+
+  if (body.id !== undefined && (typeof body.id !== "string" || !body.id.trim() || body.id.length > MAX_ID_LENGTH)) {
+    return NextResponse.json({ error: "id, if provided, must be a non-empty string." }, { status: 400 });
+  }
+  if (body.contextRefs !== undefined && (!Array.isArray(body.contextRefs) || !body.contextRefs.every((ref) => typeof ref === "string"))) {
+    return NextResponse.json({ error: "contextRefs, if provided, must be an array of strings." }, { status: 400 });
+  }
+  if (body.metadata !== undefined && (typeof body.metadata !== "object" || body.metadata === null || Array.isArray(body.metadata))) {
+    return NextResponse.json({ error: "metadata, if provided, must be a non-array object." }, { status: 400 });
   }
 
   try {
