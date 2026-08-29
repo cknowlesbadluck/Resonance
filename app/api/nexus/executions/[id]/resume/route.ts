@@ -7,6 +7,10 @@ import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persi
 import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../../../src/nexus/types";
 
 const MAX_ID_LENGTH = 128;
+// A request stuck in `accepted` for longer than this is considered orphaned and
+// eligible for recovery. Must be long enough to cover legitimate slow executions
+// that haven't yet transitioned to `executing`.
+const STALE_ACCEPTED_MS = 300_000; // 5 minutes
 
 interface StoredPlan {
   approvalRequired?: boolean;
@@ -96,15 +100,19 @@ export async function POST(
     return NextResponse.json({ error: "Explicit approval=true is required to resume this execution." }, { status: 409 });
   }
 
-  const isStaleAccepted = existing.status === "accepted" && Date.now() - new Date(existing.updated_at).getTime() > 300_000;
+  // Only `waiting` rows and genuinely orphaned `accepted` rows (handler died before
+  // it could transition to `executing`) are eligible for resume. A row in
+  // `executing` is actively owned by another handler — never reclaim it.
+  const isStaleAccepted = existing.status === "accepted" &&
+    Date.now() - new Date(existing.updated_at).getTime() > STALE_ACCEPTED_MS;
   if (existing.status !== "waiting" && !isStaleAccepted) {
     return NextResponse.json({ error: `Execution request is not awaiting approval (status: ${existing.status}).` }, { status: 409 });
   }
 
-  // Claim the waiting request before composing or executing. A second concurrent
-  // resume sees no row because the conditional update requires status=waiting
-  // (or a stale accepted status).
-  const staleCutoff = new Date(Date.now() - 300_000).toISOString();
+  // Atomically claim the row. The conditional filter ensures only one concurrent
+  // caller can win this CAS — either from `waiting`, or from a stale `accepted`
+  // that has not yet been promoted to `executing`.
+  const staleCutoff = new Date(Date.now() - STALE_ACCEPTED_MS).toISOString();
   const { data: claimed } = await db
     .from("nexus_execution_requests")
     .update({ status: "accepted", updated_at: new Date().toISOString() })
@@ -149,6 +157,16 @@ export async function POST(
 
     plan.approvalRequired = false;
     for (const step of plan.steps) step.requiresApproval = false;
+
+    // Promote to `executing` so no other resume call can reclaim this row while
+    // the handler is running, regardless of how long execution takes. This is the
+    // ownership boundary: `accepted` = claimed but not yet executing;
+    // `executing` = actively owned. Stale recovery only applies to `accepted`.
+    await db
+      .from("nexus_execution_requests")
+      .update({ status: "executing", updated_at: new Date().toISOString() })
+      .eq("project_id", projectId)
+      .eq("idempotency_key", existing.idempotency_key);
 
     const sink = {
       recordEvidence: async (item: NexusEvidence) => {
