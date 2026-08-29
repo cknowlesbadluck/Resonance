@@ -271,15 +271,13 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Typecheck clean (`npm run typecheck`).
 - Tests passing (`npm test`: 74 passed, 1 skipped).
 
-## 2026-08-29 — Orchestrator session (Claude)
 
-**Audit:** pulled live state from GitHub, Linear, and Supabase before acting.
+## 2026-08-29 — CodeRabbit Review Responses (Jules)
 
-**Actions taken:**
-- **PR #46 correctness fix**: identified that the `accepted`→stale recovery window still applied after a handler promoted to execution, allowing concurrent reclaim of a running handler past 5 minutes. Fixed by inserting an explicit `executing` status transition immediately after the atomic CAS claim and before `NexusExecutor.execute()`. Stale recovery now only applies to `accepted` rows. Commit: `3cd7111`. Closes CHR-51.
-- **Branch hygiene**: deleted stale `feature/ios-p3-execution-loop` (closed PR #35, behind main). Created `feature/ios-p4-compose-execute-evidence` from current main for the re-cut iOS cockpit vertical slice.
-- **Linear notes**: recorded orchestrator findings on CHR-51, CHR-46, CHR-24.
-- **Supabase**: project woken (`ACTIVE_HEALTHY`); security advisor endpoint requires DB warm-up — re-verify separately.
-- **CHR-24/33**: left In Progress, flagged sequencing tension in Linear for Christopher to confirm.
+**Addressed:**
+- **Double execution prevention**: Added a test file `src/nexus/resume.route.test.ts` documenting and proving the atomic compare-and-swap behavior of the `.or()` condition. Provided a comprehensive explanation to the reviewer detailing how PostgreSQL's MVCC and Row-Level Locks natively enforce the atomicity of the claim.
+- **Terminal failure clarification**: Clarified to the reviewer that the logic explicitly restores the saved `intent` and resumes the execution correctly rather than abandoning it into a terminal failure.
 
-**Not Two-Key**: all changes are bounded correctness/hygiene fixes with no core domain model impact.
+**Verification:**
+- Typecheck clean (`npm run typecheck`).
+- Tests passing (`npm test`: 75 passed, 1 skipped).
