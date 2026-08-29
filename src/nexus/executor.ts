@@ -34,6 +34,36 @@ export class NexusExecutor {
     await this.sink.recordEvent(event);
   }
 
+
+  private async invokeWithRetry(
+    adapter: NexusAdapter,
+    step: NexusExecutionPlan["steps"][0],
+    plan: NexusExecutionPlan,
+    execution: NexusExecution,
+    maxAttempts: number,
+    retry: ExecutionRetryPolicy
+  ): Promise<Awaited<ReturnType<NexusAdapter["invoke"]>>> {
+    let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
+      } catch (error) {
+        if (attempt === maxAttempts) {
+          result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+          break;
+        }
+        await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
+        await sleep(retry.backoffMs * attempt);
+        continue;
+      }
+      if (result.ok || attempt === maxAttempts) break;
+      await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
+      await sleep(retry.backoffMs * attempt);
+    }
+    if (!result) throw new Error(`Capability ${step.capabilityId} produced no invocation result.`);
+    return result;
+  }
+
   async execute(plan: NexusExecutionPlan): Promise<{ execution: NexusExecution; evidence: NexusEvidence[] }> {
     const execution: NexusExecution = { id: crypto.randomUUID(), planId: plan.id, status: "running", startedAt: new Date().toISOString() };
     const evidence: NexusEvidence[] = [];
@@ -55,24 +85,9 @@ export class NexusExecutor {
         }
         const adapter = this.adapters.find((item) => item.id === step.adapterId);
         if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
-        let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
-        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-          try {
-            result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
-          } catch (error) {
-            if (attempt === maxAttempts) {
-              result = { ok: false, error: error instanceof Error ? error.message : String(error) };
-              break;
-            }
-            await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
-            await sleep(retry.backoffMs * attempt);
-            continue;
-          }
-          if (result.ok || attempt === maxAttempts) break;
-          await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
-          await sleep(retry.backoffMs * attempt);
-        }
-        if (!result) throw new Error(`Capability ${step.capabilityId} produced no invocation result.`);
+
+        const result = await this.invokeWithRetry(adapter, step, plan, execution, maxAttempts, retry);
+
         const item: NexusEvidence = {
           id: crypto.randomUUID(),
           executionId: execution.id,

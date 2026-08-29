@@ -144,3 +144,12 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge this PR on green CI and attach the evidence artifact to issue #32.
 - Do not close #32 until the CI artifact exists. Production Netlify `GITHUB_TOKEN` remains an ops gate, not a core-architecture change.
 - No production claim.
+
+---
+
+## 2024-05-18 - Jules (Code Health Agent)
+
+**Checked:** Refactored the `execute` method in `src/nexus/executor.ts` to improve readability by extracting the retry/error-catching logic into a new private `invokeWithRetry` method.
+**Decided:** The extracted method returns the result or throws if undefined, maintaining the original error handling semantics while deeply reducing nesting in the main `execute` method.
+**Verified:** `npm run typecheck` and `npm run test` both pass.
+**Next:** Submit the change as a PR.
