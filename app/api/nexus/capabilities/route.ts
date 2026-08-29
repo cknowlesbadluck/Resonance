@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { authRequired, authenticateNexusRequest } from "../../../../src/auth/nexus-request";
 import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "../../../../src/nexus/capability-bridge";
 import { listRuntimeCapabilities } from "../../../../src/nexus/runtime";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
@@ -6,10 +7,14 @@ import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence
 /** Capability discovery returns the normalized NexusCapability contract. */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID;
+  if (authRequired()) {
+    const auth = await authenticateNexusRequest(request, projectId);
+    if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
   const ids = searchParams.get("ids")?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
   const runtime = listRuntimeCapabilities();
   const persistence = createNexusPersistenceFromEnv();
-  const projectId = searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID;
   if (persistence && projectId) {
     await Promise.all(runtime.map((capability) => persistence.saveCapability(capability, projectId)));
   }

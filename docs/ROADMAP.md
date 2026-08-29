@@ -31,12 +31,16 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`.
 - [ ] `nexus_capabilities` cut-over / dual-write
 
 ### P3 — Native execution loop
-- [ ] iOS compose → execute → result/approval UX
-- [ ] Typed HTTP error mapping in UI
-- [ ] Unified ResonanceCore package
+- [ ] iOS compose → execute → result/approval UX (PR #35, CI fix landed on branch)
+- [x] Typed HTTP error mapping in UI (iOS P3 branch)
+- [x] Unified ResonanceCore package (CHR-38)
 
 ### P4 — Integration & adapters
-- [ ] Real bridges, webhook hardening, provider isolation tests
+
+- [ ] GitHub repository-read vertical slice: required CI artifact verification is pending
+- [x] GitHub failure matrix: 401/403/404/429/5xx/timeout/malformed/invalid input
+- [ ] Production Netlify `GITHUB_TOKEN` (ops)
+- [ ] Webhook hardening, additional provider classes
 
 ### P5 — Chamber / composition fabric
 - [ ] Agenda, Chamber lifecycle, toolkit seeding, approval pauses
