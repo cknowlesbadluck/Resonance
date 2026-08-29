@@ -29,7 +29,7 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-1.5-flash
+          model: gemini-1.5-pro
           prompt: |
             You are assisting on the Resonance project (TypeScript Nexus control plane + Swift ResonanceCore).
             Analyze the current context (PR or issue) and provide helpful, precise feedback.
