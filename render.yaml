@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: resonance-admin
+    runtime: node
+    plan: free
+    region: ohio
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RESONANCE_PROJECT_ID
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: LINEAR_API_KEY
+        sync: false
