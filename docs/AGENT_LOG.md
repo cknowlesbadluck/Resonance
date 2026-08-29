@@ -144,3 +144,33 @@ Append-only. Every agent session (chat or Code) must append an entry.
 - Merge this PR on green CI and attach the evidence artifact to issue #32.
 - Do not close #32 until the CI artifact exists. Production Netlify `GITHUB_TOKEN` remains an ops gate, not a core-architecture change.
 - No production claim.
+
+---
+
+## 2026-08-28 22:59 EDT — MasterDev / Grok (full hygiene pass)
+
+**Checked:**
+- Open PRs: #41 (iOS capability unify follow-up), #40 (dual model retirement), #37 (GitHub failure matrix + policy deny), #35 (iOS P3 cockpit).
+- Branches: main (protected), develop, plus feature branches for the open PRs and orphans `feat/execution-fabric-hardening`, `feat/github-failure-matrix-16135786940844000109`, `jules-4557065144468535906-42c57b63`.
+- Required CI (`web` + `ios`) green on #41, #40, #37 heads. Gemini non-required check fails across recent PRs.
+- CodeRabbit CHANGES_REQUESTED still open on #41 (projectId binding) and #37 (resume recovery, policy, adapter edge cases).
+- IMPLEMENTATION_STATUS health metrics were stale (claimed 0 open PRs).
+
+**Decided / Done:**
+- Closed #40 as superseded by #41 (comment recorded).
+- Left #41 open — land after remaining review item (intent projectId for NexusCapabilityQuery).
+- Left #37 open — high value; do not merge until remaining security-relevant review items resolved or waived.
+- Left #35 open; triggered branch update from main; still requires fresh green checks after update. Close next cycle if no rebase progress.
+- Documented orphan branches for manual prune (no delete-ref tool in this session).
+- Refreshed IMPLEMENTATION_STATUS health metrics and this log.
+
+**Verified:**
+- Open PR count after close: 3 (#41, #37, #35).
+- Required checks remain the merge gate; Gemini is informational only.
+
+**Next / Hand-off:**
+1. Finish #41 review fix → squash-merge.
+2. Resolve or waive remaining #37 review items → merge.
+3. Confirm #35 after branch update; rebase or close.
+4. Manually delete orphan branches once their PRs are gone.
+5. No net-new feature work until open-PR count is back under control.

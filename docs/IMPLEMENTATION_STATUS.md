@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-## Six-phase sprint status — updated 2026-08-22
+## Six-phase sprint status — updated 2026-08-28 (hygiene pass)
 
 The implementation is advancing additively against canonical `main`: Nexus contracts remain the center, web/iOS are clients, Supabase is the operational persistence foundation, and provider-specific behavior remains behind adapters.
 
@@ -28,45 +28,51 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 - **GitHub repository adapter implemented** as the first real provider participant.
 - `github.repository.read` is exposed as a normalized Nexus capability when `GITHUB_TOKEN` is configured.
 - GitHub adapter contract tests cover authenticated headers, successful reads, and provider failures.
+- **Open:** failure matrix + policy deny hardening (PR #37).
 
 ### Phase 5 — Production hardening
 - CI: web typecheck/test/build + Swift package tests on macos-latest.
 - Branch protection + required status checks active.
 - Execution input now propagates through normalized intent metadata into execution steps.
 - Event ingestion/query now has the same authentication/membership boundary as Nexus execution when auth is enabled, with bounded payloads.
-- Failure-path and provider-isolation verification is the immediate hardening target.
+- Failure-path and provider-isolation verification is the immediate hardening target (PR #37).
 
 ### Phase 6 — Native iOS
 - Swift 6 package (`ios/`), actor-isolated `NexusClient`, header-aware transport.
-- App Intents: List / Compose / Execute / Open + `NexusCapabilityEntity` + Keychain token store merged.
+- App Intents: List / Compose / Execute / Open + Keychain token store merged.
+- Dual iOS Capability models being retired (PR #41; #40 closed as superseded).
 - Spatial Nexus UI; SideStore constraints documented.
-- Physical-device end-to-end verification remains outstanding.
+- Physical-device end-to-end verification remains outstanding (PR #35 / issue #11).
 
-## Repository health metrics
+## Repository health metrics (2026-08-28 hygiene)
 
 | Metric | Value | Signal |
 |--------|-------|--------|
-| Open PRs | 0 | Good |
-
-
+| Open PRs | **3** (#41, #37, #35) | Watch — stop net-new until ≤2 |
 | Canonical branches | 2 (`main`, `develop`) | Good |
-| Near-duplicate branches | 0 | Good |
+| Feature / orphan branches | 6 (3 PR heads + 3 orphans) | Prune after PR land |
 | `main` protected | **true** | Good |
-| Required CI status checks | enforced | Good |
+| Required CI status checks | `web` + `ios` enforced | Good |
 
 **Rule:** If open-PR count or duplicate-branch count trends upward, stop building and start merging/closing.
+
+### Orphan branches to delete after related PRs close
+- `feat/execution-fabric-hardening`
+- `feat/github-failure-matrix-16135786940844000109`
+- `jules-4557065144468535906-42c57b63`
+- (and the PR head branches once merged/closed)
 
 ## Current execution gates
 
 1. ~~Branch protection / governance / Idempotency-Key~~ **Done**.
 2. ~~Durable execution + Chamber primitive~~ **Done**.
 3. ~~App Intents device agency~~ **Done**.
-4. ~~Stale sprint branch pruning~~ **Done**.
-5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution now runs in required `web` CI (`GITHUB_VERTICAL_SLICE=1`) and writes `artifacts/github-vertical-slice.json`. Production Netlify still needs `GITHUB_TOKEN` before `github.repository.read` appears on the deployed control plane.
-6. **CHR-33:** keep `NexusCapability` as sole public contract and prevent catalog/runtime divergence.
-7. **Failure matrix:** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery.
+4. ~~Stale sprint branch pruning (Aug 21)~~ **Done**; Aug 28 hygiene in progress.
+5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution runs in required `web` CI when `GITHUB_VERTICAL_SLICE=1`. Production Netlify still needs `GITHUB_TOKEN`.
+6. **CHR-33 / P2:** keep `NexusCapability` as sole public contract; land #41 to retire dual iOS models.
+7. **Failure matrix (PR #37):** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery — resolve remaining review items then merge.
 8. **Production deployment proof:** authenticated execution + durable evidence.
-9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11).
+9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11 / PR #35).
 
 ## Governance process (active)
 
