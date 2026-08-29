@@ -270,3 +270,16 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verification:**
 - Typecheck clean (`npm run typecheck`).
 - Tests passing (`npm test`: 74 passed, 1 skipped).
+
+## 2026-08-29 — Orchestrator session (Claude)
+
+**Audit:** pulled live state from GitHub, Linear, and Supabase before acting.
+
+**Actions taken:**
+- **PR #46 correctness fix**: identified that the `accepted`→stale recovery window still applied after a handler promoted to execution, allowing concurrent reclaim of a running handler past 5 minutes. Fixed by inserting an explicit `executing` status transition immediately after the atomic CAS claim and before `NexusExecutor.execute()`. Stale recovery now only applies to `accepted` rows. Commit: `3cd7111`. Closes CHR-51.
+- **Branch hygiene**: deleted stale `feature/ios-p3-execution-loop` (closed PR #35, behind main). Created `feature/ios-p4-compose-execute-evidence` from current main for the re-cut iOS cockpit vertical slice.
+- **Linear notes**: recorded orchestrator findings on CHR-51, CHR-46, CHR-24.
+- **Supabase**: project woken (`ACTIVE_HEALTHY`); security advisor endpoint requires DB warm-up — re-verify separately.
+- **CHR-24/33**: left In Progress, flagged sequencing tension in Linear for Christopher to confirm.
+
+**Not Two-Key**: all changes are bounded correctness/hygiene fixes with no core domain model impact.
