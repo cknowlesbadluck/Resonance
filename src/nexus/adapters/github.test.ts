@@ -72,6 +72,28 @@ describe("GitHubAdapter", () => {
     }));
   });
 
+  it("classifies a 403 with x-ratelimit-remaining: 0 as rate_limited", async () => {
+    const headers = new Headers();
+    headers.set("x-ratelimit-remaining", "0");
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "API rate limit exceeded" }), { status: 403, headers })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
+    }));
+  });
+
+  it("classifies a 403 with retry-after as rate_limited", async () => {
+    const headers = new Headers();
+    headers.set("retry-after", "60");
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "Secondary rate limit" }), { status: 403, headers })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
+    }));
+  });
+
   it("rejects invalid repository input without calling GitHub", async () => {
     const fetchMock = vi.fn() as typeof fetch;
     const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "../etc", repo: "repo" });

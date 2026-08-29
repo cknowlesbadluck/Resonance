@@ -49,9 +49,14 @@ function repositoryInput(value: unknown): RepositoryInput {
   return { owner, repo };
 }
 
-function codeForStatus(status: number): GitHubFailureCode {
+function codeForStatus(status: number, headers?: Headers): GitHubFailureCode {
   if (status === 401) return "unauthorized";
-  if (status === 403) return "forbidden";
+  if (status === 403) {
+    if (headers?.get("x-ratelimit-remaining") === "0" || headers?.has("retry-after")) {
+      return "rate_limited";
+    }
+    return "forbidden";
+  }
   if (status === 404) return "not_found";
   if (status === 429) return "rate_limited";
   if (status >= 500) return "unavailable";
@@ -124,7 +129,7 @@ export class GitHubAdapter implements NexusAdapter {
           const message = !parseFailed && body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
             ? (body as Record<string, unknown>).message as string
             : `GitHub API returned HTTP ${response.status}`;
-          return fail(message, codeForStatus(response.status), { status: response.status });
+          return fail(message, codeForStatus(response.status, response.headers), { status: response.status });
         }
 
         if (parseFailed || !body || typeof body !== "object") {

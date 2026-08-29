@@ -239,3 +239,14 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - **`external_id` derivation on emitted events**: minor correctness nit (should prefer `event.externalId` with fallback to `event.id` instead of deriving from `correlationId`/`type`), not a security issue.
 
 **Verification (local, not CI-sourced):** `npm run typecheck` clean. `npm test`: 72 passed, 1 skipped (up from 71 — added 1 test for the `.`/`..` rejection; `loadRequest` error-propagation fix has no dedicated test yet since no existing test file mocks the Supabase client chain for this route — noted as a real coverage gap rather than forcing a fragile mock under time pressure).
+
+## 2026-08-29 — Rapid implementation of deferred hygiene items (Jules)
+
+**Implemented:**
+- **Claimed-request lease/recovery** (`resume/route.ts`): Added a lease/expiry model where requests stuck in `accepted` for more than 5 minutes can be safely resumed. Mitigates the risk of a resume handler being interrupted mid-flight.
+- **GitHub adapter 403 rate-limit heuristic** (`github.ts`): Added logic to classify `403` responses as `rate_limited` if the `x-ratelimit-remaining` header is `0` or if `retry-after` is present.
+- **`external_id` derivation on emitted events** (`resume/route.ts`, `executions/route.ts`): Simplified and standardized the mapping to prefer `event.externalId` with a fallback to `event.id`.
+
+**Verification:**
+- Typecheck clean (`npm run typecheck`).
+- Tests passing (`npm test`: 74 passed, 1 skipped). New unit tests added for the GitHub rate limit logic.

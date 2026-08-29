@@ -51,7 +51,7 @@ const sink = {
       actor_id: event.actorId ?? null,
       resource_type: "execution",
       resource_id: event.resourceId ?? null,
-      external_id: `${event.correlationId}:${event.type}`,
+      external_id: event.externalId ?? event.id,
       payload: event.payload ?? {},
       created_at: event.createdAt,
       updated_at: event.createdAt,

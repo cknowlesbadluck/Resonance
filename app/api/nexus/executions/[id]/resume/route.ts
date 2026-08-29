@@ -22,7 +22,7 @@ function dbClient() {
 async function loadRequest(db: NonNullable<ReturnType<typeof dbClient>>, projectId: string, id: string) {
   const byKey = await db
     .from("nexus_execution_requests")
-    .select("response,status,idempotency_key,execution_id")
+    .select("response,status,idempotency_key,execution_id,updated_at")
     .eq("project_id", projectId)
     .eq("idempotency_key", id)
     .maybeSingle();
@@ -30,7 +30,7 @@ async function loadRequest(db: NonNullable<ReturnType<typeof dbClient>>, project
   if (byKey.data) return byKey.data;
   const byExecution = await db
     .from("nexus_execution_requests")
-    .select("response,status,idempotency_key,execution_id")
+    .select("response,status,idempotency_key,execution_id,updated_at")
     .eq("project_id", projectId)
     .eq("execution_id", id)
     .maybeSingle();
@@ -96,18 +96,21 @@ export async function POST(
     return NextResponse.json({ error: "Explicit approval=true is required to resume this execution." }, { status: 409 });
   }
 
-  if (existing.status !== "waiting") {
+  const isStaleAccepted = existing.status === "accepted" && Date.now() - new Date(existing.updated_at).getTime() > 300_000;
+  if (existing.status !== "waiting" && !isStaleAccepted) {
     return NextResponse.json({ error: `Execution request is not awaiting approval (status: ${existing.status}).` }, { status: 409 });
   }
 
   // Claim the waiting request before composing or executing. A second concurrent
-  // resume sees no row because the conditional update requires status=waiting.
+  // resume sees no row because the conditional update requires status=waiting
+  // (or a stale accepted status).
+  const staleCutoff = new Date(Date.now() - 300_000).toISOString();
   const { data: claimed } = await db
     .from("nexus_execution_requests")
     .update({ status: "accepted", updated_at: new Date().toISOString() })
     .eq("project_id", projectId)
     .eq("idempotency_key", existing.idempotency_key)
-    .eq("status", "waiting")
+    .or(`status.eq.waiting,and(status.eq.accepted,updated_at.lte.${staleCutoff})`)
     .select("id")
     .maybeSingle();
   if (!claimed) {
@@ -169,7 +172,7 @@ export async function POST(
           actor_id: event.actorId ?? null,
           resource_type: "execution",
           resource_id: event.resourceId ?? null,
-          external_id: `${event.correlationId}:${event.type}`,
+          external_id: event.externalId ?? event.id,
           payload: event.payload ?? {},
           created_at: event.createdAt,
           updated_at: event.createdAt,
