@@ -253,3 +253,4 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verification:**
 - Ran `npm test`, all tests passing (75 passing, 1 skipped).
 - Ran `npm run typecheck`, no errors found.
+- `.github/workflows/gemini.yml`: Fixed Gemini CLI action to use `gemini-1.5-flash` model and set `continue-on-error: true`.
