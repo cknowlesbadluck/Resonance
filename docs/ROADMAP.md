@@ -39,7 +39,7 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`.
 
 - [ ] GitHub repository-read vertical slice: required CI artifact verification is pending
 - [x] GitHub failure matrix: 401/403/404/429/5xx/timeout/malformed/invalid input
-- [ ] Production Netlify `GITHUB_TOKEN` (ops)
+- [ ] Production Render `GITHUB_TOKEN` (ops)
 - [ ] Webhook hardening, additional provider classes
 
 ### P5 — Chamber / composition fabric
