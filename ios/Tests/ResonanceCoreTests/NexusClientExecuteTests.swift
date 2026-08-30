@@ -9,23 +9,16 @@ struct NexusClientExecuteTests {
 
     // MARK: - Helpers
 
-    private static func executePayload(status: String = "completed") -> Data {
-        let json = """
-        {
-            "intent": {"id":"i1","projectId":"demo","objective":"Test","requestedBy":"ios-user","requirements":[],"contextRefs":[]},
-            "plan": {"id":"p1","intentId":"i1","projectId":"demo","actorId":"ios-user","mode":"direct","steps":[],"contextRefs":[],"approvalRequired":false,"rationale":[]},
-            "execution": {"id":"e1","planId":"p1","status":"\(status)"},
-            "evidence": [{"id":"ev1","executionId":"e1","type":"event","summary":"Done","createdAt":"2026-08-30T00:00:00Z"}],
-            "status": "\(status)"
-        }
-        """
-        return json.data(using: .utf8)!
+    private static func makeExecutePayload(status: String = "completed") -> Data {
+        // Build JSON manually to avoid multi-line string interpolation edge cases
+        let jsonStr = "{\"intent\":{\"id\":\"i1\",\"projectId\":\"demo\",\"objective\":\"Test\",\"requestedBy\":\"ios-user\",\"requirements\":[],\"contextRefs\":[]},\"plan\":{\"id\":\"p1\",\"intentId\":\"i1\",\"projectId\":\"demo\",\"actorId\":\"ios-user\",\"mode\":\"direct\",\"steps\":[],\"contextRefs\":[],\"approvalRequired\":false,\"rationale\":[]},\"execution\":{\"id\":\"e1\",\"planId\":\"p1\",\"status\":\"" + status + "\"},\"evidence\":[{\"id\":\"ev1\",\"executionId\":\"e1\",\"type\":\"event\",\"summary\":\"Done\",\"createdAt\":\"2026-08-30T00:00:00Z\"}],\"status\":\"" + status + "\"}"
+        return jsonStr.data(using: .utf8)!
     }
 
     // MARK: - Tests
 
     @Test func executeReturnsCompletedResponse() async throws {
-        let transport = StubTransport(postData: Self.executePayload())
+        let transport = ExecuteStubTransport(postData: Self.makeExecutePayload())
         let client = NexusClient(transport: transport)
         let response = try await client.execute(
             NexusIntentRequest(objective: "Test", requestedBy: "ios-user", requirements: []),
@@ -36,7 +29,7 @@ struct NexusClientExecuteTests {
     }
 
     @Test func executePopulatesEvidence() async throws {
-        let transport = StubTransport(postData: Self.executePayload())
+        let transport = ExecuteStubTransport(postData: Self.makeExecutePayload())
         let client = NexusClient(transport: transport)
         let response = try await client.execute(
             NexusIntentRequest(objective: "Test", requestedBy: "ios-user", requirements: []),
@@ -48,7 +41,7 @@ struct NexusClientExecuteTests {
     }
 
     @Test func executeApprovalRequiredStatusPassesThrough() async throws {
-        let transport = StubTransport(postData: Self.executePayload(status: "approval_required"))
+        let transport = ExecuteStubTransport(postData: Self.makeExecutePayload(status: "approval_required"))
         let client = NexusClient(transport: transport)
         let response = try await client.execute(
             NexusIntentRequest(objective: "Needs approval", requestedBy: "ios-user", requirements: []),
@@ -58,7 +51,7 @@ struct NexusClientExecuteTests {
     }
 
     @Test func executeSendsSuppliedIdempotencyKey() async throws {
-        let transport = CapturingTransport(postData: Self.executePayload())
+        let transport = ExecuteCapturingTransport(postData: Self.makeExecutePayload())
         let client = NexusClient(transport: transport)
         _ = try await client.execute(
             NexusIntentRequest(objective: "Key test", requestedBy: "ios-user", requirements: []),
@@ -68,7 +61,7 @@ struct NexusClientExecuteTests {
     }
 
     @Test func executeGeneratesFreshKeyWhenOmitted() async throws {
-        let transport = CapturingTransport(postData: Self.executePayload())
+        let transport = ExecuteCapturingTransport(postData: Self.makeExecutePayload())
         let client = NexusClient(transport: transport)
         _ = try await client.execute(
             NexusIntentRequest(objective: "Auto key", requestedBy: "ios-user", requirements: [])
@@ -79,20 +72,16 @@ struct NexusClientExecuteTests {
     }
 }
 
-// MARK: - Transports
+// MARK: - Private transports (unique names to avoid collision within the test module)
 
-private struct StubTransport: NexusTransport {
-    let getData: Data
+private struct ExecuteStubTransport: NexusTransport {
     let postData: Data
-    init(getData: Data = Data(), postData: Data = Data()) {
-        self.getData = getData
-        self.postData = postData
-    }
-    func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { getData }
+    init(getData: Data = Data(), postData: Data = Data()) { self.postData = postData }
+    func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { Data() }
     func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data { postData }
 }
 
-private final class CapturingTransport: NexusTransport, @unchecked Sendable {
+private final class ExecuteCapturingTransport: NexusTransport, @unchecked Sendable {
     let postData: Data
     private(set) var lastPostHeaders: NexusRequestHeaders?
     init(postData: Data = Data()) { self.postData = postData }
