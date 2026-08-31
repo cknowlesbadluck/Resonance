@@ -5,6 +5,7 @@ import { composeNexusIntent, nexusAdapters } from "../../../../src/nexus/runtime
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
+import { decideInitiationReclaim, EXECUTING_STATUS, staleAcceptedCutoff } from "../../../../src/nexus/execution-claim";
 import type { CapabilityRequirement, NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../src/nexus/types";
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -74,6 +75,24 @@ function isRequirement(value: unknown): value is CapabilityRequirement {
   return typeof key === "string" && key.trim().length > 0 && key.length <= 256;
 }
 
+async function claimExecuting(
+  projectId: string,
+  idempotencyKey: string,
+  from: "accepted",
+  staleBefore?: string,
+) {
+  if (!db) return null;
+  let query = db
+    .from("nexus_execution_requests")
+    .update({ status: EXECUTING_STATUS, updated_at: new Date().toISOString() })
+    .eq("project_id", projectId)
+    .eq("idempotency_key", idempotencyKey)
+    .eq("status", from);
+  if (staleBefore) query = query.lt("updated_at", staleBefore);
+  const { data } = await query.select("id").maybeSingle();
+  return data ?? null;
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID ?? null;
@@ -126,24 +145,31 @@ export async function POST(request: Request) {
     const { count: recentCount, error: rateError } = await db.from("nexus_execution_requests").select("id", { count: "exact", head: true }).eq("project_id", intent.projectId).gte("created_at", windowStart);
     if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
     if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
-    const claim = await db.from("nexus_execution_requests").insert({ project_id: intent.projectId, idempotency_key: idempotencyKey, request_hash: hash, status: "accepted" });
+    const claim = await db.from("nexus_execution_requests").insert({
+      project_id: intent.projectId,
+      idempotency_key: idempotencyKey,
+      request_hash: hash,
+      status: "accepted",
+      response: { intent },
+    });
     if (claim.error) {
       const { data: existing, error: lookupError } = await db.from("nexus_execution_requests").select("request_hash,response,status,execution_id,updated_at").eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).maybeSingle();
       if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 500 });
       if (!existing) return NextResponse.json({ error: claim.error.message }, { status: 500 });
       if (existing.request_hash !== hash) return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
 
-      let canReclaim = false;
-      if (existing.status === "accepted" && existing.updated_at) {
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        if (existing.updated_at < fiveMinutesAgo) {
-          const reclaim = await db.from("nexus_execution_requests").update({ updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", "accepted").lt("updated_at", fiveMinutesAgo).select("id").maybeSingle();
-          if (reclaim.data) canReclaim = true;
-        }
-      }
-
+      const canReclaim = decideInitiationReclaim(existing.status, existing.updated_at);
       if (!canReclaim) {
         return NextResponse.json(existing.response ?? { status: existing.status, executionId: existing.execution_id }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
+      }
+      const reclaimed = await claimExecuting(intent.projectId, idempotencyKey, "accepted", staleAcceptedCutoff());
+      if (!reclaimed) {
+        return NextResponse.json(existing.response ?? { status: existing.status, executionId: existing.execution_id }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
+      }
+    } else {
+      const started = await claimExecuting(intent.projectId, idempotencyKey, "accepted");
+      if (!started) {
+        return NextResponse.json({ status: EXECUTING_STATUS }, { status: 202, headers: { "X-Idempotent-Replay": "true" } });
       }
     }
   }
@@ -152,7 +178,7 @@ export async function POST(request: Request) {
     const plan = composeNexusIntent(intent);
     if (plan.approvalRequired) {
       const response = { intent, plan, status: "approval_required" };
-      if (db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
+      if (db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", EXECUTING_STATUS);
       return NextResponse.json(response, { status: 202 });
     }
 
@@ -162,10 +188,10 @@ export async function POST(request: Request) {
       recordEvent: sink.recordEvent,
     }).execute(plan);
     const response = { intent, plan, ...result };
-    if (db) await db.from("nexus_execution_requests").update({ execution_id: result.execution.id, status: result.execution.status, response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
+    if (db) await db.from("nexus_execution_requests").update({ execution_id: result.execution.id, status: result.execution.status, response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", EXECUTING_STATUS);
     return NextResponse.json(response, { status: result.execution.status === "completed" ? 201 : 422 });
   } catch (error) {
-    if (db) await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
+    if (db) await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", EXECUTING_STATUS);
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
   }
 }
