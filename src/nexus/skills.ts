@@ -2,7 +2,7 @@ import { capabilityMatches, sortCapabilities } from "./capabilities";
 import type {
   CapabilityRequirement,
   NexusCapability,
-  NexusPolicyDecision,
+
   NexusSkill,
   SkillDiscoveryFilter,
   SkillRequirementResolution,

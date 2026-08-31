@@ -107,7 +107,7 @@ export async function POST(
   const expectedStatus = existing.status;
   const claimQuery = db
     .from("nexus_execution_requests")
-    .update({ status: "accepted", updated_at: new Date().toISOString() })
+    .update({ status: "executing", updated_at: new Date().toISOString() })
     .eq("project_id", projectId)
     .eq("idempotency_key", existing.idempotency_key)
     .eq("status", expectedStatus);

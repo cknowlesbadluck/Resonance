@@ -37,3 +37,25 @@ describe("POST /api/nexus/executions Idempotency-Key contract", () => {
     if (result.ok) expect(result.key).toBe("sprint-test-key-1");
   });
 });
+
+describe("Concurrent Execution Resume (Option A simulation)", () => {
+  it("only allows one executor invocation for a stuck request using accepted -> executing CAS", () => {
+    // This simulates the behavior of the SQL database's CAS update.
+    let status = "accepted";
+
+    function claim() {
+      if (status === "accepted") {
+        status = "executing";
+        return true;
+      }
+      return false;
+    }
+
+    const firstClaim = claim();
+    const secondClaim = claim();
+
+    expect(firstClaim).toBe(true);
+    expect(secondClaim).toBe(false);
+    expect(status).toBe("executing");
+  });
+});

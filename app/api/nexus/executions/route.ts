@@ -137,7 +137,7 @@ export async function POST(request: Request) {
       if (existing.status === "accepted" && existing.updated_at) {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
         if (existing.updated_at < fiveMinutesAgo) {
-          const reclaim = await db.from("nexus_execution_requests").update({ updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", "accepted").lt("updated_at", fiveMinutesAgo).select("id").maybeSingle();
+          const reclaim = await db.from("nexus_execution_requests").update({ status: "executing", updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", "accepted").lt("updated_at", fiveMinutesAgo).select("id").maybeSingle();
           if (reclaim.data) canReclaim = true;
         }
       }
@@ -155,6 +155,8 @@ export async function POST(request: Request) {
       if (db) await db.from("nexus_execution_requests").update({ status: "waiting", response, updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
       return NextResponse.json(response, { status: 202 });
     }
+
+    if (db) await db.from("nexus_execution_requests").update({ status: "executing", updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey);
 
     const result = await new NexusExecutor(nexusAdapters, {
       recordEvidence: async (item: NexusEvidence) => sink.recordEvidence(item, intent.projectId),
