@@ -4,7 +4,6 @@ import { authRequired, authenticateNexusRequest } from "../../../../../../src/au
 import { composeNexusIntent, nexusAdapters } from "../../../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
-import { decideResumeClaim, EXECUTING_STATUS, staleAcceptedCutoff } from "../../../../../../src/nexus/execution-claim";
 import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../../../src/nexus/types";
 
 const MAX_ID_LENGTH = 128;
@@ -97,23 +96,27 @@ export async function POST(
     return NextResponse.json({ error: "Explicit approval=true is required to resume this execution." }, { status: 409 });
   }
 
-  const decision = decideResumeClaim(existing.status, existing.updated_at);
-  if (!decision.ok) {
-    return NextResponse.json({ error: decision.error }, { status: decision.status });
+  const isStuck = existing.status === "accepted" && existing.updated_at && (new Date().getTime() - new Date(existing.updated_at).getTime() > 5 * 60 * 1000);
+
+  if (existing.status !== "waiting" && !isStuck) {
+    return NextResponse.json({ error: `Execution request is not awaiting approval (status: ${existing.status}).` }, { status: 409 });
   }
 
-  // Exclusive claim: waiting|stale-accepted → executing. A second concurrent
-  // resume sees no row because the conditional update requires the pre-claim status.
-  let claimQuery = db
+  // Claim the waiting request before composing or executing. A second concurrent
+  // resume sees no row because the conditional update requires status=waiting (or stuck accepted).
+  const expectedStatus = existing.status;
+  const claimQuery = db
     .from("nexus_execution_requests")
-    .update({ status: EXECUTING_STATUS, updated_at: new Date().toISOString() })
+    .update({ status: "accepted", updated_at: new Date().toISOString() })
     .eq("project_id", projectId)
     .eq("idempotency_key", existing.idempotency_key)
-    .eq("status", decision.from);
-  if (decision.requireStale) {
-    claimQuery = claimQuery.lt("updated_at", staleAcceptedCutoff());
-  }
-  const { data: claimed } = await claimQuery.select("id").maybeSingle();
+    .eq("status", expectedStatus);
+
+  const claimReq = isStuck
+    ? claimQuery.lt("updated_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+    : claimQuery;
+
+  const { data: claimed } = await claimReq.select("id").maybeSingle();
   if (!claimed) {
     return NextResponse.json({ error: "Execution approval was already claimed or is no longer pending." }, { status: 409 });
   }
@@ -127,7 +130,7 @@ export async function POST(
   }
 
   if (!intent) {
-    await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key).eq("status", EXECUTING_STATUS);
+    await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
     return NextResponse.json({ error: "No resumable approval_required intent found for id" }, { status: 404 });
   }
 
@@ -144,7 +147,7 @@ export async function POST(
     const originalStepApproval = new Map((originalPlan?.steps ?? []).map((step, index) => [index, Boolean(step.requiresApproval)]));
     const escalated = plan.steps.some((step, index) => step.requiresApproval && !(originalStepApproval.get(index) ?? false));
     if (!originalPlan || escalated) {
-      await db.from("nexus_execution_requests").update({ status: "waiting", response: { intent, plan, status: "approval_required" }, updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key).eq("status", EXECUTING_STATUS);
+      await db.from("nexus_execution_requests").update({ status: "waiting", response: { intent, plan, status: "approval_required" }, updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
       return NextResponse.json({ error: "Plan requirements changed since approval was requested; re-approval is required.", intent, plan }, { status: 409 });
     }
 
@@ -189,14 +192,14 @@ export async function POST(
       status: result.execution.status,
       response: { intent, plan, ...result, resumed: true },
       updated_at: new Date().toISOString(),
-    }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key).eq("status", EXECUTING_STATUS);
+    }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
 
     return NextResponse.json(
       { intent, plan, ...result, resumed: true },
       { status: result.execution.status === "completed" ? 200 : 422 },
     );
   } catch (error) {
-    await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key).eq("status", EXECUTING_STATUS);
+    await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
       { status: 422 },

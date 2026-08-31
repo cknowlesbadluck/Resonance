@@ -128,13 +128,7 @@ export class GitHubAdapter implements NexusAdapter {
           let code = codeForStatus(response.status);
 
           if (response.status === 403) {
-            const lower = message.toLowerCase();
-            if (
-              response.headers.get("x-ratelimit-remaining") === "0"
-              || response.headers.has("retry-after")
-              || lower.includes("rate limit")
-              || lower.includes("abuse detection")
-            ) {
+            if (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after") || message.toLowerCase().includes("rate limit")) {
               code = "rate_limited";
             }
           }

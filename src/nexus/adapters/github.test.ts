@@ -99,17 +99,6 @@ describe("GitHubAdapter", () => {
     }));
   });
 
-  it("normalizes HTTP 403 into rate_limited if message contains abuse detection", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      message: "You have triggered an abuse detection mechanism and have been temporarily blocked from content creation. Please retry your request again later.",
-    }), { status: 403 })) as typeof fetch;
-    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "octo", repo: "repo" });
-    expect(result).toEqual(expect.objectContaining({
-      ok: false,
-      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
-    }));
-  });
-
   it("rejects invalid repository input without calling GitHub", async () => {
     const fetchMock = vi.fn() as typeof fetch;
     const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "../etc", repo: "repo" });
