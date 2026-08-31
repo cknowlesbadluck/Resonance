@@ -2,6 +2,7 @@ export type NexusActorType = "human" | "model" | "agent" | "skill" | "tool" | "p
 export type CapabilityRisk = "low" | "medium" | "high" | "critical";
 export type CapabilityKind = "skill" | "tool" | "integration" | "resource" | "other";
 export type ExecutionMode = "direct" | "chamber";
+export type SkillValidationStatus = "unknown" | "unverified" | "verified" | "trusted" | "blocked";
 
 export interface NexusProvider { id: string; key: string; name: string; category: string; version?: string; metadata?: Record<string, unknown>; }
 export interface NexusIdentity { id: string; type: NexusActorType; name: string; providerId?: string; externalId?: string; metadata?: Record<string, unknown>; }
@@ -39,6 +40,57 @@ export interface NexusCapability {
 }
 
 export interface CapabilityRequirement { key: string; requiredPermissions?: string[]; resourceType?: string; preferredProviderIds?: string[]; maxRisk?: CapabilityRisk; tags?: string[]; }
+
+export interface NexusSkillTrust {
+  source?: string;
+  publisher?: string;
+  integrity?: string;
+  validation: SkillValidationStatus;
+  policyStatus?: "pending" | "approved" | "blocked";
+}
+
+export interface NexusSkill {
+  id: string;
+  name: string;
+  namespace: string;
+  version: string;
+  description?: string;
+  publisher?: string;
+  provenance?: string;
+  tags?: string[];
+  requirements: CapabilityRequirement[];
+  inputSchema?: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+  compositionHints?: string[];
+  trust?: NexusSkillTrust;
+  metadata?: Record<string, unknown>;
+}
+
+export interface SkillDiscoveryFilter {
+  query?: string;
+  namespace?: string;
+  tags?: string[];
+}
+
+export interface SkillRequirementResolution {
+  requirement: CapabilityRequirement;
+  capability?: NexusCapability;
+  missing: boolean;
+  denied?: boolean;
+  requiresApproval?: boolean;
+  policyReason?: string;
+  policyReasons?: string[];
+}
+
+export interface SkillResolution {
+  skill: NexusSkill;
+  requirements: SkillRequirementResolution[];
+  composable: boolean;
+  approvalRequired: boolean;
+  missing: string[];
+  denied: string[];
+}
+
 export interface NexusIntent { id: string; objective: string; projectId: string; requirements: CapabilityRequirement[]; contextRefs?: string[]; requestedBy: string; metadata?: Record<string, unknown>; }
 export interface ExecutionStep { id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; }
 export interface ExecutionRetryPolicy { maxAttempts: number; backoffMs: number; }
