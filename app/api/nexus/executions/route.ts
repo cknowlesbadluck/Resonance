@@ -51,7 +51,7 @@ const sink = {
       actor_id: event.actorId ?? null,
       resource_type: "execution",
       resource_id: event.resourceId ?? null,
-      external_id: `${event.correlationId}:${event.type}`,
+      external_id: event.externalId ?? event.id,
       payload: event.payload ?? {},
       created_at: event.createdAt,
       updated_at: event.createdAt,
@@ -128,11 +128,23 @@ export async function POST(request: Request) {
     if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
     const claim = await db.from("nexus_execution_requests").insert({ project_id: intent.projectId, idempotency_key: idempotencyKey, request_hash: hash, status: "accepted" });
     if (claim.error) {
-      const { data: existing, error: lookupError } = await db.from("nexus_execution_requests").select("request_hash,response,status,execution_id").eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).maybeSingle();
+      const { data: existing, error: lookupError } = await db.from("nexus_execution_requests").select("request_hash,response,status,execution_id,updated_at").eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).maybeSingle();
       if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 500 });
       if (!existing) return NextResponse.json({ error: claim.error.message }, { status: 500 });
       if (existing.request_hash !== hash) return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
-      return NextResponse.json(existing.response ?? { status: existing.status, executionId: existing.execution_id }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
+
+      let canReclaim = false;
+      if (existing.status === "accepted" && existing.updated_at) {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        if (existing.updated_at < fiveMinutesAgo) {
+          const reclaim = await db.from("nexus_execution_requests").update({ updated_at: new Date().toISOString() }).eq("project_id", intent.projectId).eq("idempotency_key", idempotencyKey).eq("status", "accepted").lt("updated_at", fiveMinutesAgo).select("id").maybeSingle();
+          if (reclaim.data) canReclaim = true;
+        }
+      }
+
+      if (!canReclaim) {
+        return NextResponse.json(existing.response ?? { status: existing.status, executionId: existing.execution_id }, { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } });
+      }
     }
   }
 

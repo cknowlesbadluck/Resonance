@@ -239,3 +239,18 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - **`external_id` derivation on emitted events**: minor correctness nit (should prefer `event.externalId` with fallback to `event.id` instead of deriving from `correlationId`/`type`), not a security issue.
 
 **Verification (local, not CI-sourced):** `npm run typecheck` clean. `npm test`: 72 passed, 1 skipped (up from 71 — added 1 test for the `.`/`..` rejection; `loadRequest` error-propagation fix has no dedicated test yet since no existing test file mocks the Supabase client chain for this route — noted as a real coverage gap rather than forcing a fragile mock under time pressure).
+
+## 2026-08-30 — Implement fixes for Claimed-request lease/recovery and GitHub adapter rate-limit heuristic
+
+**Context:** Fixed deferred issues from previous PR reviews.
+
+**Changed:**
+- `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts`: Implemented logic to recover "stuck" execution requests that remain in "accepted" status for over 5 minutes by reclaiming the lease using optimistic concurrency control.
+- `src/nexus/adapters/github.ts`: Updated 403 error handling to classify secondary/abuse rate limits (via `x-ratelimit-remaining: 0`, `Retry-After` header, or message content) as `rate_limited` instead of `forbidden`.
+- `src/nexus/adapters/github.test.ts`: Added tests to verify the new rate-limit heuristic.
+- `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts`: Updated event insertion to prefer `event.externalId ?? event.id` over generating from `correlationId` and `type`.
+
+**Verification:**
+- Ran `npm test`, all tests passing (75 passing, 1 skipped).
+- Ran `npm run typecheck`, no errors found.
+- `.github/workflows/gemini.yml`: Fixed Gemini CLI action to use `gemini-1.5-flash` model and set `continue-on-error: true`.
