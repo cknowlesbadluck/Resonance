@@ -72,6 +72,33 @@ describe("GitHubAdapter", () => {
     }));
   });
 
+  it("normalizes HTTP 403 into rate_limited if x-ratelimit-remaining is 0", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "API rate limit exceeded" }), { status: 403, headers: { "x-ratelimit-remaining": "0" } })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "octo", repo: "repo" });
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
+    }));
+  });
+
+  it("normalizes HTTP 403 into rate_limited if retry-after is present", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "Secondary Rate Limit" }), { status: 403, headers: { "retry-after": "60" } })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "octo", repo: "repo" });
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
+    }));
+  });
+
+  it("normalizes HTTP 403 into rate_limited if message contains rate limit", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "You have exceeded a secondary rate limit." }), { status: 403 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "octo", repo: "repo" });
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
+    }));
+  });
+
   it("rejects invalid repository input without calling GitHub", async () => {
     const fetchMock = vi.fn() as typeof fetch;
     const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }), { owner: "../etc", repo: "repo" });

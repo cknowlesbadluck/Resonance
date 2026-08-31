@@ -124,7 +124,16 @@ export class GitHubAdapter implements NexusAdapter {
           const message = !parseFailed && body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
             ? (body as Record<string, unknown>).message as string
             : `GitHub API returned HTTP ${response.status}`;
-          return fail(message, codeForStatus(response.status), { status: response.status });
+
+          let code = codeForStatus(response.status);
+
+          if (response.status === 403) {
+            if (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after") || message.toLowerCase().includes("rate limit")) {
+              code = "rate_limited";
+            }
+          }
+
+          return fail(message, code, { status: response.status });
         }
 
         if (parseFailed || !body || typeof body !== "object") {
