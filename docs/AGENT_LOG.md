@@ -254,3 +254,9 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Ran `npm test`, all tests passing (75 passing, 1 skipped).
 - Ran `npm run typecheck`, no errors found.
 - `.github/workflows/gemini.yml`: Fixed Gemini CLI action to use `gemini-1.5-flash` model and set `continue-on-error: true`.
+
+## 2026-09-01 — Jules (Typecheck fix)
+
+**Checked:** `src/nexus/skills.ts` had a typescript error importing `NexusPolicyDecision` from `"./types"` instead of `"./policy"`.
+**Decided / Fixed:** Moved `NexusPolicyDecision` import to `"./policy"`.
+**Verified:** `npm run typecheck` and `npm run test` pass successfully.

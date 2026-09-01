@@ -2,13 +2,12 @@ import { capabilityMatches, sortCapabilities } from "./capabilities";
 import type {
   CapabilityRequirement,
   NexusCapability,
-  NexusPolicyDecision,
   NexusSkill,
   SkillDiscoveryFilter,
   SkillRequirementResolution,
   SkillResolution,
 } from "./types";
-import type { NexusPolicy } from "./policy";
+import type { NexusPolicy, NexusPolicyDecision } from "./policy";
 
 export interface SkillRegistry {
   register(skill: NexusSkill): void;
