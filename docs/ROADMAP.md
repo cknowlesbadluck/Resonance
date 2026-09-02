@@ -9,7 +9,7 @@ Control planes (web + native iOS) observe, decide, and approve.
 Runtime executes under policy. Adapters never bypass capability gates.
 Quicksilver is **not** part of this product.
 
-See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`.
+See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPLOYMENT.md`.
 
 ## Phase map
 
@@ -31,22 +31,29 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`.
 - [ ] `nexus_capabilities` cut-over / dual-write
 
 ### P3 — Native execution loop
-- [ ] iOS compose → execute → result/approval UX (PR #35, CI fix landed on branch)
+- [ ] iOS compose → execute → result/approval UX (re-cut #49; do not revive #35)
 - [x] Typed HTTP error mapping in UI (iOS P3 branch)
 - [x] Unified ResonanceCore package (CHR-38)
 
 ### P4 — Integration & adapters
 
-- [ ] GitHub repository-read vertical slice: required CI artifact verification is pending
+- [x] GitHub repository-read vertical slice in required `web` CI (artifact gate)
 - [x] GitHub failure matrix: 401/403/404/429/5xx/timeout/malformed/invalid input
-- [ ] Production Netlify `GITHUB_TOKEN` (ops)
+- [ ] Production host `GITHUB_TOKEN` (ops — issue #32; host is Netlify `resonancenexus` today)
 - [ ] Webhook hardening, additional provider classes
 
 ### P5 — Chamber / composition fabric
 - [ ] Agenda, Chamber lifecycle, toolkit seeding, approval pauses
 
-### P6 — Release readiness
-- [ ] Production smoke + branch entropy under control
+### P6 — Release / deployment stage (IN PROGRESS — CHR-53)
+- [x] Host-neutral deploy contract (presence only; never echo secrets)
+- [x] `GET /api/health` liveness and `GET /api/ready` readiness
+- [x] Production smoke cases (Idempotency-Key 400, structured ready, health 200)
+- [x] Aggregate GitHub Actions job named `CI` (depends on `web` + `ios`)
+- [ ] Live host: `RESONANCE_AUTH_MODE=required` + `/api/ready` 200 (ops)
+- [ ] Authenticated GitHub vertical slice evidence on the live host (issue #32)
+- [ ] Branch entropy held flat across consecutive sessions
+- [ ] SideStore IPA / on-device proof (issue #11, I4 — not a host concern)
 
 ## Definition of done
 
