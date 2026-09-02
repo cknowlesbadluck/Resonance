@@ -102,12 +102,36 @@ export async function POST(
     return NextResponse.json({ error: `Execution request is not awaiting approval (status: ${existing.status}).` }, { status: 409 });
   }
 
-  // Claim the waiting request before composing or executing. A second concurrent
-  // resume sees no row because the conditional update requires status=waiting (or stuck accepted).
+  // Claim the waiting request by transitioning to 'executing' status, which serves as a
+  // lease/lock. A second concurrent resume sees no row because the conditional update
+  // requires status=waiting (or stuck accepted). If a prior handler was interrupted while
+  // executing, we reclaim stale 'executing' records (>5 min) before attempting the claim.
+  if (!isStuck && existing.status === "executing") {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    if (existing.updated_at && existing.updated_at < fiveMinutesAgo) {
+      // Reclaim stale executing record by transitioning back to waiting for re-approval.
+      // This allows the stuck execution to be resumed after human re-approval.
+      const reclaim = await db
+        .from("nexus_execution_requests")
+        .update({ status: "waiting", updated_at: new Date().toISOString() })
+        .eq("project_id", projectId)
+        .eq("idempotency_key", existing.idempotency_key)
+        .eq("status", "executing")
+        .lt("updated_at", fiveMinutesAgo)
+        .select("id")
+        .maybeSingle();
+      if (reclaim.data) {
+        return NextResponse.json({ error: "Execution was interrupted and has been re-queued for approval." }, { status: 409 });
+      }
+    }
+  }
+
+  // Transition from waiting or accepted to executing (never back to accepted).
+  // This serves as a lock preventing concurrent execution attempts.
   const expectedStatus = existing.status;
   const claimQuery = db
     .from("nexus_execution_requests")
-    .update({ status: "accepted", updated_at: new Date().toISOString() })
+    .update({ status: "executing", updated_at: new Date().toISOString() })
     .eq("project_id", projectId)
     .eq("idempotency_key", existing.idempotency_key)
     .eq("status", expectedStatus);

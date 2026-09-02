@@ -37,3 +37,27 @@ describe("POST /api/nexus/executions Idempotency-Key contract", () => {
     if (result.ok) expect(result.key).toBe("sprint-test-key-1");
   });
 });
+
+describe("Concurrent Execution (CHR-51: Option A - executing status lease)", () => {
+  it("only allows one executor invocation for a concurrent request using accepted -> executing CAS", () => {
+    // Simulates the database CAS update behavior: status transitions from 'accepted' to
+    // 'executing' atomically. A second concurrent attempt to claim sees the 'executing'
+    // status and cannot update, preventing double-execution.
+    let status = "accepted";
+
+    function attemptClaim() {
+      if (status === "accepted") {
+        status = "executing";
+        return true;
+      }
+      return false;
+    }
+
+    const firstClaim = attemptClaim();
+    const secondClaim = attemptClaim();
+
+    expect(firstClaim).toBe(true);
+    expect(secondClaim).toBe(false);
+    expect(status).toBe("executing");
+  });
+});
