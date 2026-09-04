@@ -1,7 +1,8 @@
 import Foundation
 
 /// Shared factory for authenticated `NexusClient`.
-/// Token resolution: override → Keychain → env → UserDefaults.
+/// Token resolution: override → Keychain → env only.
+/// UserDefaults is never used for bearer tokens (IOS-01).
 public enum NexusClientFactory {
     public static let defaultBaseURLString = "http://localhost:3000"
     public static let baseURLKey = "RESONANCE_BASE_URL"
@@ -18,10 +19,11 @@ public enum NexusClientFactory {
             ?? URL(string: UserDefaults.standard.string(forKey: baseURLKey) ?? "")
             ?? URL(string: defaultBaseURLString)!
 
+        // Auth material: override → Keychain → process environment only.
+        // Do not fall back to UserDefaults for the bearer token.
         let resolvedToken = bearerToken
             ?? KeychainTokenStore.load()
             ?? ProcessInfo.processInfo.environment[bearerTokenKey]
-            ?? UserDefaults.standard.string(forKey: bearerTokenKey)
 
         let resolvedProject = projectId
             ?? ProcessInfo.processInfo.environment[projectIdKey]
