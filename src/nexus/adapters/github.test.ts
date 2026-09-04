@@ -147,6 +147,24 @@ describe("GitHubAdapter", () => {
     }));
   });
 
+  it("classifies non-JSON 403, 404, and 429 by HTTP status instead of masking as malformed_response", async () => {
+    const cases = [
+      { status: 403, body: "<html>Forbidden</html>", expectedCode: "forbidden" },
+      { status: 403, body: "Rate limit exceeded html", headers: { "x-ratelimit-remaining": "0" }, expectedCode: "rate_limited" },
+      { status: 404, body: "<html>Not Found</html>", expectedCode: "not_found" },
+      { status: 429, body: "Too Many Requests", expectedCode: "rate_limited" },
+    ];
+
+    for (const c of cases) {
+      const fetchMock = vi.fn().mockResolvedValue(new Response(c.body, { status: c.status, headers: c.headers })) as typeof fetch;
+      const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+      expect(result).toEqual(expect.objectContaining({
+        ok: false,
+        evidence: expect.objectContaining({ code: c.expectedCode, status: c.status }),
+      }));
+    }
+  });
+
   it("rejects a successful response with wrong-typed repository metadata", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       full_name: 12345, // should be a string
