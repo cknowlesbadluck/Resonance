@@ -289,3 +289,11 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 3. Run `SMOKE_BASE_URL=https://resonancenexus.netlify.app npm run smoke` (or workflow_dispatch).
 4. Rebase/merge #52 then #53; prune `refactor/render-deployment`.
 5. iOS next: I1/P3 re-cut from main (#49) after CHR-51 lands; I4 SideStore remains #11.
+
+---
+
+## 2026-09-02 — Jules (Status-before-parse bug analysis & verification)
+
+**Checked:** `src/nexus/adapters/github.ts` status-before-parse ordering and `src/nexus/adapters/github.test.ts` test coverage.
+**Decided / Fixed:** Confirmed `GitHubAdapter` correctly evaluates HTTP status and response headers prior to body parsing failure handling for non-OK responses. Added test cases in `github.test.ts` for non-JSON 403 (with rate limit headers), 404 (HTML body), and 429 (plain text body) to prevent regression.
+**Verified:** `npm run typecheck` and `npm run test` passed cleanly (88 passed, 1 skipped).
