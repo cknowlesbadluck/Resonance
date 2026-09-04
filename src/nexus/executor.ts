@@ -11,7 +11,15 @@ const DEFAULT_RETRY: ExecutionRetryPolicy = { maxAttempts: 1, backoffMs: 0 };
 const sleep = (ms: number) => ms > 0 ? new Promise<void>((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
 
 export class NexusExecutor {
-  constructor(private readonly adapters: NexusAdapter[], private readonly sink: ExecutionSink) {}
+  private readonly adapterMap = new Map<string, NexusAdapter>();
+
+  constructor(adapters: NexusAdapter[], private readonly sink: ExecutionSink) {
+    for (const adapter of adapters) {
+      if (!this.adapterMap.has(adapter.id)) {
+        this.adapterMap.set(adapter.id, adapter);
+      }
+    }
+  }
 
   private async persistExecution(execution: NexusExecution) {
     if (this.sink.recordExecution) await this.sink.recordExecution(execution);
@@ -53,7 +61,7 @@ export class NexusExecutor {
           await this.emitEvent(plan, execution, "execution.waiting", "waiting", { stepId: step.id, reason: execution.error });
           return { execution, evidence };
         }
-        const adapter = this.adapters.find((item) => item.id === step.adapterId);
+        const adapter = this.adapterMap.get(step.adapterId);
         if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
         let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
