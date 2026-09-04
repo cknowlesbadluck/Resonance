@@ -289,3 +289,16 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 3. Run `SMOKE_BASE_URL=https://resonancenexus.netlify.app npm run smoke` (or workflow_dispatch).
 4. Rebase/merge #52 then #53; prune `refactor/render-deployment`.
 5. iOS next: I1/P3 re-cut from main (#49) after CHR-51 lands; I4 SideStore remains #11.
+
+---
+
+## 2026-09-04 17:33 UTC — Jules
+
+**Intent:** Code Health Improvement — Remove unused `sameIdentity` export from `src/nexus/identity.ts`.
+
+**What changed:**
+- Removed dead code export `sameIdentity` function from `src/nexus/identity.ts`.
+- Added unit tests in `src/nexus/identity.test.ts` to cover `identityKey`.
+
+**Verified:**
+- `npm run typecheck` and `npm run test` ran cleanly with all 22 test files passing (89 passed, 1 skipped).
