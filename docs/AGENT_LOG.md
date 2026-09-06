@@ -289,3 +289,17 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 3. Run `SMOKE_BASE_URL=https://resonancenexus.netlify.app npm run smoke` (or workflow_dispatch).
 4. Rebase/merge #52 then #53; prune `refactor/render-deployment`.
 5. iOS next: I1/P3 re-cut from main (#49) after CHR-51 lands; I4 SideStore remains #11.
+
+## 2026-09-04 — Performance Optimization for NexusExecutor adapter lookup
+
+**Context:** Performance task to optimize `NexusExecutor` step execution loop where `Array.prototype.find()` was called for every step to look up the matching adapter by ID.
+
+**Changed:**
+- `src/nexus/executor.ts`: Converted adapter list into a `Map<string, NexusAdapter>` index in constructor (`adapterMap`) for $O(1)$ adapter lookup by ID instead of $O(M)$ array lookup per step. Preserves first-adapter-wins semantics in case of duplicate IDs.
+- `src/nexus/executor.benchmark.test.ts`: Added benchmark test with 1,000 steps and 1,000 registered adapters over 10 execution iterations.
+
+**Verification:**
+- Baseline execution time: ~46.98ms per execution (469.75ms total for 10 iterations of 1000 steps x 1000 adapters).
+- Optimized execution time: ~15.04ms per execution (150.44ms total for 10 iterations of 1000 steps x 1000 adapters).
+- Measured performance gain: ~68% reduction in overall execution time (~3.12x speedup).
+- Tests: `npm run test` (88 passed, 1 skipped) and `npm run typecheck` both pass cleanly.
