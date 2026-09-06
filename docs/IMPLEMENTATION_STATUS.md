@@ -1,8 +1,8 @@
 # Resonance Implementation Status
 
-## Six-phase sprint status — updated 2026-08-28 (hygiene pass)
+## Six-phase sprint status — updated 2026-09-02 (P6 deployment stage)
 
-The implementation is advancing additively against canonical `main`: Nexus contracts remain the center, web/iOS are clients, Supabase is the operational persistence foundation, and provider-specific behavior remains behind adapters.
+The implementation is advancing additively against canonical `main`: Nexus contracts remain the center, web/iOS are clients, Supabase is the operational persistence foundation, and provider-specific behavior remains behind adapters. The live web host is **Netlify** `resonancenexus` (`https://resonancenexus.netlify.app`). The host is not a Nexus domain object.
 
 ### Phase 1 — Core Resonance
 - Provider-neutral capability contracts remain the core boundary (`NexusCapability`).
@@ -28,39 +28,33 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 - **GitHub repository adapter implemented** as the first real provider participant.
 - `github.repository.read` is exposed as a normalized Nexus capability when `GITHUB_TOKEN` is configured.
 - GitHub adapter contract tests cover authenticated headers, successful reads, and provider failures.
-- **Open:** failure matrix + policy deny hardening (PR #37).
+- Failure matrix + policy deny landed on `main` (`07ec1d0` / #37).
 
 ### Phase 5 — Production hardening
 - CI: web typecheck/test/build + Swift package tests on macos-latest.
-- Branch protection + required status checks active.
+- Branch protection + required status checks active. Aggregate job named `CI` now depends on `web` + `ios` so the protection check named `CI` can pass honestly.
 - Execution input now propagates through normalized intent metadata into execution steps.
 - Event ingestion/query now has the same authentication/membership boundary as Nexus execution when auth is enabled, with bounded payloads.
-- Failure-path and provider-isolation verification is the immediate hardening target (PR #37).
 
 ### Phase 6 — Native iOS
 - Swift 6 package (`ios/`), actor-isolated `NexusClient`, header-aware transport.
 - App Intents: List / Compose / Execute / Open + Keychain token store merged.
 - Dual iOS Capability models being retired (PR #41; #40 closed as superseded).
 - Spatial Nexus UI; SideStore constraints documented.
-- Physical-device end-to-end verification remains outstanding (PR #35 / issue #11).
+- Physical-device end-to-end verification remains outstanding (issue #11). Open PR #49 is the re-cut compose → execute → evidence slice; do not revive #35.
 
-## Repository health metrics (2026-08-28 hygiene)
+## Repository health metrics (2026-09-02 P6)
 
 | Metric | Value | Signal |
 |--------|-------|--------|
-| Open PRs | **1** (#37) | Review queue |
+| Open PRs (pre-this-PR) | **3** (#52, #53, #49) | #47 closed as superseded |
 | Canonical branches | 2 (`main`, `develop`) | Good |
-| Feature / orphan branches | 6 (3 PR heads + 3 orphans) | Prune after PR land |
+| Feature / orphan branches | PR heads + `fix/chr-51-execution-concurrency-*` | Prune after related PRs close |
 | `main` protected | **true** | Good |
-| Required CI status checks | `web` + `ios` enforced | Good |
+| Required CI status checks | `web` + `ios` + aggregate `CI` | This PR |
+| Live host | Netlify `resonancenexus` | Interchangeable |
 
 **Rule:** If open-PR count or duplicate-branch count trends upward, stop building and start merging/closing.
-
-### Orphan branches to delete after related PRs close
-- `feat/execution-fabric-hardening`
-- `feat/github-failure-matrix-16135786940844000109`
-- `jules-4557065144468535906-42c57b63`
-- (and the PR head branches once merged/closed)
 
 ## Current execution gates
 
@@ -68,11 +62,11 @@ The implementation is advancing additively against canonical `main`: Nexus contr
 2. ~~Durable execution + Chamber primitive~~ **Done**.
 3. ~~App Intents device agency~~ **Done**.
 4. ~~Stale sprint branch pruning (Aug 21, Aug 28)~~ **Done**.
-5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution runs in required `web` CI when `GITHUB_VERTICAL_SLICE=1`. Production Netlify still needs `GITHUB_TOKEN`.
-6. **CHR-33 / P2:** `NexusCapability` is the sole public contract. #40/#41 (dual iOS model retirement) closed.
-7. **Failure matrix (PR #37):** concurrency, retry exhaustion, provider failure, policy denial, approval, persistence failure, and recovery. CHR-47/48/49 and all outstanding CodeRabbit findings resolved as of `f6c7c42`; CI green; awaiting merge.
-8. **Production deployment proof:** authenticated execution + durable evidence.
-9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11). PR #35 closed unmerged.
+5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution runs in required `web` CI when `GITHUB_VERTICAL_SLICE=1`. Live host still needs `GITHUB_TOKEN` (issue #32).
+6. **CHR-33 / P2:** `NexusCapability` is the sole public contract. Dual iOS model retirement still tracked.
+7. ~~Failure matrix (PR #37)~~ **Done** on `main`.
+8. **P6 deployment contract (CHR-53):** health/ready probes + env contract + production smoke. Live `/api/ready` 200 still an ops gate (`RESONANCE_AUTH_MODE=required`).
+9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11).
 
 ## Governance process (active)
 

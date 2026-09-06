@@ -254,3 +254,52 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Ran `npm test`, all tests passing (75 passing, 1 skipped).
 - Ran `npm run typecheck`, no errors found.
 - `.github/workflows/gemini.yml`: Fixed Gemini CLI action to use `gemini-1.5-flash` model and set `continue-on-error: true`.
+
+## 2026-09-01 — Jules (Typecheck fix)
+
+**Checked:** `src/nexus/skills.ts` had a typescript error importing `NexusPolicyDecision` from `"./types"` instead of `"./policy"`.
+**Decided / Fixed:** Moved `NexusPolicyDecision` import to `"./policy"`.
+**Verified:** `npm run typecheck` and `npm run test` pass successfully.
+
+---
+
+## 2026-09-02 18:51 EDT — MasterDev / Grok (P6 deployment stage)
+
+**Checked:**
+- `main` @ `5eb652a`. Open PRs: #53 (CHR-44 docs, web+ios green), #52 (CHR-51, web+ios green), #49 (iOS P3, behind), #47 (draft Render migration, behind, stale).
+- Live host is still Netlify project `resonancenexus` (`https://resonancenexus.netlify.app`). PR checks on current branches still report Netlify deploys. #47 assumed a Render cut-over that never landed.
+- Branch protection historically required a check literally named `CI` while jobs were split into `web` + `ios`.
+- Linear: CHR-33/24/39/45/46 in progress; CHR-51/52 Done on main. New CHR-53 for this P6 slice.
+- Quicksilver / Forge framing is out of scope.
+
+**Decided:**
+- Close #47 as superseded (comment recorded). Do not migrate hosts without live proof.
+- Recut P6 from current `main` as host-neutral deployment stage (CHR-53): env contract, `/api/health`, `/api/ready`, production smoke, aggregate job named `CI`.
+- Production `RESONANCE_AUTH_MODE` must be `required`. Adapter tokens (`GITHUB_TOKEN`) are not required for process boot.
+- Leave #52/#53 open (green, blocked on review). Leave #49 for the native loop; do not revive #35.
+- Two-Key: not required. Additive ops/CI/docs. Host is not core identity.
+
+**Verified:**
+- Local `npm test` / `npm run typecheck` on this branch (see following commit). Merge still requires GitHub Actions `web` + `ios` + aggregate `CI`.
+- No production claim. Live `/api/ready` 200 and issue #32 remain ops gates.
+
+**Next / Hand-off:**
+1. Merge this PR on green `CI`.
+2. Set live Netlify env: `RESONANCE_AUTH_MODE=required`, persistence keys, `GITHUB_TOKEN`.
+3. Run `SMOKE_BASE_URL=https://resonancenexus.netlify.app npm run smoke` (or workflow_dispatch).
+4. Rebase/merge #52 then #53; prune `refactor/render-deployment`.
+5. iOS next: I1/P3 re-cut from main (#49) after CHR-51 lands; I4 SideStore remains #11.
+
+## 2026-09-04 — Performance Optimization for NexusExecutor adapter lookup
+
+**Context:** Performance task to optimize `NexusExecutor` step execution loop where `Array.prototype.find()` was called for every step to look up the matching adapter by ID.
+
+**Changed:**
+- `src/nexus/executor.ts`: Converted adapter list into a `Map<string, NexusAdapter>` index in constructor (`adapterMap`) for $O(1)$ adapter lookup by ID instead of $O(M)$ array lookup per step. Preserves first-adapter-wins semantics in case of duplicate IDs.
+- `src/nexus/executor.benchmark.test.ts`: Added benchmark test with 1,000 steps and 1,000 registered adapters over 10 execution iterations.
+
+**Verification:**
+- Baseline execution time: ~46.98ms per execution (469.75ms total for 10 iterations of 1000 steps x 1000 adapters).
+- Optimized execution time: ~15.04ms per execution (150.44ms total for 10 iterations of 1000 steps x 1000 adapters).
+- Measured performance gain: ~68% reduction in overall execution time (~3.12x speedup).
+- Tests: `npm run test` (88 passed, 1 skipped) and `npm run typecheck` both pass cleanly.

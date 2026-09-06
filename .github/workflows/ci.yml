@@ -4,6 +4,12 @@ on:
   push:
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      smoke_url:
+        description: Base URL for production smoke (host-neutral)
+        required: false
+        default: "https://resonancenexus.netlify.app"
 
 permissions:
   contents: read
@@ -44,3 +50,28 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test ResonanceCore
         run: swift test --package-path ios
+
+  CI:
+    if: always()
+    needs: [web, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require web and ios
+        run: |
+          echo "web=${{ needs.web.result }}"
+          echo "ios=${{ needs.ios.result }}"
+          test "${{ needs.web.result }}" = "success"
+          test "${{ needs.ios.result }}" = "success"
+
+  production-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/production-smoke.mjs
+        env:
+          SMOKE_BASE_URL: ${{ github.event.inputs.smoke_url }}
