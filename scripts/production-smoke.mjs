@@ -12,7 +12,7 @@ if (!base) {
 
 const cases = [
   { id: "health", method: "GET", path: "/api/health", expect: [200] },
-  { id: "ready", method: "GET", path: "/api/ready", expect: [200, 503] },
+  { id: "ready", method: "GET", path: "/api/ready", expect: [200] },
   {
     id: "idempotency-required",
     method: "POST",

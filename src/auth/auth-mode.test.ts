@@ -26,6 +26,23 @@ describe("RESONANCE_AUTH_MODE", () => {
     expect(authRequired()).toBe(true);
   });
 
+  it("trims whitespace from mode values", () => {
+    process.env.RESONANCE_AUTH_MODE = "  required  ";
+    expect(authRequired()).toBe(true);
+    process.env.RESONANCE_AUTH_MODE = "  optional  ";
+    expect(authRequired()).toBe(false);
+  });
+
+  it("fails closed on unrecognized modes", () => {
+    process.env.RESONANCE_AUTH_MODE = "enforced";
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(authRequired()).toBe(true);
+
+    process.env.RESONANCE_AUTH_MODE = "strict";
+    expect(authRequired()).toBe(true);
+  });
+
   it("auto requires auth only when Supabase is configured", () => {
     process.env.RESONANCE_AUTH_MODE = "auto";
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
