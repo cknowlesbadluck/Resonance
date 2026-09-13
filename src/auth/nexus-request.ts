@@ -15,10 +15,18 @@ export function isUuid(value: unknown): value is string {
  * - auto (default): demand auth when Supabase URL + service role are configured
  */
 export function authRequired(): boolean {
-  const mode = (process.env.RESONANCE_AUTH_MODE ?? "auto").toLowerCase();
+  const rawMode = process.env.RESONANCE_AUTH_MODE;
+  if (!rawMode) {
+    return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+  }
+  const mode = rawMode.trim().toLowerCase();
   if (mode === "required") return true;
   if (mode === "optional") return false;
-  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+  if (mode === "auto") {
+    return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+  }
+  // Fail closed on any unrecognized mode
+  return true;
 }
 
 export async function authenticateNexusRequest(
