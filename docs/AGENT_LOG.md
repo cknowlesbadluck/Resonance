@@ -247,7 +247,7 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Changed:**
 - `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts`: Implemented logic to recover "stuck" execution requests that remain in "accepted" status for over 5 minutes by reclaiming the lease using optimistic concurrency control.
 - `src/nexus/adapters/github.ts`: Updated 403 error handling to classify secondary/abuse rate limits (via `x-ratelimit-remaining: 0`, `Retry-After` header, or message content) as `rate_limited` instead of `forbidden`.
-- `src/nexus/adapters/github.test.ts`: Added tests to verify the new rate-limit heuristic.
+- `src/nexus/adapters/github.test.ts`: Updated tests to verify the new rate-limit heuristic.
 - `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts`: Updated event insertion to prefer `event.externalId ?? event.id` over generating from `correlationId` and `type`.
 
 **Verification:**
@@ -303,3 +303,14 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Optimized execution time: ~15.04ms per execution (150.44ms total for 10 iterations of 1000 steps x 1000 adapters).
 - Measured performance gain: ~68% reduction in overall execution time (~3.12x speedup).
 - Tests: `npm run test` (88 passed, 1 skipped) and `npm run typecheck` both pass cleanly.
+
+---
+
+## 2026-09-07 — Performance Optimization for Permissions Check in policy.ts
+
+**Context:** Suboptimal permissions check in `DefaultNexusPolicy.evaluate` using `Object.prototype.hasOwnProperty.call(rank, permission)` inside loop.
+**Changed:**
+- `src/nexus/policy.ts`: Replaced per-iteration `Object.prototype.hasOwnProperty.call` with static `SUPPORTED_PERMISSIONS = new Set<string>(Object.keys(rank))` lookup (`SUPPORTED_PERMISSIONS.has(permission)`).
+**Verification:**
+- Read `src/nexus/policy.ts` to confirm exact edits.
+- Confirmed prototype pollution protection and error message format are preserved.
