@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const runtime = listRuntimeCapabilities();
   const persistence = createNexusPersistenceFromEnv();
   if (persistence && projectId) {
-    await Promise.all(runtime.map((capability) => persistence.saveCapability(capability, projectId)));
+    await persistence.saveCapabilities(runtime, projectId);
   }
   const catalog = listNexusCapabilitiesFromCatalog();
   const merged = [...runtime, ...catalog.filter((catalogCapability) => !runtime.some((runtimeCapability) => runtimeCapability.id === catalogCapability.id))];

@@ -303,3 +303,16 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Optimized execution time: ~15.04ms per execution (150.44ms total for 10 iterations of 1000 steps x 1000 adapters).
 - Measured performance gain: ~68% reduction in overall execution time (~3.12x speedup).
 - Tests: `npm run test` (88 passed, 1 skipped) and `npm run typecheck` both pass cleanly.
+
+## 2026-09-14 — Performance Optimization for Nexus Capabilities DB Persistence Batching
+
+**Context:** Performance task to optimize database persistence in `app/api/nexus/capabilities/route.ts` where runtime capabilities were saved via individual `upsert` database calls inside `Promise.all`.
+
+**Changed:**
+- `src/nexus/persistence/supabase.ts`: Added `saveCapabilities(capabilities: NexusCapability[], projectId?: string)` to `NexusPersistence` interface and `SupabaseNexusPersistence` implementation to bulk upsert all capabilities in a single database roundtrip (`.upsert(rows)`). Refactored `saveCapability` to delegate to `saveCapabilities([capability], projectId)`.
+- `app/api/nexus/capabilities/route.ts`: Updated `GET` handler to call `persistence.saveCapabilities(runtime, projectId)` instead of `Promise.all(runtime.map(...))`.
+- `src/nexus/persistence/supabase.test.ts`: Added unit tests verifying bulk saving behavior, empty array handling, single item delegation, and database call count reduction ($N \to 1$).
+
+**Verification:**
+- Measured database request reduction: Reduced database roundtrips for saving runtime capabilities from $N$ separate calls to $1$ single bulk call per capability route request.
+- Tests: `npm run typecheck` and `npm test` passed cleanly with 23 test files (94 passed, 1 skipped).
