@@ -303,3 +303,23 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Optimized execution time: ~15.04ms per execution (150.44ms total for 10 iterations of 1000 steps x 1000 adapters).
 - Measured performance gain: ~68% reduction in overall execution time (~3.12x speedup).
 - Tests: `npm run test` (88 passed, 1 skipped) and `npm run typecheck` both pass cleanly.
+
+## 2026-09-14 — Resolution of Three Known Gaps
+
+**Context:** Resolving three known repository gaps (Status-Before-Parse Regression verification/test coverage, Dead Code removal, Skipped Vertical Slice test documentation) in a single clean PR.
+
+**Intent:**
+- Ensure non-JSON error responses on GitHubAdapter (403, rate-limited 403, 404, 429) correctly surface status-derived failure codes without being masked as malformed_response.
+- Remove dead code export `sameIdentity` from `src/nexus/identity.ts`.
+- Document explicit requirements for the skipped `github.vertical-slice.test.ts` integration proof without altering core architecture or domain identity.
+
+**What changed:**
+- `src/nexus/adapters/github.test.ts`: Added test cases for non-JSON 403, rate-limited non-JSON 403, non-JSON 404, and non-JSON 429 error responses. Confirmed current `GitHubAdapter` implementation (landed in PR #55) already handles status classification before JSON parsing. Audited all other adapters under `src/nexus/adapters/` and confirmed no other HTTP fetch status-parsing gaps exist.
+- `src/nexus/identity.ts`: Removed unused `sameIdentity` function export (originally done in PR #58).
+- `src/nexus/github.vertical-slice.test.ts`: Added explicit JSDoc documentation detailing required environment setup (`GITHUB_VERTICAL_SLICE=1` and `GITHUB_TOKEN`) and referencing unit/integration test coverage that prevents silent code rot.
+
+**Verified locally:**
+- `npm run typecheck` clean.
+- `npm test`: 94 passed, 1 skipped (up from 90 passed, 1 skipped prior to adding the 4 new regression test cases).
+
+**Two-Key check:** Not required. Fixes did not alter core identity, domain semantics, source-of-truth hierarchy, or architecture.
