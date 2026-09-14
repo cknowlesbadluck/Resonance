@@ -35,6 +35,18 @@ describe("GitHub authenticated vertical slice", () => {
     expect(token, "GITHUB_TOKEN must be present for credential-backed execution").toBeTruthy();
   });
 
+  /**
+   * Skipped in standard offline/sandbox environments because it requires live network access
+   * to api.github.com and a valid GITHUB_TOKEN credential (enabled via GITHUB_VERTICAL_SLICE=1).
+   * Per README.md ("The external bridge fixtures prove the architecture; they are not claims
+   * of production credentials or external-service connectivity"), this live vertical slice test
+   * is an integration proof for credentialed environments.
+   *
+   * Mocked coverage of this exact execution pipeline and adapter logic is maintained in:
+   * - src/nexus/adapters/github.test.ts (GitHubAdapter response/error normalization)
+   * - src/nexus/nexus.test.ts (Capability registration, policy evaluation, composition)
+   * - src/nexus/executor.lifecycle.test.ts (NexusExecutor step execution & evidence recording)
+   */
   it.skipIf(!sliceEnabled || !token)("resolves a real GitHub capability, passes policy, executes, and persists evidence", async () => {
     const adapter = new GitHubAdapter(token);
     const registry = new InMemoryCapabilityRegistry();

@@ -138,6 +138,42 @@ describe("GitHubAdapter", () => {
     }));
   });
 
+  it("classifies a non-JSON 403 by HTTP status instead of masking it as malformed_response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("Forbidden", { status: 403 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "forbidden", status: 403 }),
+    }));
+  });
+
+  it("classifies a rate-limited non-JSON 403 by HTTP status instead of masking it as malformed_response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("Forbidden", { status: 403, headers: { "x-ratelimit-remaining": "0" } })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 403 }),
+    }));
+  });
+
+  it("classifies a non-JSON 404 by HTTP status instead of masking it as malformed_response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("Not Found", { status: 404 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "not_found", status: 404 }),
+    }));
+  });
+
+  it("classifies a non-JSON 429 by HTTP status instead of masking it as malformed_response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("Too Many Requests", { status: 429 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "rate_limited", status: 429 }),
+    }));
+  });
+
   it("classifies a non-JSON 401 by HTTP status instead of masking it as malformed_response", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("Unauthorized", { status: 401 })) as typeof fetch;
     const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
