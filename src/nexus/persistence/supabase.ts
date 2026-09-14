@@ -3,6 +3,7 @@ import type { NexusEvidence, NexusExecution, NexusCapability, ContextEntry } fro
 
 export interface NexusPersistence {
   saveCapability(capability: NexusCapability, projectId?: string): Promise<void>;
+  saveCapabilities(capabilities: NexusCapability[], projectId?: string): Promise<void>;
   saveContext(entry: ContextEntry, projectId?: string): Promise<void>;
   saveExecution(execution: NexusExecution, projectId?: string): Promise<void>;
   saveEvidence(evidence: NexusEvidence, projectId?: string): Promise<void>;
@@ -17,32 +18,42 @@ export function createNexusPersistenceFromEnv(): NexusPersistence | null {
   return new SupabaseNexusPersistence(createClient(url, key, { auth: { persistSession: false } }));
 }
 
+function mapCapabilityToRow(capability: NexusCapability, projectId?: string) {
+  return {
+    id: capability.id,
+    project_id: projectId ?? null,
+    capability_key: capability.key,
+    name: capability.name,
+    description: capability.description ?? null,
+    provider_id: capability.providerId ?? null,
+    identity_id: capability.identityId ?? null,
+    adapter_id: capability.adapterId ?? null,
+    resource_type: capability.resourceType ?? null,
+    required_permissions: capability.requiredPermissions,
+    risk: capability.risk,
+    input_schema: capability.inputSchema ?? null,
+    output_schema: capability.outputSchema ?? null,
+    tags: capability.tags ?? [],
+    compatibility: capability.compatibility ?? [],
+    availability: capability.availability ?? "available",
+    provenance: capability.provenance ?? null,
+    version: capability.version ?? null,
+    cost: capability.cost ?? null,
+    latency_ms: capability.latencyMs ?? null,
+  };
+}
+
 export class SupabaseNexusPersistence implements NexusPersistence {
   constructor(private readonly db: SupabaseClient) {}
 
   async saveCapability(capability: NexusCapability, projectId?: string) {
-    const { error } = await this.db.from("nexus_capabilities").upsert({
-      id: capability.id,
-      project_id: projectId ?? null,
-      capability_key: capability.key,
-      name: capability.name,
-      description: capability.description ?? null,
-      provider_id: capability.providerId ?? null,
-      identity_id: capability.identityId ?? null,
-      adapter_id: capability.adapterId ?? null,
-      resource_type: capability.resourceType ?? null,
-      required_permissions: capability.requiredPermissions,
-      risk: capability.risk,
-      input_schema: capability.inputSchema ?? null,
-      output_schema: capability.outputSchema ?? null,
-      tags: capability.tags ?? [],
-      compatibility: capability.compatibility ?? [],
-      availability: capability.availability ?? "available",
-      provenance: capability.provenance ?? null,
-      version: capability.version ?? null,
-      cost: capability.cost ?? null,
-      latency_ms: capability.latencyMs ?? null,
-    });
+    await this.saveCapabilities([capability], projectId);
+  }
+
+  async saveCapabilities(capabilities: NexusCapability[], projectId?: string) {
+    if (capabilities.length === 0) return;
+    const rows = capabilities.map((cap) => mapCapabilityToRow(cap, projectId));
+    const { error } = await this.db.from("nexus_capabilities").upsert(rows);
     if (error) throw error;
   }
 
