@@ -321,3 +321,25 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm run typecheck` clean.
 - `npm run test` (90 passed, 1 skipped).
 - `npm run build` completed cleanly.
+
+---
+
+## 2026-09-15 — Jules (Full Audit & Strategic Roadmap Proposal)
+
+**Checked:**
+- **Codebase & Architecture:** Verified provider-neutral Nexus domain contracts (`src/nexus/`), capability bridge (`lib/capabilities.ts` → `NexusCapability`), adapter boundaries (HTTP, MCP, GitHub), and $O(1)$ executor lookup.
+- **Verification Suite:** `npm run typecheck` passes with zero errors; Vitest test suite (`npm run test`) passes 100% (90 passed, 1 skipped across 22 test files). Production `npm run build` succeeds cleanly.
+- **Linear & Issue Tracking:** Audited active Linear issues across teams (CHR-33 capability plane convergence, CHR-46/CHR-39/CHR-40 iOS cockpit, CHR-24/CHR-25 ingestion & events, CHR-53 deployment stage).
+- **Deployment & Host:** Active Supabase project `Resonance` (`lfdynzionafcpddqipqc`), active Netlify live host `resonancenexus` (`https://resonancenexus.netlify.app`), with `/api/health` and `/api/ready` probes operational.
+
+**Decided & Roadmapped:**
+- **P0 Governance & CI Truth:** Retain branch protection on `main` with required aggregate `CI` job (`web` + `ios`). Enforce Two-Key rule for critical architecture reformations.
+- **P1 Hardened Execution:** Idempotency-Key header mandatory (HTTP 400 on missing key); unique DB index on `(project_id, idempotency_key)`; rate limit enforced (30/min/project).
+- **P2 Capability Plane Convergence:** Complete transition to single `NexusCapability` model; deprecate legacy dual capability tables and models in web and `ResonanceCore`.
+- **P3 Native iOS Cockpit:** Finalize and merge PR #49 (`feature/ios-p4-compose-execute-evidence`) with SideStore compatibility (no paid App Store entitlements, Keychain storage, generated idempotency keys).
+- **P4 Provider Adapters & Webhook Bus:** Set live host `GITHUB_TOKEN` to enable live `github.repository.read`; finalize raw event deduplication and signature verification for inbound webhooks.
+- **P5 Coordinated Chamber Engine:** Extend Chamber execution for multi-participant agent/tool coordination with agenda scheduling and human approval gates.
+- **P6 Production Deployment & Verification:** Transition Netlify host to `RESONANCE_AUTH_MODE=required` and execute automated production smoke suite (`scripts/production-smoke.mjs`).
+
+**Verified:**
+- Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
