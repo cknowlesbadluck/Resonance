@@ -34,6 +34,12 @@ public struct NexusRequestHeaders: Sendable, Equatable {
 public protocol NexusTransport: Sendable {
     func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data
     func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data
+
+    /// Status-preserving variants. Default implementations wrap the `Data` methods so
+    /// existing conformances keep working; `URLSessionNexusTransport` overrides them to
+    /// report the real status instead of throwing on non-2xx.
+    func getResponse(_ path: String, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse
+    func postResponse(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse
 }
 
 public extension NexusTransport {
@@ -44,12 +50,14 @@ public extension NexusTransport {
     func post(_ path: String, body: Data) async throws -> Data {
         try await post(path, body: body, headers: NexusRequestHeaders())
     }
-}
 
-public enum NexusClientError: Error, Sendable, Equatable {
-    case httpStatus(Int, message: String?)
-    case decodingFailed
-    case missingIdempotencyKey
+    func getResponse(_ path: String, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse {
+        NexusHTTPResponse(status: 200, data: try await get(path, headers: headers))
+    }
+
+    func postResponse(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse {
+        NexusHTTPResponse(status: 200, data: try await post(path, body: body, headers: headers))
+    }
 }
 
 public actor NexusClient {
@@ -69,8 +77,19 @@ public actor NexusClient {
         defaultHeaders.authorizationBearer = token
     }
 
-    public func setProjectId(_ projectId: String?) {
+    /// Sets the project scope. Rejects a non-UUID up front rather than letting the
+    /// control plane return a 400 on every subsequent call.
+    public func setProjectId(_ projectId: String?) throws {
+        if let projectId, !NexusProjectID.isValid(projectId) {
+            throw NexusClientError.invalidProjectId(projectId)
+        }
         defaultHeaders.projectId = projectId
+    }
+
+    private func decode<T: Decodable>(_ type: T.Type, from response: NexusHTTPResponse) throws -> T {
+        if let error = NexusClientError.from(status: response.status, data: response.data) { throw error }
+        do { return try decoder.decode(type, from: response.data) }
+        catch { throw NexusClientError.decodingFailed }
     }
 
     public func capabilities() async throws -> [NexusCapability] {
@@ -78,14 +97,14 @@ public actor NexusClient {
         if let projectId = defaultHeaders.projectId {
             path += "?projectId=\(projectId)"
         }
-        let data = try await transport.get(path, headers: defaultHeaders)
-        return try decoder.decode(NexusCapabilityResponse.self, from: data).capabilities
+        let response = try await transport.getResponse(path, headers: defaultHeaders)
+        return try decode(NexusCapabilityResponse.self, from: response).capabilities
     }
 
     public func compose(_ request: NexusIntentRequest) async throws -> NexusIntentResponse {
         let body = try encoder.encode(request)
-        let data = try await transport.post("/api/nexus/intents", body: body, headers: defaultHeaders)
-        return try decoder.decode(NexusIntentResponse.self, from: data)
+        let response = try await transport.postResponse("/api/nexus/intents", body: body, headers: defaultHeaders)
+        return try decode(NexusIntentResponse.self, from: response)
     }
 
     /// Creates an execution. Always sends a non-blank Idempotency-Key (generated if omitted).
@@ -100,9 +119,21 @@ public actor NexusClient {
         var headers = defaultHeaders
         headers.idempotencyKey = resolvedKey
 
+        if !NexusProjectID.isValid(request.projectId) {
+            throw NexusClientError.invalidProjectId(request.projectId)
+        }
+
         let body = try encoder.encode(request)
-        let data = try await transport.post("/api/nexus/executions", body: body, headers: headers)
-        return try decoder.decode(NexusExecutionResponse.self, from: data)
+        let response = try await transport.postResponse("/api/nexus/executions", body: body, headers: headers)
+
+        // 422 means the plan composed but the execution did not complete. The control
+        // plane returns the full envelope — including evidence for the failed step — so
+        // the failure is returned to the caller, not thrown away. Only an undecodable
+        // 422 becomes an error.
+        if response.status == 422, let decoded = try? decoder.decode(NexusExecutionResponse.self, from: response.data) {
+            return decoded
+        }
+        return try decode(NexusExecutionResponse.self, from: response)
     }
 
     public func executions() async throws -> NexusExecutionsResponse {
@@ -110,7 +141,7 @@ public actor NexusClient {
         if let projectId = defaultHeaders.projectId {
             path += "?projectId=\(projectId)"
         }
-        let data = try await transport.get(path, headers: defaultHeaders)
-        return try decoder.decode(NexusExecutionsResponse.self, from: data)
+        let response = try await transport.getResponse(path, headers: defaultHeaders)
+        return try decode(NexusExecutionsResponse.self, from: response)
     }
 }

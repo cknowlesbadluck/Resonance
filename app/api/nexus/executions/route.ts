@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
-import { composeNexusIntent, nexusAdapters } from "../../../../src/nexus/runtime";
+import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
+import { nexusAdapters } from "../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
@@ -17,8 +18,19 @@ const MAX_IDEMPOTENCY_LENGTH = 128;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
 const CLAIM_STALE_MS = 5 * 60 * 1000;
+/**
+ * Fallback buffers used only when no durable persistence is configured.
+ * They are hard-capped: previously they grew without bound for the life of the
+ * process, which on a long-lived host is an unbounded memory leak and on a
+ * serverless host silently returns per-instance results that differ per request.
+ */
+const MEMORY_BUFFER_LIMIT = 200;
 const memoryExecutions: NexusExecution[] = [];
 const memoryEvidence: unknown[] = [];
+
+function trim<T>(buffer: T[]): void {
+  if (buffer.length > MEMORY_BUFFER_LIMIT) buffer.length = MEMORY_BUFFER_LIMIT;
+}
 const persistence = createNexusPersistenceFromEnv();
 
 function dbClient() {
@@ -32,12 +44,16 @@ const durable = Boolean(db && persistence);
 const sink = {
   recordEvidence: async (item: NexusEvidence, projectId?: string) => {
     memoryEvidence.unshift(item);
+    trim(memoryEvidence);
     if (persistence) await persistence.saveEvidence(item, projectId ?? process.env.RESONANCE_PROJECT_ID);
   },
   recordExecution: async (execution: NexusExecution, projectId?: string) => {
     const index = memoryExecutions.findIndex((item) => item.id === execution.id);
     if (index >= 0) memoryExecutions[index] = execution;
-    else memoryExecutions.unshift(execution);
+    else {
+      memoryExecutions.unshift(execution);
+      trim(memoryExecutions);
+    }
     if (persistence) await persistence.saveExecution(execution, projectId ?? process.env.RESONANCE_PROJECT_ID);
   },
   recordEvent: async (event: NexusEvent) => {

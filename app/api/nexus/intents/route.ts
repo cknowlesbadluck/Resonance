@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
-import { composeNexusIntent } from "../../../../src/nexus/runtime";
+import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
 import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/types";
 
 const MAX_BODY_BYTES = 64 * 1024;

@@ -18,7 +18,23 @@ public struct URLSessionNexusTransport: NexusTransport {
         try await request(path: path, method: "POST", body: body, headers: headers)
     }
 
+    public func getResponse(_ path: String, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse {
+        try await send(path: path, method: "GET", body: nil, headers: headers)
+    }
+
+    public func postResponse(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse {
+        try await send(path: path, method: "POST", body: body, headers: headers)
+    }
+
     private func request(path: String, method: String, body: Data?, headers: NexusRequestHeaders) async throws -> Data {
+        let response = try await send(path: path, method: method, body: body, headers: headers)
+        if let error = NexusClientError.from(status: response.status, data: response.data, retryAfter: nil) {
+            throw error
+        }
+        return response.data
+    }
+
+    private func send(path: String, method: String, body: Data?, headers: NexusRequestHeaders) async throws -> NexusHTTPResponse {
         guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
             throw URLError(.badURL)
         }
@@ -38,11 +54,6 @@ public struct URLSessionNexusTransport: NexusTransport {
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-
-        guard 200..<300 ~= http.statusCode else {
-            let message = String(data: data, encoding: .utf8)
-            throw NexusClientError.httpStatus(http.statusCode, message: message)
-        }
-        return data
+        return NexusHTTPResponse(status: http.statusCode, data: data)
     }
 }
