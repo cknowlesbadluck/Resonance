@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authRequired, authenticateNexusRequest } from "../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "../../../../src/nexus/capability-bridge";
 import { listRuntimeCapabilities } from "../../../../src/nexus/runtime";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
@@ -11,6 +11,9 @@ export async function GET(request: Request) {
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
+  if (projectId && !isUuid(projectId)) {
+    return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
   }
   const ids = searchParams.get("ids")?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
   const runtime = listRuntimeCapabilities();

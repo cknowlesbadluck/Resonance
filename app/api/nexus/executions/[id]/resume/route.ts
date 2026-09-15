@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { authRequired, authenticateNexusRequest } from "../../../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusRequest, isUuid } from "../../../../../../src/auth/nexus-request";
 import { composeNexusIntent, nexusAdapters } from "../../../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
@@ -53,6 +53,9 @@ export async function POST(
   };
 
   const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? null;
+  if (projectId && !isUuid(projectId)) {
+    return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
+  }
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) {
