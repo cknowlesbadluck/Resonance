@@ -4,10 +4,16 @@ import Foundation
 public struct URLSessionNexusTransport: NexusTransport {
     private let baseURL: URL
     private let session: URLSession
+    private let timeout: TimeInterval
 
-    public init(baseURL: URL, session: URLSession = .shared) {
+    /// 30s matches the control plane's own execution ceiling. `URLSession.shared`
+    /// defaults to 60s, which is long enough for a stalled request to look like a hung UI.
+    public static let defaultTimeout: TimeInterval = 30
+
+    public init(baseURL: URL, session: URLSession = .shared, timeout: TimeInterval = defaultTimeout) {
         self.baseURL = baseURL
         self.session = session
+        self.timeout = timeout
     }
 
     public func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data {
@@ -39,7 +45,7 @@ public struct URLSessionNexusTransport: NexusTransport {
             throw URLError(.badURL)
         }
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         for (name, value) in headers.httpHeaders {

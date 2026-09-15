@@ -142,8 +142,28 @@ final class NexusClientTests: XCTestCase {
         XCTAssertFalse(NexusClientError.idempotencyConflict(message: nil).isRetryable)
         XCTAssertFalse(NexusClientError.badRequest(message: nil).isRetryable)
     }
-}
 
+    func testPercentEncodesProjectIdInQuery() async throws {
+        let transport = CapturingTransport(getData: #"{"capabilities":[]}"#.data(using: .utf8)!)
+        let client = NexusClient(
+            transport: transport,
+            defaultHeaders: NexusRequestHeaders(projectId: "a b&c=d")
+        )
+        _ = try? await client.capabilities()
+
+        let path = transport.lastGetPath ?? ""
+        XCTAssertFalse(path.contains(" "), "raw space leaked into the query: \(path)")
+        XCTAssertFalse(path.contains("&c=d"), "unencoded separator leaked into the query: \(path)")
+        XCTAssertTrue(path.hasPrefix("/api/nexus/capabilities?projectId="))
+    }
+
+    func testOmitsQueryWhenProjectIdIsUnset() async throws {
+        let transport = CapturingTransport(getData: #"{"capabilities":[]}"#.data(using: .utf8)!)
+        let client = NexusClient(transport: transport)
+        _ = try? await client.capabilities()
+        XCTAssertEqual(transport.lastGetPath, "/api/nexus/capabilities")
+    }
+}
 
 private struct StubTransport: NexusTransport {
     let getData: Data
@@ -173,13 +193,17 @@ private final class CapturingTransport: NexusTransport, @unchecked Sendable {
     let postData: Data
     private(set) var lastPostPath: String?
     private(set) var lastPostHeaders: NexusRequestHeaders?
+    private(set) var lastGetPath: String?
 
     init(getData: Data = Data(), postData: Data = Data()) {
         self.getData = getData
         self.postData = postData
     }
 
-    func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data { getData }
+    func get(_ path: String, headers: NexusRequestHeaders) async throws -> Data {
+        lastGetPath = path
+        return getData
+    }
 
     func post(_ path: String, body: Data, headers: NexusRequestHeaders) async throws -> Data {
         lastPostPath = path

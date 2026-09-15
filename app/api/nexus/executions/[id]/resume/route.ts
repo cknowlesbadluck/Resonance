@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest } from "../../../../../../src/auth/nexus-request";
-import { composeNexusIntent, nexusAdapters } from "../../../../../../src/nexus/runtime";
+import { composeIntentWithCatalog as composeNexusIntent } from "../../../../../../src/composition/root";
+import { nexusAdapters } from "../../../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
 import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../../../src/nexus/types";

@@ -92,11 +92,32 @@ public actor NexusClient {
         catch { throw NexusClientError.decodingFailed }
     }
 
+    /// Builds a path with a percent-encoded query. Interpolating the project id directly
+    /// produced a malformed URL for any value containing a reserved character.
+    ///
+    /// Deliberately not `URLComponents.queryItems`: that setter treats `&`, `=` and `+`
+    /// as legal query characters and leaves them unescaped inside a *value*, so a value
+    /// containing `&` silently becomes a second parameter. The allowed set is narrowed
+    /// and the query assembled explicitly.
+    private func path(_ base: String, query: [String: String?]) -> String {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "&=+?#")
+
+        let items = query
+            .compactMap { name, value -> String? in
+                guard let value, !value.isEmpty,
+                      let encodedName = name.addingPercentEncoding(withAllowedCharacters: allowed),
+                      let encodedValue = value.addingPercentEncoding(withAllowedCharacters: allowed)
+                else { return nil }
+                return "\(encodedName)=\(encodedValue)"
+            }
+            .sorted()
+
+        return items.isEmpty ? base : "\(base)?\(items.joined(separator: "&"))"
+    }
+
     public func capabilities() async throws -> [NexusCapability] {
-        var path = "/api/nexus/capabilities"
-        if let projectId = defaultHeaders.projectId {
-            path += "?projectId=\(projectId)"
-        }
+        let path = self.path("/api/nexus/capabilities", query: ["projectId": defaultHeaders.projectId])
         let response = try await transport.getResponse(path, headers: defaultHeaders)
         return try decode(NexusCapabilityResponse.self, from: response).capabilities
     }
@@ -137,10 +158,7 @@ public actor NexusClient {
     }
 
     public func executions() async throws -> NexusExecutionsResponse {
-        var path = "/api/nexus/executions"
-        if let projectId = defaultHeaders.projectId {
-            path += "?projectId=\(projectId)"
-        }
+        let path = self.path("/api/nexus/executions", query: ["projectId": defaultHeaders.projectId])
         let response = try await transport.getResponse(path, headers: defaultHeaders)
         return try decode(NexusExecutionsResponse.self, from: response)
     }

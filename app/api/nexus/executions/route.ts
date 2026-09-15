@@ -98,7 +98,13 @@ export async function GET(request: Request) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
   }
-  if (persistence && projectId) {
+  if (persistence) {
+    // Falling back to the in-process buffer while durable storage is configured would
+    // return a different answer per serverless instance, with `source` as the only
+    // signal. Ask for the missing scope instead of quietly answering wrong.
+    if (!projectId) {
+      return NextResponse.json({ error: "projectId is required when durable persistence is configured." }, { status: 400 });
+    }
     try {
       const [executions, evidence] = await Promise.all([persistence.listExecutions(projectId), persistence.listEvidence(projectId)]);
       return NextResponse.json({ executions, evidence, source: "durable" });
@@ -141,11 +147,11 @@ export async function POST(request: Request) {
   let claimToken = crypto.randomUUID();
 
   if (db) {
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-    const { count: recentCount, error: rateError } = await db.from("nexus_execution_requests").select("id", { count: "exact", head: true }).eq("project_id", intent.projectId).gte("created_at", windowStart);
-    if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
-    if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
-
+    // Claim first, then count. Counting before inserting left a TOCTOU window in which
+    // N concurrent requests could each observe a under-limit count and all proceed.
+    // Because every caller has already inserted its own row before counting, concurrent
+    // callers see each other and exactly the overflow is rejected. Replays (duplicate
+    // key) skip the check entirely — returning a stored response costs nothing.
     const claim = await db.from("nexus_execution_requests").insert({
       project_id: intent.projectId,
       idempotency_key: idempotencyKey,
@@ -153,6 +159,26 @@ export async function POST(request: Request) {
       status: "accepted",
       claim_token: claimToken,
     });
+
+    if (!claim.error) {
+      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+      const { count: recentCount, error: rateError } = await db
+        .from("nexus_execution_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", intent.projectId)
+        .gte("created_at", windowStart);
+      if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
+      if ((recentCount ?? 0) > RATE_LIMIT_MAX_REQUESTS) {
+        // Release our own claim so the key is not burned by a throttled attempt.
+        await db
+          .from("nexus_execution_requests")
+          .delete()
+          .eq("project_id", intent.projectId)
+          .eq("idempotency_key", idempotencyKey)
+          .eq("claim_token", claimToken);
+        return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
+      }
+    }
 
     if (claim.error) {
       const { data: existing, error: lookupError } = await db
