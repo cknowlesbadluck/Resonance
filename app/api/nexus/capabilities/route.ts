@@ -19,13 +19,13 @@ export async function GET(request: Request) {
   }
 
   const ids = searchParams.get("ids")?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
-  const advertised = listAdvertisedCapabilities();
+  const advertised = await listAdvertisedCapabilities();
   if (ids.length === 0) return NextResponse.json({ capabilities: advertised });
 
   const direct = advertised.filter((capability) => ids.includes(capability.id));
   const remainingIds = ids.filter((id) => !direct.some((capability) => capability.id === id));
   const resolution = remainingIds.length > 0
-    ? resolveCatalogCapabilities(remainingIds)
+    ? await resolveCatalogCapabilities(remainingIds)
     : { requested: [], resolved: [], missing: [], unavailable: [] };
 
   return NextResponse.json({

@@ -228,7 +228,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const plan = composeNexusIntent(intent);
+    const plan = await composeNexusIntent(intent);
     if (plan.approvalRequired) {
       const response = { intent, plan, status: "approval_required" };
       if (db) {

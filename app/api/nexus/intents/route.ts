@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       contextRefs: body.contextRefs ?? [],
       metadata: body.metadata ?? {},
     };
-    return NextResponse.json({ intent, plan: composeNexusIntent(intent) }, { status: 200 });
+    return NextResponse.json({ intent, plan: await composeNexusIntent(intent) }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
   }

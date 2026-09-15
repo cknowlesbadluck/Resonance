@@ -136,7 +136,7 @@ export async function POST(
   }
 
   try {
-    const plan = composeNexusIntent(intent);
+    const plan = await composeNexusIntent(intent);
 
     // The human approved the plan that was originally shown to them (recorded in
     // `originalPlan` at compose time). Recomposing here must not silently escalate

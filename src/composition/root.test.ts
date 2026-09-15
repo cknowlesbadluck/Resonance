@@ -3,10 +3,15 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 /**
  * Regression guard for the P2 capability-plane gap.
  *
- * Before this slice, `GET /api/nexus/capabilities` advertised 14 catalog capabilities
- * and every single one failed at compose time with the opaque error
- * "No compatible capability for <key>", while `DefaultNexusPolicy` denied all of them
- * with "unsupported permission". Discovery and execution were two disconnected planes.
+ * Before this work, `GET /api/nexus/capabilities` advertised 14 catalog capabilities and
+ * every one failed at compose time with the opaque "No compatible capability for <key>",
+ * while `DefaultNexusPolicy` denied all of them for declaring an "unsupported permission".
+ * Discovery and execution were two disconnected planes.
+ *
+ * The second guard here is subtler and was a defect in the first fix: binding a catalog
+ * entry to an adapter because their provider names matched made the capability
+ * *composable* while still guaranteeing `unsupported_capability` at invoke. Executability
+ * must follow what an adapter actually declares.
  */
 
 async function freshRoot(env: Record<string, string | undefined> = {}) {
@@ -30,57 +35,94 @@ const intentFor = (key: string) => ({
 
 beforeEach(() => {
   delete process.env.GITHUB_TOKEN;
+  delete process.env.LINEAR_API_KEY;
 });
 
 describe("capability plane convergence", () => {
   it("every advertised capability is resolvable by the composer", async () => {
-    const root = await freshRoot({ GITHUB_TOKEN: undefined });
-    const advertised = root.listAdvertisedCapabilities();
+    const root = await freshRoot();
+    const advertised = await root.listAdvertisedCapabilities();
     expect(advertised.length).toBeGreaterThan(10);
 
     const unresolvable: string[] = [];
     for (const capability of advertised) {
       try {
-        root.composeIntentWithCatalog(intentFor(capability.key));
+        await root.composeIntentWithCatalog(intentFor(capability.key));
       } catch (error) {
-        const message = (error as Error).message;
-        // The composer must never fail to *find* an advertised capability.
-        // Failing on policy or executability is legitimate; failing on lookup is the bug.
-        if (message.startsWith("No compatible capability")) unresolvable.push(capability.key);
+        // Failing on policy or executability is legitimate. Failing to *find* an
+        // advertised capability is the bug.
+        if ((error as Error).message.startsWith("No capability is registered")) {
+          unresolvable.push(capability.key);
+        }
       }
     }
     expect(unresolvable).toEqual([]);
   });
 
-  it("refuses unbound capabilities with an actionable reason, not an opaque lookup miss", async () => {
-    const root = await freshRoot({ GITHUB_TOKEN: undefined });
-    expect(() => root.composeIntentWithCatalog(intentFor("tool.linear")))
-      .toThrowError(/no adapter is bound to provider "linear"/i);
+  it("refuses unbound capabilities with an actionable reason", async () => {
+    const root = await freshRoot();
+    await expect(root.composeIntentWithCatalog(intentFor("tool.figma")))
+      .rejects.toThrowError(/no adapter is bound to provider "figma"/i);
   });
 
-  it("composes and binds a catalog capability once its adapter is configured", async () => {
+  it("treats provider-level catalog entries as descriptors, not invocable operations", async () => {
+    // The GitHub adapter declares `github.repository.read`, never `tool.github`.
+    // Binding them by provider name would compose a plan that always fails at invoke.
     const root = await freshRoot({ GITHUB_TOKEN: "ghp_test_token" });
-    const github = root.listAdvertisedCapabilities().find((c) => c.id === "tool.github");
-    expect(github?.executable).toBe(true);
-    expect(github?.adapterId).toBe("github");
+    const advertised = await root.listAdvertisedCapabilities();
 
-    const plan = root.composeIntentWithCatalog(intentFor("tool.github"));
+    const descriptor = advertised.find((c) => c.id === "tool.github");
+    expect(descriptor?.executable).toBe(false);
+    expect(descriptor?.unexecutableReason).toContain("github.repository.read");
+
+    const invocable = advertised.find((c) => c.id === "github.repository.read");
+    expect(invocable?.executable).toBe(true);
+    expect(invocable?.adapterId).toBe("github");
+  });
+
+  it("composes and executes against a capability an adapter actually declares", async () => {
+    const root = await freshRoot({ GITHUB_TOKEN: "ghp_test_token" });
+    const plan = await root.composeIntentWithCatalog(intentFor("github.repository.read"));
     expect(plan.steps).toHaveLength(1);
     expect(plan.steps[0].adapterId).toBe("github");
-    // repo.write + pr.write ⇒ high risk ⇒ above the "execute" approval threshold.
-    expect(plan.approvalRequired).toBe(true);
+    expect(plan.steps[0].capabilityId).toBe("github.repository.read");
+    expect(plan.approvalRequired).toBe(false);
   });
 
-  it("advertises executability honestly per deployment", async () => {
-    const root = await freshRoot({ GITHUB_TOKEN: undefined });
-    const advertised = root.listAdvertisedCapabilities();
-    const catalogEntries = advertised.filter((c) => c.provenance === "catalog");
+  it("binds a second provider without any change to the core", async () => {
+    // The whole point of the composition root: adding a provider is a wiring act.
+    const root = await freshRoot({ LINEAR_API_KEY: "lin_api_test" });
+    const advertised = await root.listAdvertisedCapabilities();
+
+    const linear = advertised.find((c) => c.id === "linear.issue.read");
+    expect(linear?.executable).toBe(true);
+
+    const plan = await root.composeIntentWithCatalog(intentFor("linear.issue.read"));
+    expect(plan.steps[0].adapterId).toBe("linear");
+
+    const descriptor = advertised.find((c) => c.id === "tool.linear");
+    expect(descriptor?.executable).toBe(false);
+    expect(descriptor?.unexecutableReason).toContain("linear.issue.read");
+  });
+
+  it("reports a provider as absent when its credential is not configured", async () => {
+    const root = await freshRoot();
+    const advertised = await root.listAdvertisedCapabilities();
+    expect(advertised.find((c) => c.id === "linear.issue.read")).toBeUndefined();
+    expect(advertised.find((c) => c.id === "github.repository.read")).toBeUndefined();
+
+    const descriptor = advertised.find((c) => c.id === "tool.linear");
+    expect(descriptor?.executable).toBe(false);
+    expect(descriptor?.unexecutableReason).toMatch(/no adapter is bound/i);
+  });
+
+  it("advertises executability honestly for every catalog entry", async () => {
+    const root = await freshRoot();
+    const catalogEntries = (await root.listAdvertisedCapabilities()).filter((c) => c.provenance === "catalog");
     expect(catalogEntries.length).toBeGreaterThan(0);
     for (const capability of catalogEntries) {
       expect(capability.executable).toBe(false);
       expect(capability.unexecutableReason).toBeTruthy();
     }
-    // Runtime-native fixtures remain executable.
-    expect(advertised.find((c) => c.id === "http.demo.read")?.adapterId).toBe("http-demo");
   });
 });
