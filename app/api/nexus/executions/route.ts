@@ -82,6 +82,9 @@ export async function GET(request: Request) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
   }
+  if (projectId && !isUuid(projectId)) {
+    return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
+  }
   if (persistence && projectId) {
     try {
       const [executions, evidence] = await Promise.all([persistence.listExecutions(projectId), persistence.listEvidence(projectId)]);
@@ -102,6 +105,8 @@ export async function POST(request: Request) {
   catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
 
   const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
+  if (!isUuid(projectId)) return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
+
   let actorId = body.requestedBy;
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
@@ -114,7 +119,6 @@ export async function POST(request: Request) {
   if (body.contextRefs !== undefined && (!Array.isArray(body.contextRefs) || body.contextRefs.length > MAX_CONTEXT_REFS || body.contextRefs.some((item) => typeof item !== "string" || item.length > MAX_CONTEXT_REF_LENGTH))) return NextResponse.json({ error: "contextRefs must contain at most 64 strings of at most 500 characters." }, { status: 400 });
   if (body.metadata !== undefined && (!body.metadata || typeof body.metadata !== "object" || Array.isArray(body.metadata) || Object.keys(body.metadata).length > MAX_METADATA_KEYS)) return NextResponse.json({ error: "metadata must be an object with at most 32 keys." }, { status: 400 });
   if (!actorId) return NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 });
-  if ((authRequired() || durable) && !isUuid(projectId)) return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
 
   const intent: NexusIntent = {
     id: body.id ?? crypto.randomUUID(), projectId, objective: body.objective.trim(), requestedBy: actorId,

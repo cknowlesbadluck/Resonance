@@ -343,3 +343,22 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-16 — Jules (Systematic Stabilization & Security Input Harmonization Pass)
+
+**Checked:**
+- Full codebase health across all Next.js API route handlers, authentication mode checking, runtime adapter registry, and execution pipeline.
+- Input validation consistency across endpoints (`/api/nexus/capabilities`, `/api/nexus/executions`, `/api/nexus/executions/[id]/resume`, `/api/nexus/intents`, `/api/nexus/identities`, `/api/events`).
+- Verification suite (`npm run typecheck`, `npm run test`, `npm run build`).
+
+**Decided & Done:**
+- **Harmonized Non-UUID Identifier Rejection:** Updated `app/api/nexus/capabilities/route.ts`, `app/api/nexus/executions/[id]/resume/route.ts`, and `app/api/nexus/executions/route.ts` to strictly validate `projectId` with `isUuid` and fail closed with HTTP 400 on non-UUID identifiers across all execution and discovery endpoints.
+- **Contract Test Coverage:** Added route-level input validation contract tests in `src/nexus/executions.route.test.ts` verifying HTTP 400 status codes for missing or non-UUID `projectId` inputs and invalid `Idempotency-Key` headers.
+- **Verification Suite:** `npm run typecheck` zero errors, `npm run test` 93 passed | 1 skipped (100% pass rate across 22 test files), `npm run build` succeeds cleanly.
+
+**Verified:**
+- `npm run typecheck` passed cleanly.
+- `npm run test` (93 passed, 1 skipped).
+- `npm run build` static/dynamic compilation succeeded.
