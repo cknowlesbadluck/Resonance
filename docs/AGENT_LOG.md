@@ -343,3 +343,24 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-08-18 - Optimized Event Insertion with `emit_event` RPC
+
+### Intent
+Refactor event logging across Nexus execution routes to utilize the Supabase `emit_event` stored procedure instead of direct table upserts.
+
+### What changed
+- Replaced direct `db.from("events").upsert(...)` queries in `app/api/nexus/executions/[id]/resume/route.ts` and `app/api/nexus/executions/route.ts` with RPC calls to `emit_event`.
+
+### Verified locally
+- Ran `npm run typecheck` - passed with 0 errors.
+- Ran `npm test` - all 22 test files passed (90 passed, 1 skipped).
+
+### Pending verification
+- None.
+
+### Not fixed / out of scope
+- N/A.
+
+### Two-Key check
+- No core architecture, identity, or irreversible database schema changes were made.
