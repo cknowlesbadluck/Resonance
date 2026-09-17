@@ -343,3 +343,22 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Jules (Testing Improvement for Nexus Intents Route)
+
+**STATUS**: Complete
+**BLOCKERS**: None
+**NEXT**: Submit PR and complete pre-commit steps.
+
+**Intent:**
+- Add comprehensive error path and contract test coverage for `POST /api/nexus/intents` route handler (`app/api/nexus/intents/route.ts`).
+
+**What Changed:**
+- Created `src/nexus/intents.route.test.ts` to test route handling logic for `POST /api/nexus/intents`.
+- Covered invalid JSON payloads (400), payload body size limit exceeded (400), invalid or missing `projectId` UUID (400), missing/invalid `objective` (400), missing `requestedBy` actor ID (400), invalid `requirements` (400), invalid optional fields (`id`, `contextRefs`, `metadata`) (400), composition failures (422), and happy path response (200).
+
+**Verified locally:**
+- `npm run typecheck` passed cleanly with 0 type errors.
+- `npm run test` passed all 102 tests across 23 test files (1 skipped).
