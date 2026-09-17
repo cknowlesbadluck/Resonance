@@ -343,3 +343,15 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-17 — Jules (GitHub Webhook Handler Unit Tests)
+
+**Context:** Added comprehensive test coverage for POST /api/webhooks/github route handler (`app/api/webhooks/github/route.ts`).
+
+**Changed:**
+- `vitest.config.ts`: Added `"app/**/*.test.ts"` pattern to test runner configuration.
+- `app/api/webhooks/github/route.test.ts`: Created new test suite covering signature verification failure modes (401), invalid JSON payload handling (400), unconfigured database fallback (200), successful Supabase event persistence (200), default event type and delivery ID fallbacks, and database persistence error handling (500).
+
+**Verified:**
+- `npm run test` (99 passed, 1 skipped across 23 test files).
+- `npm run typecheck` clean with zero errors.
