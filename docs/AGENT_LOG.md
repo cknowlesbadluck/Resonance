@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Jules (Code Health: Refactor SupabaseNexusPersistence)
+
+**Checked:**
+- Code health issue on `SupabaseNexusPersistence` in `src/nexus/persistence/supabase.ts`.
+- Evaluated database operations and row mappings for capabilities, context entries, executions, and evidence.
+
+**Decided / Done:**
+- Refactored `src/nexus/persistence/supabase.ts` by extracting typed data mappers (`mapCapabilityToRow`, `mapContextEntryToRow`, `mapExecutionToRow`, `mapEvidenceToRow`, `mapRowToExecution`, `mapRowToEvidence`) and database operation helpers (`upsertCapability`, `upsertContextEntry`, `upsertExecution`, `upsertEvidence`, `fetchExecutions`, `fetchEvidence`).
+- Reduced `SupabaseNexusPersistence` class to concise delegation to these helper functions, improving maintainability, readability, and testability while preserving behavior and interface compatibility.
+- Added comprehensive unit tests in `src/nexus/persistence/supabase.test.ts`.
+
+**Verified:**
+- `npm run typecheck` clean.
+- `npm run test` passed all 23 test files (99 passed, 1 skipped).
