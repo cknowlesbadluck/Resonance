@@ -343,3 +343,12 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-17 — Jules (GitHub webhook event deduplication)
+
+**Intent:** Deduplicate raw inbound events from the GitHub webhook adapter.
+**What changed:** Modified `app/api/webhooks/github/route.ts` to utilize the `emit_event` Supabase RPC function instead of performing a direct insert into the `events` table. This leverages the database function's `ON CONFLICT` logic against the unique index on `(project_id, source, external_id)` to deduplicate raw events, resolving the "raw event bus deduplication" roadmap item. Added full test coverage for the routing logic inside `src/nexus/webhooks/github.route.test.ts`.
+**Verified locally:** Clean `npm run typecheck`, 100% test pass rate (`npm run test`), production build successful (`npm run build`).
+**Pending verification:** Webhook handling in a live environment processing identical delivery payloads consecutively.
+**Not fixed / out of scope:** Inbound webhook integration for providers other than GitHub.
+**Two-Key check:** Not required; this change acts on a previously established roadmap checkpoint without changing system boundaries.

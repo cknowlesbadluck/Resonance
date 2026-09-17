@@ -35,19 +35,20 @@ export async function POST(request: Request) {
   }
 
   const event = request.headers.get("x-github-event") ?? "unknown";
-  const deliveryId = request.headers.get("x-github-delivery") ?? undefined;
+  const deliveryId = request.headers.get("x-github-delivery") ?? null;
   const projectId = process.env.RESONANCE_PROJECT_ID ?? null;
 
   const db = getDbClient();
   if (db && projectId) {
-    const { error } = await db.from("events").insert({
-      project_id: projectId,
-      source: "github",
-      type: `github.${event}`,
-      status: "received",
-      payload,
-      external_id: deliveryId,
+    const { error } = await db.rpc("emit_event", {
+      p_project_id: projectId,
+      p_source: "github",
+      p_type: `github.${event}`,
+      p_status: "received",
+      p_external_id: deliveryId,
+      p_payload: payload,
     });
+
     if (error) {
       console.error("github webhook: failed to persist event", error);
       return NextResponse.json({ error: "Failed to persist event" }, { status: 500 });
