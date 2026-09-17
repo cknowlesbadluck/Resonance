@@ -343,3 +343,9 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2025-09-17 - Refactor POST Resume Route
+
+- Extracted database operations, claim logic, plan escalation check, and sink builder from `app/api/nexus/executions/[id]/resume/route.ts` into service functions in `src/nexus/resume.ts`.
+- Added unit test suite in `src/nexus/resume.test.ts` for plan escalation checking.
+- Verified TypeScript compilation (`npm run typecheck`) and Vitest test suite (`npm run test`).
