@@ -14,7 +14,13 @@ export function createNexusPersistenceFromEnv(): NexusPersistence | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
-  return new SupabaseNexusPersistence(createClient(url, key, { auth: { persistSession: false } }));
+  const customWebSocket = typeof WebSocket !== "undefined" ? WebSocket : (class {} as any);
+  return new SupabaseNexusPersistence(
+    createClient(url, key, {
+      auth: { persistSession: false },
+      realtime: { transport: customWebSocket },
+    })
+  );
 }
 
 // Data Mappers
