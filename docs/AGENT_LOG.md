@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Jules (Nexus Intents API Route Error Path Testing)
+
+**Checked:**
+- `app/api/nexus/intents/route.ts` error handling paths and parameter validation logic.
+- Test coverage for invalid JSON payloads, request size limits, missing/invalid UUIDs, invalid requirement keys, and optional field validations.
+
+**Decided / Done:**
+- Added comprehensive unit and contract tests in `src/nexus/intents.route.test.ts`.
+- Covered 11 distinct test cases: invalid JSON body (400), payload size excess (400), invalid `projectId` (400), objective validation (400), `requestedBy` validation (400), requirement validation (400), optional field validation for `id`, `contextRefs`, `metadata` (400), composition failure for unmatched requirements (422), and valid intent composition (200).
+
+**Verified:**
+- `npm run typecheck` clean.
+- `npm test` 101 passed, 1 skipped across 23 test files.
+- `npm run build` succeeded cleanly.
