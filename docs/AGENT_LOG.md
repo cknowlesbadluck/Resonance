@@ -343,3 +343,16 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-16 — Jules (Testing Improvement — authenticateNexusRequest)
+
+**Checked:** Missing unit tests for `authenticateNexusRequest` in `src/auth/nexus-request.ts`.
+**Decided / Created:**
+- Created comprehensive unit test suite `src/auth/nexus-request.test.ts` covering `isUuid` helper and `authenticateNexusRequest`.
+- Covered happy path (`NexusRequestAuth` return), invalid/non-UUID `projectId`, missing/malformed Bearer header, empty tokens, missing Supabase environment variables, `getUser` failure/missing user, and `project_members` database error/missing record.
+- Used Vitest `vi.mock` for `@supabase/supabase-js`.
+**Verified:**
+- `npm run typecheck` passed cleanly with zero errors.
+- `npm run test` passed with 101 tests (100 passed, 1 skipped across 23 test files).
