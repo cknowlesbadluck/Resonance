@@ -93,97 +93,194 @@ export async function GET(request: Request) {
   return NextResponse.json({ executions: memoryExecutions, evidence: memoryEvidence, source: "memory" });
 }
 
-export async function POST(request: Request) {
+function validateIdempotencyKey(request: Request): { ok: true; idempotencyKey: string } | { ok: false; response: NextResponse } {
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
-  if (!idempotencyKey || idempotencyKey.length > MAX_IDEMPOTENCY_LENGTH) return NextResponse.json({ error: "Idempotency-Key header is required" }, { status: 400 });
+  if (!idempotencyKey || idempotencyKey.length > MAX_IDEMPOTENCY_LENGTH) {
+    return { ok: false, response: NextResponse.json({ error: "Idempotency-Key header is required" }, { status: 400 }) };
+  }
+  return { ok: true, idempotencyKey };
+}
 
+async function parseAndValidateIntent(
+  request: Request
+): Promise<{ ok: true; intent: NexusIntent } | { ok: false; response: NextResponse }> {
   let body: Partial<NexusIntent>;
-  try { body = await readJson(request); }
-  catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
+  try {
+    body = await readJson(request);
+  } catch (error) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }),
+    };
+  }
 
   const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
   let actorId = body.requestedBy;
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
-    if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+    if (!auth) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 }),
+      };
+    }
     actorId = auth.userId;
   }
-  if (typeof body.objective !== "string" || !body.objective.trim() || body.objective.length > MAX_OBJECTIVE_LENGTH) return NextResponse.json({ error: "objective is required and must be at most 4000 characters." }, { status: 400 });
-  if (!Array.isArray(body.requirements) || body.requirements.length === 0 || body.requirements.length > MAX_REQUIREMENTS) return NextResponse.json({ error: "requirements must contain between 1 and 32 items." }, { status: 400 });
-  if (!body.requirements.every(isRequirement)) return NextResponse.json({ error: "each requirement must include a non-empty key string." }, { status: 400 });
-  if (body.contextRefs !== undefined && (!Array.isArray(body.contextRefs) || body.contextRefs.length > MAX_CONTEXT_REFS || body.contextRefs.some((item) => typeof item !== "string" || item.length > MAX_CONTEXT_REF_LENGTH))) return NextResponse.json({ error: "contextRefs must contain at most 64 strings of at most 500 characters." }, { status: 400 });
-  if (body.metadata !== undefined && (!body.metadata || typeof body.metadata !== "object" || Array.isArray(body.metadata) || Object.keys(body.metadata).length > MAX_METADATA_KEYS)) return NextResponse.json({ error: "metadata must be an object with at most 32 keys." }, { status: 400 });
-  if (!actorId) return NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 });
-  if ((authRequired() || durable) && !isUuid(projectId)) return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
+
+  if (typeof body.objective !== "string" || !body.objective.trim() || body.objective.length > MAX_OBJECTIVE_LENGTH) {
+    return { ok: false, response: NextResponse.json({ error: "objective is required and must be at most 4000 characters." }, { status: 400 }) };
+  }
+  if (!Array.isArray(body.requirements) || body.requirements.length === 0 || body.requirements.length > MAX_REQUIREMENTS) {
+    return { ok: false, response: NextResponse.json({ error: "requirements must contain between 1 and 32 items." }, { status: 400 }) };
+  }
+  if (!body.requirements.every(isRequirement)) {
+    return { ok: false, response: NextResponse.json({ error: "each requirement must include a non-empty key string." }, { status: 400 }) };
+  }
+  if (body.contextRefs !== undefined && (!Array.isArray(body.contextRefs) || body.contextRefs.length > MAX_CONTEXT_REFS || body.contextRefs.some((item) => typeof item !== "string" || item.length > MAX_CONTEXT_REF_LENGTH))) {
+    return { ok: false, response: NextResponse.json({ error: "contextRefs must contain at most 64 strings of at most 500 characters." }, { status: 400 }) };
+  }
+  if (body.metadata !== undefined && (!body.metadata || typeof body.metadata !== "object" || Array.isArray(body.metadata) || Object.keys(body.metadata).length > MAX_METADATA_KEYS)) {
+    return { ok: false, response: NextResponse.json({ error: "metadata must be an object with at most 32 keys." }, { status: 400 }) };
+  }
+  if (!actorId) {
+    return { ok: false, response: NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 }) };
+  }
+  if ((authRequired() || durable) && !isUuid(projectId)) {
+    return { ok: false, response: NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 }) };
+  }
 
   const intent: NexusIntent = {
-    id: body.id ?? crypto.randomUUID(), projectId, objective: body.objective.trim(), requestedBy: actorId,
-    requirements: body.requirements, contextRefs: body.contextRefs ?? [], metadata: body.metadata ?? {},
+    id: body.id ?? crypto.randomUUID(),
+    projectId,
+    objective: body.objective.trim(),
+    requestedBy: actorId,
+    requirements: body.requirements,
+    contextRefs: body.contextRefs ?? [],
+    metadata: body.metadata ?? {},
   };
-  const hash = hashExecutionRequest(intent);
-  // Fencing token for this attempt. Only the holder may advance the request.
+
+  return { ok: true, intent };
+}
+
+type ClaimResult =
+  | { ok: true; claimToken: string }
+  | { ok: false; response: NextResponse };
+
+async function claimExecutionRequest(
+  intent: NexusIntent,
+  idempotencyKey: string
+): Promise<ClaimResult> {
+  if (!db) {
+    return { ok: true, claimToken: crypto.randomUUID() };
+  }
+
   let claimToken = crypto.randomUUID();
+  const hash = hashExecutionRequest(intent);
 
-  if (db) {
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-    const { count: recentCount, error: rateError } = await db.from("nexus_execution_requests").select("id", { count: "exact", head: true }).eq("project_id", intent.projectId).gte("created_at", windowStart);
-    if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
-    if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+  const { count: recentCount, error: rateError } = await db
+    .from("nexus_execution_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", intent.projectId)
+    .gte("created_at", windowStart);
 
-    const claim = await db.from("nexus_execution_requests").insert({
-      project_id: intent.projectId,
-      idempotency_key: idempotencyKey,
-      request_hash: hash,
-      status: "accepted",
-      claim_token: claimToken,
-    });
+  if (rateError) {
+    return { ok: false, response: NextResponse.json({ error: rateError.message }, { status: 500 }) };
+  }
+  if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "Execution rate limit exceeded. Retry after the current window." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      ),
+    };
+  }
 
-    if (claim.error) {
-      const { data: existing, error: lookupError } = await db
-        .from("nexus_execution_requests")
-        .select("request_hash,response,status,execution_id,updated_at,claim_token")
-        .eq("project_id", intent.projectId)
-        .eq("idempotency_key", idempotencyKey)
-        .maybeSingle();
-      if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 500 });
-      if (!existing) return NextResponse.json({ error: claim.error.message }, { status: 500 });
-      if (existing.request_hash !== hash) {
-        return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
-      }
+  const claim = await db.from("nexus_execution_requests").insert({
+    project_id: intent.projectId,
+    idempotency_key: idempotencyKey,
+    request_hash: hash,
+    status: "accepted",
+    claim_token: claimToken,
+  });
 
-      let canReclaim = false;
-      if (existing.status === "accepted" && existing.updated_at) {
-        const staleBefore = new Date(Date.now() - CLAIM_STALE_MS).toISOString();
-        if (existing.updated_at < staleBefore) {
-          // Atomic reclaim: only one concurrent waiter wins by writing a new claim_token.
-          const newToken = crypto.randomUUID();
-          const reclaim = await db
-            .from("nexus_execution_requests")
-            .update({
-              claim_token: newToken,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("project_id", intent.projectId)
-            .eq("idempotency_key", idempotencyKey)
-            .eq("status", "accepted")
-            .lt("updated_at", staleBefore)
-            .select("id, claim_token")
-            .maybeSingle();
-          if (reclaim.data?.claim_token === newToken) {
-            claimToken = newToken;
-            canReclaim = true;
-          }
+  if (claim.error) {
+    const { data: existing, error: lookupError } = await db
+      .from("nexus_execution_requests")
+      .select("request_hash,response,status,execution_id,updated_at,claim_token")
+      .eq("project_id", intent.projectId)
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+
+    if (lookupError) {
+      return { ok: false, response: NextResponse.json({ error: lookupError.message }, { status: 500 }) };
+    }
+    if (!existing) {
+      return { ok: false, response: NextResponse.json({ error: claim.error.message }, { status: 500 }) };
+    }
+    if (existing.request_hash !== hash) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: "Idempotency-Key was already used for a different execution request." },
+          { status: 409 }
+        ),
+      };
+    }
+
+    let canReclaim = false;
+    if (existing.status === "accepted" && existing.updated_at) {
+      const staleBefore = new Date(Date.now() - CLAIM_STALE_MS).toISOString();
+      if (existing.updated_at < staleBefore) {
+        // Atomic reclaim: only one concurrent waiter wins by writing a new claim_token.
+        const newToken = crypto.randomUUID();
+        const reclaim = await db
+          .from("nexus_execution_requests")
+          .update({
+            claim_token: newToken,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("project_id", intent.projectId)
+          .eq("idempotency_key", idempotencyKey)
+          .eq("status", "accepted")
+          .lt("updated_at", staleBefore)
+          .select("id, claim_token")
+          .maybeSingle();
+
+        if (reclaim.data?.claim_token === newToken) {
+          claimToken = newToken;
+          canReclaim = true;
         }
       }
+    }
 
-      if (!canReclaim) {
-        return NextResponse.json(
+    if (!canReclaim) {
+      return {
+        ok: false,
+        response: NextResponse.json(
           existing.response ?? { status: existing.status, executionId: existing.execution_id },
-          { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } },
-        );
-      }
+          { status: existing.response ? 200 : 202, headers: { "X-Idempotent-Replay": "true" } }
+        ),
+      };
     }
   }
+
+  return { ok: true, claimToken };
+}
+
+export async function POST(request: Request) {
+  const keyResult = validateIdempotencyKey(request);
+  if (!keyResult.ok) return keyResult.response;
+  const { idempotencyKey } = keyResult;
+
+  const intentResult = await parseAndValidateIntent(request);
+  if (!intentResult.ok) return intentResult.response;
+  const { intent } = intentResult;
+
+  const claimResult = await claimExecutionRequest(intent, idempotencyKey);
+  if (!claimResult.ok) return claimResult.response;
+  const { claimToken } = claimResult;
 
   try {
     const plan = composeNexusIntent(intent);
