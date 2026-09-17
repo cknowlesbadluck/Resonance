@@ -343,3 +343,16 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Jules (Code Health: Refactor POST Executions Route)
+
+**Checked:**
+- `app/api/nexus/executions/route.ts`: Evaluated `POST` route handler complexity and length.
+- Extracted route logic into modular, single-responsibility helper functions (`validateIdempotencyKey`, `parseAndValidateIntent`, `claimExecutionRequest`).
+- Refactored `POST` handler into an orchestration pipeline that preserves all status codes, error payloads, rate limits, atomic claim logic, and execution steps.
+
+**Verified:**
+- `npm run typecheck`: clean with zero errors.
+- `npm test`: 94 passed, 1 skipped across 22 test files (including new unit tests in `src/nexus/executions.route.test.ts`).
