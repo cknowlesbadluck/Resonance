@@ -28,4 +28,58 @@ describe("capability plane", () => {
     expect(result.resolved).toEqual([]);
     expect(result.missing).toEqual(["missing.capability"]);
   });
+
+  it("detects dependency cycles and throws descriptive error", () => {
+    const cyclicCatalog = [
+      {
+        id: "tool.a",
+        name: "Tool A",
+        description: "Cyclic tool A",
+        kind: "tool" as const,
+        provider: "test",
+        version: "1.0.0",
+        status: "available" as const,
+        permissions: [],
+        dependencies: [{ id: "tool.b", kind: "tool" as const }],
+        tags: [],
+      },
+      {
+        id: "tool.b",
+        name: "Tool B",
+        description: "Cyclic tool B",
+        kind: "tool" as const,
+        provider: "test",
+        version: "1.0.0",
+        status: "available" as const,
+        permissions: [],
+        dependencies: [{ id: "tool.a", kind: "tool" as const }],
+        tags: [],
+      },
+    ];
+
+    expect(() => resolveCapabilities(["tool.a"], cyclicCatalog)).toThrow(
+      "Capability dependency cycle detected at tool.a"
+    );
+  });
+
+  it("detects self-referencing dependency cycles", () => {
+    const selfCyclicCatalog = [
+      {
+        id: "tool.self",
+        name: "Self Tool",
+        description: "Self cyclic tool",
+        kind: "tool" as const,
+        provider: "test",
+        version: "1.0.0",
+        status: "available" as const,
+        permissions: [],
+        dependencies: [{ id: "tool.self", kind: "tool" as const }],
+        tags: [],
+      },
+    ];
+
+    expect(() => resolveCapabilities(["tool.self"], selfCyclicCatalog)).toThrow(
+      "Capability dependency cycle detected at tool.self"
+    );
+  });
 });
