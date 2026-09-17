@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Jules (Testing Improvement: Capability Dependency Cycle Detection)
+
+**Checked:**
+- **Codebase & Architecture:** Examined `lib/capabilities.ts` capability resolution logic (`resolveCapabilities`) and its cycle detection guard (`visiting.has(id)`).
+- **Verification Suite:** `npm run typecheck` passes cleanly; Vitest test suite (`npm run test`) passes 100% (92 passed, 1 skipped across 22 test files).
+
+**Decided & Implemented:**
+- Updated `resolveCapabilities` signature to accept an optional `capabilitiesCatalog` parameter defaulting to the global `catalog`. This enables isolated testing of fixture capability graphs without mutating module-level state.
+- Added comprehensive unit tests in `lib/capabilities.test.ts` covering cyclic dependency detection (mutual cycle `A -> B -> A` and self-referencing cycle `self -> self`).
+- Verified that `resolveCapabilities` throws a descriptive error matching `Capability dependency cycle detected at <id>`.
+
+**Verified:**
+- `npm run typecheck` clean.
+- `npm run test` (92 passed, 1 skipped).

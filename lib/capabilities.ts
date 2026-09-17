@@ -51,8 +51,11 @@ export function listCapabilities(): Capability[] {
   return [...catalog];
 }
 
-export function resolveCapabilities(requested: string[]): CapabilityResolution {
-  const byId = new Map(catalog.map(capability => [capability.id, capability]));
+export function resolveCapabilities(
+  requested: string[],
+  capabilitiesCatalog: Capability[] = catalog
+): CapabilityResolution {
+  const byId = new Map(capabilitiesCatalog.map(capability => [capability.id, capability]));
   const resolved: Capability[] = [];
   const missing: string[] = [];
   const unavailable: string[] = [];
