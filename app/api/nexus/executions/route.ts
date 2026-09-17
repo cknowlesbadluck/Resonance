@@ -93,7 +93,7 @@ export async function GET(request: Request) {
   return NextResponse.json({ executions: memoryExecutions, evidence: memoryEvidence, source: "memory" });
 }
 
-export function validateIdempotencyKey(request: Request): { ok: true; idempotencyKey: string } | { ok: false; response: NextResponse } {
+function validateIdempotencyKey(request: Request): { ok: true; idempotencyKey: string } | { ok: false; response: NextResponse } {
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
   if (!idempotencyKey || idempotencyKey.length > MAX_IDEMPOTENCY_LENGTH) {
     return { ok: false, response: NextResponse.json({ error: "Idempotency-Key header is required" }, { status: 400 }) };
@@ -101,7 +101,7 @@ export function validateIdempotencyKey(request: Request): { ok: true; idempotenc
   return { ok: true, idempotencyKey };
 }
 
-export async function parseAndValidateIntent(
+async function parseAndValidateIntent(
   request: Request
 ): Promise<{ ok: true; intent: NexusIntent } | { ok: false; response: NextResponse }> {
   let body: Partial<NexusIntent>;
@@ -166,7 +166,7 @@ type ClaimResult =
   | { ok: true; claimToken: string }
   | { ok: false; response: NextResponse };
 
-export async function claimExecutionRequest(
+async function claimExecutionRequest(
   intent: NexusIntent,
   idempotencyKey: string
 ): Promise<ClaimResult> {
