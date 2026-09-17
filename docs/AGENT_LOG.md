@@ -343,3 +343,18 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-16 — Jules (Testing Improvement: Skill Registry Duplicate Registration Error)
+
+**Checked:**
+- Identified missing unit test for duplicate skill registration error in `src/nexus/skills.ts` line 35 (`InMemorySkillRegistry.register`).
+- Checked existing test coverage across `src/nexus/`.
+
+**Implemented:**
+- Added `src/nexus/skills.test.ts` unit test suite covering `InMemorySkillRegistry` and `skills.ts` helpers.
+- Added explicit error test for duplicate skill registration attempting to register the same skill ID twice.
+- Added tests for `validateSkill`, `get` (deep clone object isolation), `remove`, `discover` (filtering by namespace, tags, search query, and sorting order), and `resolveSkill` (satisfied, missing, denied).
+
+**Verified:**
+- Ran `npm run typecheck` and `npm run test` (all 23 test files passed, 101 tests passed, 1 skipped).
+- Verified failure behavior by temporarily breaking the duplicate check line and confirming test assertion failure.
