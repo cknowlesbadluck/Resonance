@@ -343,3 +343,21 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-16 — Jules (Testing Improvement: Nexus Intents API Route Test Coverage)
+
+**Checked:**
+- Inspected `app/api/nexus/intents/route.ts` error paths and input validation logic.
+- Identified missing test coverage for invalid JSON payloads, request body byte limits (> 64 KiB), `projectId` UUID validation, objective length and missing checks, requirement payload validation, and optional fields type checking.
+
+**Decided & Done:**
+- Added `src/nexus/intents.route.test.ts` to test `POST` handler directly in Vitest.
+- Covered invalid JSON parsing error path (returns status 400 with "Invalid JSON body.").
+- Covered byte limit error paths (> 64 KiB via `content-length` header and body text).
+- Covered validation for `projectId`, `objective`, `requestedBy`, `requirements`, and optional shape validation (`id`, `contextRefs`, `metadata`).
+- Covered successful intent composition happy path (returns status 200 with intent and plan).
+
+**Verified:**
+- Verified `src/nexus/intents.route.test.ts` file structure and test cases.
