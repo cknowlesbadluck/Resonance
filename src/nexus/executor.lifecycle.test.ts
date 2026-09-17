@@ -103,4 +103,80 @@ describe("NexusExecutor lifecycle semantics", () => {
     expect(result.execution.status).toBe("completed");
     expect(eventTypes(events)).toEqual(["execution.started", "execution.retrying", "execution.step.completed", "execution.completed"]);
   });
+
+  it("executes independent steps in parallel waves while preserving output order", async () => {
+    const executedOrder: string[] = [];
+    const adapter = makeAdapter(async ({ capabilityId }) => {
+      executedOrder.push(capabilityId);
+      return { ok: true, output: `result-${capabilityId}` };
+    });
+
+    const dagPlan: NexusExecutionPlan = {
+      ...plan,
+      steps: [
+        { id: "s1", capabilityId: "cap1", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: [] },
+        { id: "s2", capabilityId: "cap2", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: [] },
+        { id: "s3", capabilityId: "cap3", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: ["s1", "s2"] },
+      ],
+    };
+
+    const result = await new NexusExecutor([adapter], {
+      recordEvidence: async () => undefined,
+    }).execute(dagPlan);
+
+    expect(result.execution.status).toBe("completed");
+    expect(result.execution.output).toEqual(["result-cap1", "result-cap2", "result-cap3"]);
+    expect(executedOrder.indexOf("cap3")).toBeGreaterThan(executedOrder.indexOf("cap1"));
+    expect(executedOrder.indexOf("cap3")).toBeGreaterThan(executedOrder.indexOf("cap2"));
+  });
+
+  it("detects cyclic step dependencies and fails cleanly", async () => {
+    const cyclicPlan: NexusExecutionPlan = {
+      ...plan,
+      steps: [
+        { id: "s1", capabilityId: "cap1", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: ["s2"] },
+        { id: "s2", capabilityId: "cap2", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: ["s1"] },
+      ],
+    };
+
+    const result = await new NexusExecutor([makeAdapter(async () => ({ ok: true }))], {
+      recordEvidence: async () => undefined,
+    }).execute(cyclicPlan);
+
+    expect(result.execution.status).toBe("failed");
+    expect(result.execution.error).toMatch(/Cyclic dependency/i);
+  });
+
+  it("detects unknown step dependency references and fails cleanly", async () => {
+    const invalidRefPlan: NexusExecutionPlan = {
+      ...plan,
+      steps: [
+        { id: "s1", capabilityId: "cap1", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: ["unknown-step"] },
+      ],
+    };
+
+    const result = await new NexusExecutor([makeAdapter(async () => ({ ok: true }))], {
+      recordEvidence: async () => undefined,
+    }).execute(invalidRefPlan);
+
+    expect(result.execution.status).toBe("failed");
+    expect(result.execution.error).toMatch(/depends on unknown step/i);
+  });
+
+  it("detects duplicate step IDs and fails cleanly", async () => {
+    const dupPlan: NexusExecutionPlan = {
+      ...plan,
+      steps: [
+        { id: "s1", capabilityId: "cap1", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: [] },
+        { id: "s1", capabilityId: "cap2", adapterId: "adapter", input: {}, requiresApproval: false, dependsOn: [] },
+      ],
+    };
+
+    const result = await new NexusExecutor([makeAdapter(async () => ({ ok: true }))], {
+      recordEvidence: async () => undefined,
+    }).execute(dupPlan);
+
+    expect(result.execution.status).toBe("failed");
+    expect(result.execution.error).toMatch(/Duplicate step ID/i);
+  });
 });

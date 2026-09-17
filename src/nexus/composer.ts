@@ -19,6 +19,7 @@ export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry,
       adapterId: adapter.id,
       input: intent.metadata?.input ?? {},
       requiresApproval: decision.requiresApproval,
+      dependsOn: [],
     };
   });
   const approvalRequired = steps.some((step) => step.requiresApproval);

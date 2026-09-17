@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Performance Optimization for NexusExecutor DAG execution
+
+**Context:** Performance optimization task to eliminate sequential I/O execution bottlenecks in `NexusExecutor` by evaluating step dependencies as a Directed Acyclic Graph (DAG) and executing independent steps concurrently using `Promise.all`.
+
+**Changed:**
+- `src/nexus/types.ts`: Added optional `dependsOn?: string[]` to `ExecutionStep` interface.
+- `src/nexus/executor.ts`: Implemented `partitionStepsIntoWaves` function to validate step IDs, detect cycles/unknown step references, and group steps into parallel execution waves. Updated `NexusExecutor.execute` to run independent steps within each wave concurrently using `Promise.all` while preserving output ordering (`outputs[stepIndex]`), event emissions, evidence recording, and approval gating.
+- `src/nexus/composer.ts`: Set `dependsOn: []` for independent capability requirements during intent step composition.
+- `src/nexus/executor.lifecycle.test.ts`: Added unit tests for DAG parallel wave execution, output ordering, cycle detection, unknown step references, and duplicate step IDs.
+- `src/nexus/executor.benchmark.test.ts`: Added latency benchmark comparing sequential execution vs parallel DAG wave execution.
+
+**Verification:**
+- Measured DAG benchmark results: Sequential execution of 10 steps with 10ms I/O delay took ~116.18ms; parallel DAG execution took ~10.70ms (~10.86x speedup, ~90.8% latency reduction).
+- Full verification suite: `npm run typecheck` clean; `npm run test` passed 100% across all 22 test files (95 passed, 1 skipped).
