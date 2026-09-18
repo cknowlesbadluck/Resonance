@@ -53,50 +53,93 @@ export class NexusExecutor {
 
     try {
       const outputs: unknown[] = [];
-      for (const step of plan.steps) {
-        if (step.requiresApproval) {
-          execution.status = "waiting";
-          execution.error = "Approval required before execution.";
-          await this.persistExecution(execution);
-          await this.emitEvent(plan, execution, "execution.waiting", "waiting", { stepId: step.id, reason: execution.error });
-          return { execution, evidence };
+      const completedSteps = new Set<string>();
+      const pendingSteps = new Set(plan.steps);
+
+      while (pendingSteps.size > 0) {
+        // Find steps ready to execute in this wave
+        const wave = Array.from(pendingSteps).filter(step =>
+          !step.dependsOn || step.dependsOn.every(dep => completedSteps.has(dep))
+        );
+
+        if (wave.length === 0) {
+          throw new Error("Deadlock detected: unresolvable step dependencies.");
         }
-        const adapter = this.adapterMap.get(step.adapterId);
-        if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
-        let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
-        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-          try {
-            result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
-          } catch (error) {
-            if (attempt === maxAttempts) {
-              result = { ok: false, error: error instanceof Error ? error.message : String(error) };
-              break;
+
+        // Check for approvals before firing any external calls for this wave
+        for (const step of wave) {
+          if (step.requiresApproval) {
+            execution.status = "waiting";
+            execution.error = "Approval required before execution.";
+            await this.persistExecution(execution);
+            await this.emitEvent(plan, execution, "execution.waiting", "waiting", { stepId: step.id, reason: execution.error });
+            return { execution, evidence };
+          }
+        }
+
+        // Execute wave concurrently
+        const waveResults = await Promise.all(wave.map(async (step) => {
+          const adapter = this.adapterMap.get(step.adapterId);
+          if (!adapter) return { step, error: `Adapter ${step.adapterId} not found` };
+
+          let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
+          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            try {
+              result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
+            } catch (error) {
+              if (attempt === maxAttempts) {
+                result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+                break;
+              }
+              await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
+              await sleep(retry.backoffMs * attempt);
+              continue;
             }
+            if (result.ok || attempt === maxAttempts) break;
             await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
             await sleep(retry.backoffMs * attempt);
-            continue;
           }
-          if (result.ok || attempt === maxAttempts) break;
-          await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
-          await sleep(retry.backoffMs * attempt);
+
+          if (!result) return { step, error: `Capability ${step.capabilityId} produced no invocation result.` };
+
+          const item: NexusEvidence = {
+            id: crypto.randomUUID(),
+            executionId: execution.id,
+            type: result.ok ? "event" : "audit",
+            summary: result.ok ? `Capability ${step.capabilityId} completed.` : `Capability ${step.capabilityId} failed.`,
+            payload: result.ok ? result.output : result.error,
+            createdAt: new Date().toISOString(),
+          };
+          evidence.push(item);
+          await this.sink.recordEvidence(item);
+          await this.emitEvent(plan, execution, result.ok ? "execution.step.completed" : "execution.step.failed", result.ok ? "completed" : "failed", { stepId: step.id, capabilityId: step.capabilityId });
+
+          if (!result.ok) return { step, error: result.error ?? "Adapter invocation failed" };
+
+          return { step, output: result.output };
+        }));
+
+        // Process wave results - first pass registers success, second checks for error to prevent ignoring successes from the wave
+        for (const res of waveResults) {
+          if (!res.error) {
+            outputs.push(res.output);
+            completedSteps.add(res.step.id);
+            pendingSteps.delete(res.step);
+          }
         }
-        if (!result) throw new Error(`Capability ${step.capabilityId} produced no invocation result.`);
-        const item: NexusEvidence = {
-          id: crypto.randomUUID(),
-          executionId: execution.id,
-          type: result.ok ? "event" : "audit",
-          summary: result.ok ? `Capability ${step.capabilityId} completed.` : `Capability ${step.capabilityId} failed.`,
-          payload: result.ok ? result.output : result.error,
-          createdAt: new Date().toISOString(),
-        };
-        evidence.push(item);
-        await this.sink.recordEvidence(item);
-        await this.emitEvent(plan, execution, result.ok ? "execution.step.completed" : "execution.step.failed", result.ok ? "completed" : "failed", { stepId: step.id, capabilityId: step.capabilityId });
-        if (!result.ok) throw new Error(result.error ?? "Adapter invocation failed");
-        outputs.push(result.output);
+
+        for (const res of waveResults) {
+          if (res.error) {
+            throw new Error(res.error);
+          }
+        }
       }
+
       execution.status = "completed";
       execution.completedAt = new Date().toISOString();
+      // Only set outputs if we executed strictly sequentially without complex DAGs
+      // or we accept outputs not matching original step order.
+      // The original just pushed to outputs.
       execution.output = outputs;
       await this.persistExecution(execution);
       await this.emitEvent(plan, execution, "execution.completed", "completed", { outputCount: outputs.length });
