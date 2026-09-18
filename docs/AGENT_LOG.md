@@ -343,3 +343,10 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-15 - Feat: DAG Execution for NexusExecutor
+- Implemented concurrent DAG execution in `NexusExecutor`.
+- `ExecutionStep` now supports an optional `dependsOn?: string[]` property.
+- Modified `NexusExecutor.execute()` to resolve independent steps and execute them in parallel waves using `Promise.all`.
+- Handled edge cases correctly for concurrent execution, avoiding state inconsistency by checking for `requiresApproval` before launching external calls, and properly logging success/failure states.
+- Added corresponding tests for DAG execution and deadlock detection.
