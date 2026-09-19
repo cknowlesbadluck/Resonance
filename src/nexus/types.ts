@@ -92,7 +92,7 @@ export interface SkillResolution {
 }
 
 export interface NexusIntent { id: string; objective: string; projectId: string; requirements: CapabilityRequirement[]; contextRefs?: string[]; requestedBy: string; metadata?: Record<string, unknown>; }
-export interface ExecutionStep { id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; }
+export interface ExecutionStep { id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; dependsOn?: string[]; }
 export interface ExecutionRetryPolicy { maxAttempts: number; backoffMs: number; }
 export interface NexusExecutionPlan { id: string; intentId: string; projectId: string; actorId: string; mode: ExecutionMode; steps: ExecutionStep[]; contextRefs: string[]; approvalRequired: boolean; rationale: string[]; retry?: ExecutionRetryPolicy; }
 export interface NexusExecution { id: string; planId: string; status: "planned" | "running" | "waiting" | "completed" | "failed" | "cancelled"; startedAt?: string; completedAt?: string; output?: unknown; error?: string; }
