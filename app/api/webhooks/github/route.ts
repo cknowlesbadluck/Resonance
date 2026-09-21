@@ -40,13 +40,13 @@ export async function POST(request: Request) {
 
   const db = getDbClient();
   if (db && projectId) {
-    const { error } = await db.from("events").insert({
-      project_id: projectId,
-      source: "github",
-      type: `github.${event}`,
-      status: "received",
-      payload,
-      external_id: deliveryId,
+    const { error } = await db.rpc("emit_event", {
+      p_project_id: projectId,
+      p_source: "github",
+      p_type: `github.${event}`,
+      p_status: "received",
+      p_payload: payload,
+      p_external_id: deliveryId,
     });
     if (error) {
       console.error("github webhook: failed to persist event", error);

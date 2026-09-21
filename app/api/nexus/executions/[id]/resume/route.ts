@@ -166,21 +166,19 @@ export async function POST(
       },
       recordEvent: async (event: NexusEvent) => {
         if (!db) return;
-        const { error } = await db.from("events").upsert({
-          id: event.id,
-          project_id: projectId,
-          source: event.source,
-          type: event.type,
-          status: event.status,
-          correlation_id: event.correlationId,
-          actor_id: event.actorId ?? null,
-          resource_type: "execution",
-          resource_id: event.resourceId ?? null,
-          external_id: event.externalId ?? event.id,
-          payload: event.payload ?? {},
-          created_at: event.createdAt,
-          updated_at: event.createdAt,
-        }, { onConflict: "project_id,source,external_id" });
+        const { error } = await db.rpc("emit_event", {
+          p_project_id: projectId,
+          p_source: event.source,
+          p_type: event.type,
+          p_status: event.status,
+          p_correlation_id: event.correlationId,
+          p_resource_type: "execution",
+          p_resource_id: event.resourceId ?? null,
+          p_external_id: event.externalId ?? event.id,
+          p_payload: event.payload ?? {},
+          p_actor_id: event.actorId ?? null,
+          p_id: event.id,
+        });
         if (error) throw error;
       },
     };

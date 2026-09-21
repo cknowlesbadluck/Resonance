@@ -40,7 +40,7 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 - [x] GitHub repository-read vertical slice in required `web` CI
 - [x] GitHub failure matrix: 401/403/404/429/5xx/timeout/malformed/invalid input
 - [ ] Production host `GITHUB_TOKEN` (ops — issue #32; host is Netlify `resonancenexus` today)
-- [ ] Inbound webhook signature verification and raw event bus deduplication
+- [x] Inbound webhook signature verification and raw event bus deduplication
 
 ### P5 — Chamber / composition fabric (PLANNED)
 - [x] Basic Chamber execution primitive in runtime

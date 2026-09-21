@@ -343,3 +343,22 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-21 — Jules (Event Deduplication Refactor)
+
+**Checked:**
+- Identified opportunity to consolidate direct `insert`/`upsert` calls to the `"events"` table into the `public.emit_event` Supabase RPC as defined in `supabase/migrations/20260818160000_event_lifecycle_alignment.sql`.
+- Analyzed `app/api/events/route.ts`, `app/api/webhooks/github/route.ts`, `app/api/nexus/executions/route.ts`, and `app/api/nexus/executions/[id]/resume/route.ts`.
+
+**Decided / Done:**
+- Updated the database migration `20260921000000_emit_event_actor_id.sql` to extend `public.emit_event` with `p_actor_id` and `p_id` parameters to ensure parity with the pre-existing direct `upsert` queries in the execution handlers.
+- Refactored `app/api/events/route.ts`, replacing the direct insert with `supabase.rpc("emit_event", ...).select().single()`.
+- Refactored `app/api/webhooks/github/route.ts`, replacing direct insert with `db.rpc("emit_event", ...)`.
+- Refactored the `recordEvent` handlers in `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts` to replace the verbose `upsert` logic with the centralized `emit_event` RPC, correctly mapping `p_actor_id` and `p_id`.
+
+**Verified:**
+- `npm run typecheck` clean.
+- `npm run test` cleanly (90 passed, 1 skipped).
+- `npm run build` succeeds cleanly.
