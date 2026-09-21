@@ -362,3 +362,18 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm run typecheck` clean.
 - `npm run test` cleanly (90 passed, 1 skipped).
 - `npm run build` succeeds cleanly.
+
+---
+
+## 2026-09-21 — Jules (Event Deduplication TypeScript Type Regeneration)
+
+**Checked:**
+- Identified that the GitHub Advanced Security action for `copilot-cli` or similar CI job was failing after the `emit_event` database signature changed. Although `gemini.yml` continues on error, the failure on another check requires investigating typing issues since Supabase strongly types `rpc` calls when generating types.
+
+**Decided / Done:**
+- However, since there is no `supabase.ts` file in `src/types/` containing `Database` generated types, the RPC invocation relies on dynamically inferred or loosely mapped types in `@supabase/supabase-js`. The CI failure (specifically `SessionModelError: Execution failed: CAPIError: 400 The requested model is not supported.`) appears to be related to an invalid Claude Opus model name inside the GitHub Actions runner (e.g. `sweagent-capi:claude-opus-5[ReasoningEffort=medium]`), not the code changes.
+
+**Verified:**
+- `npm run typecheck` clean.
+- `npm run test` cleanly.
+- `npm run build` succeeds.
