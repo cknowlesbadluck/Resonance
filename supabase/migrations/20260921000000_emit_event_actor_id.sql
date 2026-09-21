@@ -21,8 +21,15 @@ declare
 begin
   insert into public.events(id, project_id, source, type, status, correlation_id, resource_type, resource_id, external_id, payload, actor_id)
   values (coalesce(p_id, gen_random_uuid()), p_project_id, p_source, p_type, p_status, p_correlation_id, p_resource_type, p_resource_id, p_external_id, coalesce(p_payload, '{}'::jsonb), p_actor_id)
-  on conflict (project_id, source, external_id) where p_external_id is not null
-  do update set updated_at = now()
+  on conflict (project_id, source, external_id) where external_id is not null
+  do update set
+    status = coalesce(excluded.status, events.status),
+    payload = coalesce(excluded.payload, events.payload),
+    correlation_id = coalesce(excluded.correlation_id, events.correlation_id),
+    resource_type = coalesce(excluded.resource_type, events.resource_type),
+    resource_id = coalesce(excluded.resource_id, events.resource_id),
+    actor_id = coalesce(excluded.actor_id, events.actor_id),
+    updated_at = now()
   returning * into v_event;
   return v_event;
 end;
