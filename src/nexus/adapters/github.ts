@@ -86,90 +86,115 @@ export class GitHubAdapter implements NexusAdapter {
   }
 
   async invoke(request: InvocationRequest): Promise<InvocationResult> {
-    if (request.capabilityId !== capability.id) {
-      return fail(`Unsupported GitHub capability: ${request.capabilityId}`, "unsupported_capability");
-    }
     try {
-      const { owner, repo } = repositoryInput(request.input);
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), this.timeoutMs);
-      try {
-        const response = await this.fetchImpl(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
-          headers: {
-            Accept: "application/vnd.github+json",
-            Authorization: `Bearer ${this.token}`,
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "Resonance-Nexus",
-          },
-          cache: "no-store",
-          signal: controller.signal,
-        });
-
-        const raw = await response.text();
-        let body: unknown = null;
-        let parseFailed = false;
-        if (raw) {
-          try {
-            body = JSON.parse(raw);
-          } catch {
-            parseFailed = true;
-          }
-        }
-
-        if (!response.ok) {
-          // Classify by HTTP status first. A non-OK response with a non-JSON body
-          // (HTML error page, empty 503, etc.) must still surface unauthorized /
-          // forbidden / rate_limited / unavailable — not get masked as
-          // malformed_response before the status is ever inspected.
-          const message = !parseFailed && body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
-            ? (body as Record<string, unknown>).message as string
-            : `GitHub API returned HTTP ${response.status}`;
-
-          let code = codeForStatus(response.status);
-
-          if (response.status === 403) {
-            if (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after") || message.toLowerCase().includes("rate limit")) {
-              code = "rate_limited";
-            }
-          }
-
-          return fail(message, code, { status: response.status });
-        }
-
-        if (parseFailed || !body || typeof body !== "object") {
-          return fail("GitHub API returned a malformed response.", "malformed_response", { status: response.status });
-        }
-
-        const record = body as Record<string, unknown>;
-        if (typeof record.full_name !== "string" || typeof record.private !== "boolean") {
-          return fail("GitHub API returned repository metadata with an unexpected shape.", "malformed_response", { status: response.status });
-        }
-        return {
-          ok: true,
-          output: {
-            provider: "github",
-            resourceType: "repository",
-            owner,
-            name: repo,
-            fullName: record.full_name,
-            private: record.private,
-            htmlUrl: typeof record.html_url === "string" ? record.html_url : null,
-            defaultBranch: typeof record.default_branch === "string" ? record.default_branch : null,
-            description: typeof record.description === "string" ? record.description : null,
-          },
-          evidence: { provider: "github", capability: capability.id, correlationId: request.correlationId, code: "ok" },
-        };
-      } finally {
-        clearTimeout(timer);
+      switch (request.capabilityId) {
+        case capability.id:
+          return await this.handleRepositoryRead(request);
+        default:
+          return fail(`Unsupported GitHub capability: ${request.capabilityId}`, "unsupported_capability");
       }
     } catch (error) {
       if (isAbortError(error)) return fail("GitHub request timed out.", "timeout");
       const candidate = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+      const extra = error && typeof error === "object" ? (error as { extra?: Record<string, unknown> }).extra : undefined;
       const code: GitHubFailureCode = typeof candidate === "string" && GITHUB_FAILURE_CODES.has(candidate as GitHubFailureCode)
         ? candidate as GitHubFailureCode
         : "unavailable";
-      return fail(error instanceof Error ? error.message : String(error), code);
+      return fail(error instanceof Error ? error.message : String(error), code, extra);
     }
+  }
+
+  private async handleRepositoryRead(request: InvocationRequest): Promise<InvocationResult> {
+    const { owner, repo } = repositoryInput(request.input);
+    const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+    const { body, status } = await this.fetchGitHubApi(path);
+
+    const record = body as Record<string, unknown>;
+    if (typeof record.full_name !== "string" || typeof record.private !== "boolean") {
+      throw Object.assign(new Error("GitHub API returned repository metadata with an unexpected shape."), {
+        code: "malformed_response" as const,
+        extra: { status },
+      });
+    }
+
+    return {
+      ok: true,
+      output: {
+        provider: "github",
+        resourceType: "repository",
+        owner,
+        name: repo,
+        fullName: record.full_name,
+        private: record.private,
+        htmlUrl: typeof record.html_url === "string" ? record.html_url : null,
+        defaultBranch: typeof record.default_branch === "string" ? record.default_branch : null,
+        description: typeof record.description === "string" ? record.description : null,
+      },
+      evidence: { provider: "github", capability: capability.id, correlationId: request.correlationId, code: "ok" },
+    };
+  }
+
+  private async fetchGitHubApi(path: string): Promise<{ body: unknown; status: number }> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const response = await this.fetchImpl(`https://api.github.com${path}`, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${this.token}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "Resonance-Nexus",
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+
+      const raw = await response.text();
+      let body: unknown = null;
+      let parseFailed = false;
+      if (raw) {
+        try {
+          body = JSON.parse(raw);
+        } catch {
+          parseFailed = true;
+        }
+      }
+
+      if (!response.ok) {
+        throw this.classifyHttpError(response, body, parseFailed);
+      }
+
+      if (parseFailed || !body || typeof body !== "object") {
+        throw Object.assign(new Error("GitHub API returned a malformed response."), {
+          code: "malformed_response" as const,
+          extra: { status: response.status },
+        });
+      }
+
+      return { body, status: response.status };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private classifyHttpError(response: Response, body: unknown, parseFailed: boolean): Error {
+    const message = !parseFailed && body && typeof body === "object" && typeof (body as Record<string, unknown>).message === "string"
+      ? (body as Record<string, unknown>).message as string
+      : `GitHub API returned HTTP ${response.status}`;
+
+    let code = codeForStatus(response.status);
+
+    if (response.status === 403) {
+      if (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after") || message.toLowerCase().includes("rate limit")) {
+        code = "rate_limited";
+      }
+    }
+
+    return Object.assign(new Error(message), {
+      code,
+      extra: { status: response.status },
+    });
   }
 }
 

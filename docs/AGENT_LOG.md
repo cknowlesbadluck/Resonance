@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-21 — Jules (Refactor GitHubAdapter handleRequest Code Health Improvement)
+
+**Checked:**
+- `src/nexus/adapters/github.ts`: Analyzed `GitHubAdapter.invoke` (`handleRequest`), which previously contained all HTTP fetching, timeout handling, error parsing, status classification, and repository payload validation inline in a single monolithic method.
+- Code health goal: Decompose monolithic method into modular handler methods per capability and helper methods for API calls and error classification.
+
+**Changed:**
+- `src/nexus/adapters/github.ts`:
+  - Refactored `invoke` to dispatch by `request.capabilityId` to specific handler methods (e.g. `handleRepositoryRead`).
+  - Extracted `fetchGitHubApi` helper method to handle AbortController signal creation/clearing, JSON body parsing, and status checking.
+  - Extracted `classifyHttpError` helper method to encapsulate HTTP error classification (handling rate limits, 403 headers, status codes).
+  - Extracted `handleRepositoryRead` to manage input validation, URL formatting, and output shape validation for repository metadata.
+
+**Verified:**
+- `npm run typecheck` passes cleanly.
+- `npm run test` passes 100% (90 passed, 1 skipped across 22 test files).
