@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-17 — Jules (Performance Optimization: Adapter describe caching)
+
+**Checked:**
+- Identified N+1 async describe call overhead in `GET /api/nexus/identities` (`app/api/nexus/identities/route.ts`).
+- Updated `vitest.config.ts` to include `app/**/*.test.ts` test files.
+
+**Decided / Implemented:**
+- Implemented `describeAdapter` and `describeAdapters` in `src/nexus/adapters/describe-cache.ts` using `WeakMap` for memory-safe per-adapter description caching with configurable TTL (default 60s) and in-flight Promise deduplication for concurrent thundering-herd protection.
+- Updated `app/api/nexus/identities/route.ts` to fetch adapter descriptions via `describeAdapters(nexusAdapters)`.
+- Created benchmark (`src/nexus/adapters/describe-cache.benchmark.test.ts`), unit tests (`src/nexus/adapters/describe-cache.test.ts`), and route tests (`app/api/nexus/identities/route.test.ts`).
+
+**Verified:**
+- Benchmark measured ~48x speedup (baseline ~538ms vs cached ~11ms for 50 requests x 10 adapters @ 10ms latency).
+- Full verification suite: `npm run typecheck` clean, `npm run test` (100 passed, 1 skipped across 25 test files).
