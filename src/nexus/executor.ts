@@ -1,5 +1,5 @@
 import type { NexusAdapter } from "./adapters/types";
-import type { NexusEvent, NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy } from "./types";
+import type { NexusEvent, NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy, ExecutionStep } from "./types";
 
 export interface ExecutionSink {
   recordEvidence(evidence: NexusEvidence): Promise<void>;
@@ -42,6 +42,130 @@ export class NexusExecutor {
     await this.sink.recordEvent(event);
   }
 
+  private async handleStepApprovalRequired(
+    step: ExecutionStep,
+    plan: NexusExecutionPlan,
+    execution: NexusExecution
+  ): Promise<void> {
+    execution.status = "waiting";
+    execution.error = "Approval required before execution.";
+    await this.persistExecution(execution);
+    await this.emitEvent(plan, execution, "execution.waiting", "waiting", {
+      stepId: step.id,
+      reason: execution.error,
+    });
+  }
+
+  private async invokeStepWithRetry(
+    step: ExecutionStep,
+    plan: NexusExecutionPlan,
+    execution: NexusExecution,
+    maxAttempts: number,
+    backoffMs: number
+  ): Promise<Awaited<ReturnType<NexusAdapter["invoke"]>>> {
+    const adapter = this.adapterMap.get(step.adapterId);
+    if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
+
+    let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        result = await adapter.invoke({
+          capabilityId: step.capabilityId,
+          input: step.input,
+          actorId: plan.actorId,
+          correlationId: execution.id,
+        });
+      } catch (error) {
+        if (attempt === maxAttempts) {
+          result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+          break;
+        }
+        await this.emitEvent(plan, execution, "execution.retrying", "retrying", {
+          stepId: step.id,
+          attempt,
+          nextAttempt: attempt + 1,
+        });
+        await sleep(backoffMs * attempt);
+        continue;
+      }
+      if (result.ok || attempt === maxAttempts) break;
+      await this.emitEvent(plan, execution, "execution.retrying", "retrying", {
+        stepId: step.id,
+        attempt,
+        nextAttempt: attempt + 1,
+      });
+      await sleep(backoffMs * attempt);
+    }
+
+    if (!result) throw new Error(`Capability ${step.capabilityId} produced no invocation result.`);
+    return result;
+  }
+
+  private async recordStepEvidence(
+    executionId: string,
+    capabilityId: string,
+    result: Awaited<ReturnType<NexusAdapter["invoke"]>>
+  ): Promise<NexusEvidence> {
+    const item: NexusEvidence = {
+      id: crypto.randomUUID(),
+      executionId,
+      type: result.ok ? "event" : "audit",
+      summary: result.ok ? `Capability ${capabilityId} completed.` : `Capability ${capabilityId} failed.`,
+      payload: result.ok ? result.output : result.error,
+      createdAt: new Date().toISOString(),
+    };
+    await this.sink.recordEvidence(item);
+    return item;
+  }
+
+  private async processStep(
+    step: ExecutionStep,
+    plan: NexusExecutionPlan,
+    execution: NexusExecution,
+    evidence: NexusEvidence[],
+    maxAttempts: number,
+    backoffMs: number
+  ): Promise<unknown> {
+    const result = await this.invokeStepWithRetry(step, plan, execution, maxAttempts, backoffMs);
+    const item = await this.recordStepEvidence(execution.id, step.capabilityId, result);
+    evidence.push(item);
+
+    await this.emitEvent(
+      plan,
+      execution,
+      result.ok ? "execution.step.completed" : "execution.step.failed",
+      result.ok ? "completed" : "failed",
+      { stepId: step.id, capabilityId: step.capabilityId }
+    );
+
+    if (!result.ok) throw new Error(result.error ?? "Adapter invocation failed");
+    return result.output;
+  }
+
+  private async markExecutionCompleted(
+    plan: NexusExecutionPlan,
+    execution: NexusExecution,
+    outputs: unknown[]
+  ): Promise<void> {
+    execution.status = "completed";
+    execution.completedAt = new Date().toISOString();
+    execution.output = outputs;
+    await this.persistExecution(execution);
+    await this.emitEvent(plan, execution, "execution.completed", "completed", { outputCount: outputs.length });
+  }
+
+  private async markExecutionFailed(
+    plan: NexusExecutionPlan,
+    execution: NexusExecution,
+    error: unknown
+  ): Promise<void> {
+    execution.status = "failed";
+    execution.completedAt = new Date().toISOString();
+    execution.error = error instanceof Error ? error.message : String(error);
+    await this.persistExecution(execution);
+    await this.emitEvent(plan, execution, "execution.failed", "failed", { error: execution.error });
+  }
+
   async execute(plan: NexusExecutionPlan): Promise<{ execution: NexusExecution; evidence: NexusEvidence[] }> {
     const execution: NexusExecution = { id: crypto.randomUUID(), planId: plan.id, status: "running", startedAt: new Date().toISOString() };
     const evidence: NexusEvidence[] = [];
@@ -55,58 +179,16 @@ export class NexusExecutor {
       const outputs: unknown[] = [];
       for (const step of plan.steps) {
         if (step.requiresApproval) {
-          execution.status = "waiting";
-          execution.error = "Approval required before execution.";
-          await this.persistExecution(execution);
-          await this.emitEvent(plan, execution, "execution.waiting", "waiting", { stepId: step.id, reason: execution.error });
+          await this.handleStepApprovalRequired(step, plan, execution);
           return { execution, evidence };
         }
-        const adapter = this.adapterMap.get(step.adapterId);
-        if (!adapter) throw new Error(`Adapter ${step.adapterId} not found`);
-        let result: Awaited<ReturnType<NexusAdapter["invoke"]>> | undefined;
-        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-          try {
-            result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
-          } catch (error) {
-            if (attempt === maxAttempts) {
-              result = { ok: false, error: error instanceof Error ? error.message : String(error) };
-              break;
-            }
-            await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
-            await sleep(retry.backoffMs * attempt);
-            continue;
-          }
-          if (result.ok || attempt === maxAttempts) break;
-          await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
-          await sleep(retry.backoffMs * attempt);
-        }
-        if (!result) throw new Error(`Capability ${step.capabilityId} produced no invocation result.`);
-        const item: NexusEvidence = {
-          id: crypto.randomUUID(),
-          executionId: execution.id,
-          type: result.ok ? "event" : "audit",
-          summary: result.ok ? `Capability ${step.capabilityId} completed.` : `Capability ${step.capabilityId} failed.`,
-          payload: result.ok ? result.output : result.error,
-          createdAt: new Date().toISOString(),
-        };
-        evidence.push(item);
-        await this.sink.recordEvidence(item);
-        await this.emitEvent(plan, execution, result.ok ? "execution.step.completed" : "execution.step.failed", result.ok ? "completed" : "failed", { stepId: step.id, capabilityId: step.capabilityId });
-        if (!result.ok) throw new Error(result.error ?? "Adapter invocation failed");
-        outputs.push(result.output);
+        const output = await this.processStep(step, plan, execution, evidence, maxAttempts, retry.backoffMs);
+        outputs.push(output);
       }
-      execution.status = "completed";
-      execution.completedAt = new Date().toISOString();
-      execution.output = outputs;
-      await this.persistExecution(execution);
-      await this.emitEvent(plan, execution, "execution.completed", "completed", { outputCount: outputs.length });
+      await this.markExecutionCompleted(plan, execution, outputs);
       return { execution, evidence };
     } catch (error) {
-      execution.status = "failed";
-      execution.completedAt = new Date().toISOString();
-      execution.error = error instanceof Error ? error.message : String(error);
-      await this.persistExecution(execution);
-      await this.emitEvent(plan, execution, "execution.failed", "failed", { error: execution.error });
+      await this.markExecutionFailed(plan, execution, error);
       return { execution, evidence };
     }
   }

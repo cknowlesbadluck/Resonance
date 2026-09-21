@@ -343,3 +343,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-21 — Jules (Refactored NexusExecutor for Code Health)
+
+**Checked:**
+- Audited `src/nexus/executor.ts` to address code health issue (long `execute` method).
+- Reviewed step execution, retry, event emission, approval gate, evidence recording, and failure state handling semantics.
+
+**Decided & Refactored:**
+- Decomposed `NexusExecutor.execute` into 6 dedicated, single-responsibility helper methods (`handleStepApprovalRequired`, `invokeStepWithRetry`, `recordStepEvidence`, `processStep`, `markExecutionCompleted`, `markExecutionFailed`).
+- Reduced `execute` method from >60 lines to ~20 lines, significantly improving maintainability and readability while preserving exact evidence tracking, retry backoff, and event emission behavior.
+
+**Verified:**
+- `npx tsc --noEmit` clean with zero errors.
+- `npm test` suite passed 100% (90 passed, 1 skipped across 22 test files).
+- Code review performed and confirmed logic correctness and safety.
