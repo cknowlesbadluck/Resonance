@@ -343,3 +343,8 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+### 2024-05-18 (Test improvement for InMemoryContextStore)
+- Added comprehensive unit tests for `InMemoryContextStore` in `src/nexus/context.test.ts`.
+- Verified the `put`, `viewFor`, and `promoteToKnowledge` methods according to visibility and scope rules.
+- Tests passed locally using `vitest`.
