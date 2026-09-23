@@ -343,3 +343,17 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-23 — Jules (Test nexus chamber plan mapping)
+
+**Context:** Test improvement task to cover `src/chambers/nexus.ts`, ensuring the gap in test coverage for `chamberRequestFromPlan` and `openChamberForPlan` is filled.
+
+**Changed:**
+- Created `src/chambers/nexus.test.ts`.
+- Added unit tests for `chamberRequestFromPlan` mapping `NexusExecutionPlan` to `OpenChamberRequest` properly.
+- Added unit tests to ensure `openChamberForPlan` mocks the `ChamberRuntime` correctly and verifies proper request routing and execution triggering.
+
+**Verification:**
+- `npm run test`: All test files passed (23 files, 93 passing, 1 skipped).
+- `npm run typecheck`: Passed cleanly.
+- `npm run build`: Passed cleanly.
