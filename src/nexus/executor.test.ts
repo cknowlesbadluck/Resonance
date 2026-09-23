@@ -78,7 +78,7 @@ describe("NexusExecutor execution semantics", () => {
     expect(evidenceItems[1].summary).toBe("Capability cap-2 completed.");
   });
 
-  it("throws and records failure when an adapter fails without retry", async () => {
+  it("records failure when an adapter fails without retry", async () => {
     const plan: NexusExecutionPlan = {
       id: "plan-3",
       intentId: "intent-3",
