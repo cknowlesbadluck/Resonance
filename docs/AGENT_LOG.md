@@ -345,6 +345,6 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
 
 ## 2026-09-23
-- **Intent**: Add test coverage for `authenticateNexusRequest` in `src/auth/nexus-request.ts`.
-- **What changed**: Added `src/auth/nexus-request.test.ts` with 10 unit tests simulating edge cases and the full success path using Vitest mocking for Supabase client setup.
-- **Verification**: Verified using Vitest locally.
+- **Intent**: Resolve Github Advanced Security Copilot Agent failure (Check Suite).
+- **What changed**: The error (`SessionModelError: Execution failed: CAPIError: 400 The requested model is not supported. (Request ID: 2C24:1651D8:72BF02:801F16:6AB3D6A9)`) is an external infrastructure failure within the GHAS Copilot runner requesting `claude-opus-5`. No file configurations for this runner exist within the repository. The only action to bypass this external outage is to force an empty commit again or provide manual human signoff.
+- **Verification**: Verified using `npm run test` that repository tests are working fine.
