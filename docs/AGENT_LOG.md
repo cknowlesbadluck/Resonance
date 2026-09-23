@@ -369,3 +369,15 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Decision:**
 - As this is a GitHub infrastructure issue and not a codebase failure, no code changes can be made to resolve it. I will re-submit the PR to trigger a retry.
+
+## 2026-09-23 — Jules (CI Check Suite Failure Analysis - Retry)
+
+**Context:** The PR submission resulted in another CI check suite failure for `github-advanced-security`.
+
+**Analysis:**
+- This is the exact same failure as before, originating from the injected `ghas-code-scanning-agentic` Copilot job.
+- The error `SessionModelError: Execution failed: CAPIError: 400 The requested model is not supported` persists.
+- This is outside the control of the codebase or `.github` workflow configuration. It's a failure in GitHub's advanced security / copilot scanning infrastructure for this repository.
+
+**Decision:**
+- Re-submit.
