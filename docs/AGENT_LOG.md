@@ -343,3 +343,8 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2024-05-18 (Testing Improvement - Registry Discovery Edge Cases)
+* Addressed testing gap by creating tests for `InMemoryCapabilityRegistry` in `src/nexus/registry.test.ts`.
+* Tests successfully cover capabilities discovery matching requirements and proper aliases behavior, including the `findByCapability` empty matches scenario.
+* Executed complete test suite verified using `vitest`.
