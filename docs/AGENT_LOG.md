@@ -343,3 +343,18 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-17 — Jules (Performance Optimization: Bulk Save for Nexus Capabilities)
+
+**Context:** The `app/api/nexus/capabilities/route.ts` route had an N+1 database problem where it was awaiting `Promise.all(runtime.map(...))` to save each runtime capability individually to the `nexus_capabilities` table.
+
+**Changed:**
+- Added `saveCapabilities(capabilities: NexusCapability[], projectId?: string): Promise<void>` to the `NexusPersistence` interface.
+- Implemented `saveCapabilities` in `SupabaseNexusPersistence` using a bulk `upsert` of mapped rows.
+- Updated `app/api/nexus/capabilities/route.ts` to call the new bulk method.
+- Added `scripts/benchmark-capability-save.ts` to measure the overhead and verify the impact.
+
+**Verification:**
+- Baseline: N+1 `Promise.all` generated 100 database calls (simulated in the benchmark script).
+- Improvement: Bulk `upsert` reduced this to exactly 1 database call. This eliminates significant real-world TCP overhead, Supabase connection pooling saturation, and request latency spikes.
+- Tests: `npm run typecheck`, `npm run test` (91 passed, 1 skipped), and `npm run build` completed cleanly.
