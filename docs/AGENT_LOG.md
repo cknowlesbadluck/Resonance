@@ -343,3 +343,6 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-23
+- Added tests for `identityKey` and `sameIdentity` in `src/nexus/identity.ts` by creating `src/nexus/identity.test.ts`
