@@ -343,3 +343,22 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+---
+
+## 2026-09-23 — Jules (DAG Execution Wave Support)
+
+**Checked:**
+- Evaluated `NexusExecutor` loop for parallel execution optimization using a `dependsOn` directed acyclic graph (DAG) approach.
+- Discovered executor was purely sequential, leading to O(N) wait times for independent capabilities.
+
+**Decided / Done:**
+- Modified `ExecutionStep` type in `src/nexus/types.ts` to include an optional `dependsOn?: string[]` array.
+- Refactored `NexusExecutor.execute` in `src/nexus/executor.ts` to identify concurrent waves of execution steps and execute them using `Promise.allSettled` to prevent background task leakage in case of individual step failure.
+- Guaranteed final output array format matches original `plan.steps` indices using a mapped index.
+- Added DAG unit tests tracking wave parallelism and cyclic dependency detection (`src/nexus/executor.dag.test.ts`).
+
+**Verified:**
+- Tests added and all 23 test suites pass cleanly (`npm run test`).
+- Type verification succeeded (`npm run typecheck`).
+- Code reviewed and certified for merge readiness.
