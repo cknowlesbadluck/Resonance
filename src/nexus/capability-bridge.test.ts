@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catalogToNexus, listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "./capability-bridge";
+import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "./capability-bridge";
 
 describe("capability bridge → NexusCapability", () => {
   it("maps catalog entries to NexusCapability shape", () => {

@@ -343,3 +343,11 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+## 2024-05-18: Code Health - Remove unused import
+
+* **Intent:** Remove unused `catalogToNexus` import from `src/nexus/capability-bridge.test.ts`.
+* **What changed:** Removed the import statement for `catalogToNexus`.
+* **Verified locally:** Ran `npm run typecheck` and `npm run test`, which completed successfully.
+* **Pending verification:** None
+* **Not fixed / out of scope:** None
+* **Two-Key check:** Not applicable
