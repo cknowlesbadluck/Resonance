@@ -343,3 +343,8 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-23
+- **Intent**: Add test coverage for `authenticateNexusRequest` in `src/auth/nexus-request.ts`.
+- **What changed**: Added `src/auth/nexus-request.test.ts` with 10 unit tests simulating edge cases and the full success path using Vitest mocking for Supabase client setup.
+- **Verification**: Verified using Vitest locally.
