@@ -343,3 +343,8 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-23
+- **Goal:** Improve testing coverage for the Skill Registry in `src/nexus/skills.ts`.
+- **What Changed:** Added `src/nexus/skills.test.ts` to implement tests for `validateSkill`, `InMemorySkillRegistry` covering validation rules, capability resolution logic, and registry CRUD operations.
+- **Verification:** Ran `npm run test` which passed successfully. Verified typing with `npm run typecheck` and ensure successful builds with `npm run build`.

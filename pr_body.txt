@@ -1,0 +1,28 @@
+🎯 **What:** The testing gap addressed
+The `InMemorySkillRegistry` and its associated validation logic were missing tests.
+
+📊 **Coverage:** What scenarios are now tested
+- `validateSkill`: Verified the validation correctly rejects missing required fields and empty spaces, and allows valid inputs.
+- `InMemorySkillRegistry`: Added tests for `register`, `get`, `discover`, and `remove`.
+- Includes ensuring skills are safely cloned, errors are thrown on duplicates or invalid inputs, querying works with diverse filters, sorting order checks, and deleting existing elements logic.
+
+✨ **Result:** The improvement in test coverage
+We now have reliable, isolated verification of our core skill management logic inside the Nexus plane. This helps prevent future regressions when handling the registry lifecycle.
+
+### Intent
+Improve test coverage for `InMemorySkillRegistry`.
+
+### What changed
+Added `src/nexus/skills.test.ts`.
+
+### Verified locally
+Ran `npm run test`, `npm run typecheck` and `npm run build` which all succeed.
+
+### Pending verification
+None.
+
+### Not fixed / out of scope
+None.
+
+### Two-Key check
+Not applicable.
