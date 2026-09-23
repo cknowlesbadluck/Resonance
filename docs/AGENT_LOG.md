@@ -351,3 +351,5 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 * **Pending verification:** None
 * **Not fixed / out of scope:** None
 * **Two-Key check:** Not applicable
+
+Triggering a new commit to retry the CI run as the previous failure was an infrastructure error regarding an unsupported model (claude-opus-5).
