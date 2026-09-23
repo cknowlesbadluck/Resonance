@@ -343,3 +343,18 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-23 — Jules (Testing Improvement: InMemoryCapabilityRegistry)
+
+**Context:** The `src/nexus/registry.ts` file lacked tests for its `InMemoryCapabilityRegistry` implementation, which is a key component for managing and filtering capabilities based on requirements.
+
+**Changed:**
+- `src/nexus/registry.test.ts`: Created a new test suite for `InMemoryCapabilityRegistry` covering:
+  - `register`: Adding new and overwriting existing capabilities.
+  - `list`: Retrieving all registered capabilities.
+  - `findByCapability`: Filtering capabilities by key, risk, and returning them sorted.
+  - `findCompatible`: Verifying it acts as an alias for `findByCapability`.
+
+**Verification:**
+- Ran `npm test`, successfully executing the new tests (8 tests in `src/nexus/registry.test.ts` passed). Total tests passed: 98 (1 skipped).
+- Ran `npm run typecheck`, no errors found.
