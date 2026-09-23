@@ -5,11 +5,14 @@ import type { NexusIntent, NexusExecutionPlan } from "./types";
 import type { NexusPolicy } from "./policy";
 
 export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry, policy: NexusPolicy, adapters: NexusAdapter[]): NexusExecutionPlan {
+  const adapterMap = new Map(adapters.map((a) => [a.id, a]));
+
+  const capabilities = registry.list();
   const steps = intent.requirements.map((requirement, index) => {
-    const candidates = sortCapabilities(registry.list().filter((capability) => capabilityMatches(capability, requirement)));
+    const candidates = sortCapabilities(capabilities.filter((capability) => capabilityMatches(capability, requirement)));
     if (!candidates.length) throw new Error(`No compatible capability for ${requirement.key}`);
     const selected = candidates[0];
-    const adapter = adapters.find((item) => item.id === selected.adapterId || item.id === selected.providerId);
+    const adapter = (selected.adapterId && adapterMap.get(selected.adapterId)) || (selected.providerId && adapterMap.get(selected.providerId));
     if (!adapter) throw new Error(`No adapter for capability ${selected.id}`);
     const decision = policy.evaluate(intent.requestedBy, selected);
     if (!decision.allowed) throw new Error(decision.reason ?? `Capability ${selected.id} denied by policy`);
