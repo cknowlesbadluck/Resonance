@@ -343,3 +343,13 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Verified:**
 - Documentation updated cleanly and verified with `npm run typecheck` and `npm test`.
+
+## 2026-09-24 — Test coverage improvement for NexusExecutor
+
+**Context:** The `NexusExecutor` class lacked direct test coverage for the main `execute` loop's standard behavior (happy path, empty plans, and permanent error states). While lifecycle and retry logic were tested, the primary step execution flow was untested.
+
+**Changed:**
+- `src/nexus/executor.test.ts`: Added four main tests covering the standard execution paths: single step success, multi-step success (ensuring output ordering and evidence persistence), non-retryable failure handling, and empty plan behavior. Used robust mocks for `NexusAdapter` and `ExecutionSink`.
+
+**Verification:**
+- `npm run test` (94 passed, 1 skipped) and `npm run typecheck` run clean. Tests fully evaluate `NexusExecutor.execute`.
