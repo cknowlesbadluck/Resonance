@@ -1,21 +1,20 @@
 # Resonance Implementation Status
 
-Observed 2026-09-25 09:20 EDT against `main` `d9dc1e62b28a3c42096d3584272f41494cf44db9` and the live host. Older notes treated closed issues and a Completed Linear project as finished work. They were hygiene, not acceptance.
+Observed 2026-09-25 12:07 EDT against `main` after #105 (`77dc9395`, prior `c08cdc79` / fail-closed `d9dc1e62`) and the live host.
 
 ## What was verified
 
 | Check | Result |
 | --- | --- |
-| `main` CI [run 36136474497](https://github.com/cknowlesbadluck/Resonance/actions/runs/36136474497) | aggregate `CI` success on `d9dc1e62`. `production-smoke` skipped. |
-| Open pull requests | audit docs #104; no runtime PR |
+| Open pull requests | docs #105 squash-merged; this 12:07 docs branch | 
 | Open GitHub issues | 0 |
-| Live host | Netlify `https://resonancenexus.netlify.app`. Do not treat Render as production. |
-| `GET /api/health` | historically 200, `stage: deployment` |
-| `GET /api/ready` | 503. Missing `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESONANCE_PROJECT_ID`, `RESONANCE_AUTH_MODE`. |
+| Live host | Netlify `https://resonancenexus.netlify.app`. Do not treat Render or `resonanceplane` as production. |
+| `GET /api/ready` | **503**. Missing persistence/auth env. Confirmed this hour. |
+| Conduit | health/ready/diagnostics green; version 0.8.0; persistence postgres |
 
-Fail-closed user-data behavior is on `main`. It is not proven on the live host until env is set and the deploy serving `d9dc1e62` is confirmed.
+Fail-closed user-data behavior is on `main`. It is not proven on the live host until env is set and the deploy serving that SHA is confirmed.
 
-No Supabase migration was applied from this session.
+No Supabase migration was applied from this session. No secrets were invented.
 
 ## Working
 
@@ -26,18 +25,12 @@ No Supabase migration was applied from this session.
 - Approval resume refuses to widen a plan that gained new approval requirements.
 - Swift package `ResonanceCore` tests pass on the macOS CI runner. That is not an installed iPhone app.
 
-## Partial
-
-- Web control surface can select a project, preview a plan, execute, approve or cancel, and show evidence when the host tells the truth about unreadiness.
-- Chambers run one bounded in-process scenario. Not wired through Supabase or the web UI.
-- Catalog directory entries planned/unavailable. Fixtures unpublished.
-
 ## Not done
 
 - Live credential-backed execution stored in Supabase and readable after restart by a project member only.
 - `/api/ready` 200 with `RESONANCE_AUTH_MODE=required`.
 - GitHub webhook delivery against the live host.
-- SideStore IPA on a physical iPhone. No Xcode app target in this revision.
+- SideStore IPA on a physical iPhone.
 - A second real provider. MCP remains a fixture.
 
 ## Owner actions still required
