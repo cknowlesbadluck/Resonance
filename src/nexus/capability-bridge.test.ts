@@ -16,12 +16,11 @@ describe("capability bridge → NexusCapability", () => {
     expect(sample.kind).toBeDefined();
   });
 
-  it("resolves dependencies into NexusCapability list", () => {
+  it("does not resolve unconfigured catalog slots as live capabilities", () => {
     const result = resolveNexusCapabilities(["skill.ios-swiftui"]);
+    expect(result.resolved).toEqual([]);
+    expect(result.unavailable).toEqual(["skill.ios-swiftui"]);
     expect(result.missing).toEqual([]);
-    expect(result.unavailable).toEqual([]);
-    expect(result.resolved.map((c) => c.key)).toEqual(["tool.github", "skill.ios-swiftui"]);
-    expect(result.resolved.every((c) => c.requiredPermissions)).toBe(true);
   });
 
   it("preserves planned as availability", () => {

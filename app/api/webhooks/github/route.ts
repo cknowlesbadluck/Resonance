@@ -1,6 +1,6 @@
-import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { decideGitHubWebhook, isUniqueViolation } from "../../../../src/nexus/github-webhook";
 
 function getDbClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,51 +8,34 @@ function getDbClient() {
   return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
 }
 
-function verify(raw: string, signature: string | null): boolean {
-  const secret = process.env.GITHUB_WEBHOOK_SECRET;
-  if (!secret || !signature) return false;
-  const expected = Buffer.from(`sha256=${createHmac("sha256", secret).update(raw).digest("hex")}`);
-  const actual = Buffer.from(signature);
-  if (expected.length !== actual.length) {
-    // Perform dummy timingSafeEqual to avoid timing side-channel
-    timingSafeEqual(expected, expected);
-    return false;
-  }
-  return timingSafeEqual(expected, actual);
-}
-
 export async function POST(request: Request) {
   const raw = await request.text();
-  if (!verify(raw, request.headers.get("x-hub-signature-256"))) {
-    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
-  }
-
-  let payload: Record<string, unknown>;
-  try {
-    payload = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
-  }
-
-  const event = request.headers.get("x-github-event") ?? "unknown";
-  const deliveryId = request.headers.get("x-github-delivery") ?? undefined;
-  const projectId = process.env.RESONANCE_PROJECT_ID ?? null;
-
   const db = getDbClient();
-  if (db && projectId) {
-    const { error } = await db.from("events").insert({
-      project_id: projectId,
-      source: "github",
-      type: `github.${event}`,
-      status: "received",
-      payload,
-      external_id: deliveryId,
-    });
-    if (error) {
-      console.error("github webhook: failed to persist event", error);
-      return NextResponse.json({ error: "Failed to persist event" }, { status: 500 });
-    }
-  }
+  const projectId = process.env.RESONANCE_PROJECT_ID ?? null;
+  const decision = decideGitHubWebhook({
+    raw,
+    signature: request.headers.get("x-hub-signature-256"),
+    secret: process.env.GITHUB_WEBHOOK_SECRET,
+    eventName: request.headers.get("x-github-event"),
+    deliveryId: request.headers.get("x-github-delivery"),
+    projectId,
+    persistenceConfigured: Boolean(db && projectId),
+  });
+  if (!decision.ok) return NextResponse.json({ error: decision.error }, { status: decision.status });
+  if (!db) return NextResponse.json({ error: "Persistence is required before acknowledging a webhook." }, { status: 503 });
 
+  const { error } = await db.from("events").insert({
+    project_id: decision.event.projectId,
+    source: decision.event.source,
+    type: decision.event.type,
+    status: decision.event.status,
+    payload: decision.event.payload,
+    external_id: decision.event.externalId,
+  });
+  if (error) {
+    if (isUniqueViolation(error)) return NextResponse.json({ accepted: true, duplicate: true });
+    console.error("github webhook: failed to persist event", error);
+    return NextResponse.json({ error: "Failed to persist event" }, { status: 500 });
+  }
   return NextResponse.json({ accepted: true });
 }

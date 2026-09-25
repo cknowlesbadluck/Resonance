@@ -8,8 +8,8 @@ import type { NexusAdapter } from "./adapters/types";
 import type { NexusCapability, NexusIntent } from "./types";
 
 const demoCapabilities: NexusCapability[] = [
-  { id: "http.demo.read", key: "demo.read", name: "HTTP Demo Read", adapterId: "http-demo", requiredPermissions: ["read"], risk: "low", availability: "available", provenance: "nexus-fixture" },
-  { id: "mcp.demo.write", key: "demo.write", name: "MCP Demo Write", adapterId: "mcp-demo", requiredPermissions: ["execute"], risk: "high", availability: "available", provenance: "nexus-fixture" },
+  { id: "http.demo.read", key: "demo.read", name: "HTTP Demo Read", adapterId: "http-demo", requiredPermissions: ["read"], risk: "low", availability: "unavailable", provenance: "fixture" },
+  { id: "mcp.demo.write", key: "demo.write", name: "MCP Demo Write", adapterId: "mcp-demo", requiredPermissions: ["execute"], risk: "high", availability: "unavailable", provenance: "fixture" },
 ];
 
 const httpAdapter = new HttpAdapter("http-demo", {
@@ -21,14 +21,25 @@ const mcpAdapter = new McpAdapter("mcp-demo", {
   async callTool(capabilityId, input) { return { bridge: "mcp", capabilityId, input, result: "ok" }; },
 });
 
-const githubAdapter = process.env.GITHUB_TOKEN?.trim() ? new GitHubAdapter(process.env.GITHUB_TOKEN) : null;
+const githubConfigured = Boolean(process.env.GITHUB_TOKEN?.trim());
+const githubAdapter = githubConfigured ? new GitHubAdapter(process.env.GITHUB_TOKEN as string) : null;
+const publishedCapabilities: NexusCapability[] = [
+  ...demoCapabilities,
+  {
+    ...githubRepositoryReadCapability,
+    availability: githubConfigured ? "available" : "unavailable",
+    provenance: githubConfigured ? "github-adapter" : "github-adapter-unconfigured",
+  },
+];
 export const nexusAdapters: NexusAdapter[] = githubAdapter
   ? [httpAdapter, mcpAdapter, githubAdapter]
   : [httpAdapter, mcpAdapter];
 
 export const nexusRegistry = new InMemoryCapabilityRegistry();
 demoCapabilities.forEach((capability) => nexusRegistry.register(capability));
-if (githubAdapter) nexusRegistry.register(githubRepositoryReadCapability);
+publishedCapabilities.filter((capability) => capability.provenance !== "fixture").forEach((capability) => {
+  if (!nexusRegistry.list().some((existing) => existing.id === capability.id)) nexusRegistry.register(capability);
+});
 export const nexusPolicy = new DefaultNexusPolicy();
 
 export function composeNexusIntent(intent: NexusIntent) { return composeIntent(intent, nexusRegistry, nexusPolicy, nexusAdapters); }

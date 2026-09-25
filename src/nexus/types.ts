@@ -95,7 +95,24 @@ export interface NexusIntent { id: string; objective: string; projectId: string;
 export interface ExecutionStep { id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; dependsOn?: string[]; }
 export interface ExecutionRetryPolicy { maxAttempts: number; backoffMs: number; }
 export interface NexusExecutionPlan { id: string; intentId: string; projectId: string; actorId: string; mode: ExecutionMode; steps: ExecutionStep[]; contextRefs: string[]; approvalRequired: boolean; rationale: string[]; retry?: ExecutionRetryPolicy; }
-export interface NexusExecution { id: string; planId: string; status: "planned" | "running" | "waiting" | "completed" | "failed" | "cancelled"; startedAt?: string; completedAt?: string; output?: unknown; error?: string; }
+export interface StepOutcome {
+  stepId: string;
+  capabilityId: string;
+  ok: boolean;
+  error?: string;
+}
+
+export interface NexusExecution {
+  id: string;
+  planId: string;
+  status: "planned" | "running" | "waiting" | "completed" | "failed" | "partial" | "cancelled";
+  startedAt?: string;
+  completedAt?: string;
+  output?: unknown;
+  error?: string;
+  /** Present when execution stopped before every step succeeded. Succeeded steps must not be retried. */
+  stepOutcomes?: StepOutcome[];
+}
 export interface NexusEvidence { id: string; executionId: string; type: "event" | "artifact" | "decision" | "audit" | "knowledge"; summary: string; payload: unknown; createdAt: string; }
 export interface NexusEvent { id: string; source: string; type: string; status: string; correlationId: string; actorId?: string; projectId?: string; resourceId?: string; payload: unknown; createdAt: string; externalId?: string; }
 export interface ContextEntry { id: string; scope: string; key: string; value: unknown; visibility: "private" | "participants" | "project"; createdBy: string; provenance?: string; persistent: boolean; createdAt: string; }

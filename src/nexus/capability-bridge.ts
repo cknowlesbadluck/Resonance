@@ -23,6 +23,7 @@ export function catalogToNexus(capability: Capability): NexusCapability {
     outputSchema: capability.outputSchema,
     tags: [...(capability.tags ?? []), `kind:${kind}`],
     availability: capability.status,
+    provenance: capability.status === "available" ? "catalog" : "catalog-unconfigured",
     version: capability.version,
     dependencies: (capability.dependencies ?? []).map((d) => ({
       capabilityKey: d.id,

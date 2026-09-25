@@ -5,6 +5,9 @@ import { composeNexusIntent, nexusAdapters } from "../../../../src/nexus/runtime
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
+import { MemoryIdempotencyStore } from "../../../../src/nexus/memory-idempotency";
+import { productionUserDataBlock } from "../../../../src/nexus/production-boundary";
+import { ScopedExecutionMemory } from "../../../../src/nexus/scoped-memory";
 import type { CapabilityRequirement, NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../src/nexus/types";
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -17,8 +20,8 @@ const MAX_IDEMPOTENCY_LENGTH = 128;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
 const CLAIM_STALE_MS = 5 * 60 * 1000;
-const memoryExecutions: NexusExecution[] = [];
-const memoryEvidence: unknown[] = [];
+const scopedMemory = new ScopedExecutionMemory();
+const memoryIdempotency = new MemoryIdempotencyStore();
 const persistence = createNexusPersistenceFromEnv();
 
 function dbClient() {
@@ -31,13 +34,11 @@ const db = dbClient();
 const durable = Boolean(db && persistence);
 const sink = {
   recordEvidence: async (item: NexusEvidence, projectId?: string) => {
-    memoryEvidence.unshift(item);
+    scopedMemory.addEvidence(projectId ?? process.env.RESONANCE_PROJECT_ID ?? "unscoped", item);
     if (persistence) await persistence.saveEvidence(item, projectId ?? process.env.RESONANCE_PROJECT_ID);
   },
   recordExecution: async (execution: NexusExecution, projectId?: string) => {
-    const index = memoryExecutions.findIndex((item) => item.id === execution.id);
-    if (index >= 0) memoryExecutions[index] = execution;
-    else memoryExecutions.unshift(execution);
+    scopedMemory.upsertExecution(projectId ?? process.env.RESONANCE_PROJECT_ID ?? "unscoped", execution);
     if (persistence) await persistence.saveExecution(execution, projectId ?? process.env.RESONANCE_PROJECT_ID);
   },
   recordEvent: async (event: NexusEvent) => {
@@ -76,13 +77,16 @@ function isRequirement(value: unknown): value is CapabilityRequirement {
 }
 
 export async function GET(request: Request) {
+  const blocked = productionUserDataBlock();
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID ?? null;
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
   }
-  if (persistence && projectId) {
+  if (!projectId) return NextResponse.json({ error: "projectId is required." }, { status: 400 });
+  if (persistence) {
     try {
       const [executions, evidence] = await Promise.all([persistence.listExecutions(projectId), persistence.listEvidence(projectId)]);
       return NextResponse.json({ executions, evidence, source: "durable" });
@@ -90,10 +94,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
   }
-  return NextResponse.json({ executions: memoryExecutions, evidence: memoryEvidence, source: "memory" });
+  const listed = scopedMemory.list(projectId);
+  return NextResponse.json({ executions: listed.executions, evidence: listed.evidence, source: "memory" });
 }
 
 export async function POST(request: Request) {
+  const blocked = productionUserDataBlock();
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
   if (!idempotencyKey || idempotencyKey.length > MAX_IDEMPOTENCY_LENGTH) return NextResponse.json({ error: "Idempotency-Key header is required" }, { status: 400 });
 
@@ -123,6 +130,20 @@ export async function POST(request: Request) {
   const hash = hashExecutionRequest(intent);
   // Fencing token for this attempt. Only the holder may advance the request.
   let claimToken = crypto.randomUUID();
+
+  if (!db) {
+    const decision = memoryIdempotency.begin(intent.projectId, idempotencyKey, hash);
+    if (decision.kind === "conflict") {
+      return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
+    }
+    if (decision.kind === "replay") {
+      return NextResponse.json(decision.body, { status: decision.httpStatus, headers: { "X-Idempotent-Replay": "true" } });
+    }
+    if (decision.kind === "in_progress") {
+      return NextResponse.json({ status: "accepted" }, { status: 202, headers: { "X-Idempotent-Replay": "true" } });
+    }
+    claimToken = decision.claimToken;
+  }
 
   if (db) {
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
@@ -196,6 +217,8 @@ export async function POST(request: Request) {
           .eq("project_id", intent.projectId)
           .eq("idempotency_key", idempotencyKey)
           .eq("claim_token", claimToken);
+      } else {
+        memoryIdempotency.finish(intent.projectId, idempotencyKey, claimToken, response, 202, "waiting");
       }
       return NextResponse.json(response, { status: 202 });
     }
@@ -206,6 +229,7 @@ export async function POST(request: Request) {
       recordEvent: sink.recordEvent,
     }).execute(plan);
     const response = { intent, plan, ...result };
+    const httpStatus = result.execution.status === "completed" ? 201 : result.execution.status === "partial" ? 207 : 422;
     if (db) {
       await db
         .from("nexus_execution_requests")
@@ -219,8 +243,10 @@ export async function POST(request: Request) {
         .eq("project_id", intent.projectId)
         .eq("idempotency_key", idempotencyKey)
         .eq("claim_token", claimToken);
+    } else {
+      memoryIdempotency.finish(intent.projectId, idempotencyKey, claimToken, response, httpStatus, result.execution.status);
     }
-    return NextResponse.json(response, { status: result.execution.status === "completed" ? 201 : 422 });
+    return NextResponse.json(response, { status: httpStatus });
   } catch (error) {
     if (db) {
       await db
@@ -229,6 +255,9 @@ export async function POST(request: Request) {
         .eq("project_id", intent.projectId)
         .eq("idempotency_key", idempotencyKey)
         .eq("claim_token", claimToken);
+    } else {
+      const response = { error: error instanceof Error ? error.message : String(error) };
+      memoryIdempotency.finish(intent.projectId, idempotencyKey, claimToken, response, 422, "failed");
     }
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
   }

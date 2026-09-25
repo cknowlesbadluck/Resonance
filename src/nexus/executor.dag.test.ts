@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { NexusExecutor } from "./executor";
+import { NexusExecutor, stepsSafeToRetry } from "./executor";
 import type { NexusExecutionPlan } from "./types";
 import type { NexusAdapter } from "./adapters/types";
 
@@ -104,5 +104,43 @@ describe("NexusExecutor DAG Execution", () => {
 
     expect(execution.status).toBe("failed");
     expect(execution.error).toContain("Cyclic dependency");
+  });
+
+  it("records a partial status when a parallel step succeeds and another fails", async () => {
+    const ok = createMockAdapter("adapter-ok");
+    const failing: NexusAdapter = {
+      ...createMockAdapter("adapter-bad"),
+      invoke: vi.fn().mockResolvedValue({ ok: false, error: "provider rejected the write" }),
+    };
+    const executor = new NexusExecutor([ok, failing], mockSink);
+    const plan: NexusExecutionPlan = {
+      id: "plan-partial",
+      intentId: "intent-1",
+      projectId: "proj-1",
+      actorId: "actor-1",
+      mode: "direct",
+      approvalRequired: false,
+      contextRefs: [],
+      rationale: [],
+      steps: [
+        { id: "read", capabilityId: "cap-ok", adapterId: "adapter-ok", input: "A", requiresApproval: false },
+        { id: "write", capabilityId: "cap-bad", adapterId: "adapter-bad", input: "B", requiresApproval: false },
+      ],
+    };
+
+    const { execution, evidence } = await executor.execute(plan);
+    expect(execution.status).toBe("partial");
+    expect(execution.error).toMatch(/Do not retry succeeded steps/);
+    expect(execution.stepOutcomes).toEqual([
+      expect.objectContaining({ stepId: "read", ok: true }),
+      expect.objectContaining({ stepId: "write", ok: false }),
+    ]);
+    expect(evidence.map((item) => item.summary)).toEqual([
+      "Capability cap-ok completed.",
+      "Capability cap-bad failed.",
+    ]);
+    expect(stepsSafeToRetry(plan, execution.stepOutcomes).map((step) => step.id)).toEqual(["write"]);
+    expect(ok.invoke).toHaveBeenCalledTimes(1);
+    expect(failing.invoke).toHaveBeenCalledTimes(1);
   });
 });

@@ -4,6 +4,12 @@ P6 — host-neutral release surface for the Nexus control plane.
 
 The host is **runtime infrastructure**, not a domain object. Adapters stay in adapters. Switching Netlify → Render → Vercel does not change Identity, Capability, Intent, or Evidence.
 
+## Observed 2026-09-25
+
+`GET /api/health` returned 200. `GET /api/ready` returned 503 with `missingRequired` of `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESONANCE_PROJECT_ID`, and `RESONANCE_AUTH_MODE`. `authMode` was `auto`. `githubAdapterConfigured` was false. The host was not changed.
+
+User-data routes fail closed with 503 when production is missing persistence or `RESONANCE_AUTH_MODE=required`. They must not answer from process memory.
+
 ## Current host
 
 - Live web surface: [https://resonancenexus.netlify.app](https://resonancenexus.netlify.app)

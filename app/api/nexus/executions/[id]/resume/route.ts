@@ -4,6 +4,7 @@ import { authRequired, authenticateNexusRequest } from "../../../../../../src/au
 import { composeNexusIntent, nexusAdapters } from "../../../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
+import { productionUserDataBlock } from "../../../../../../src/nexus/production-boundary";
 import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../../../src/nexus/types";
 
 const MAX_ID_LENGTH = 128;
@@ -46,6 +47,8 @@ export async function POST(
   if (!id || id.length > MAX_ID_LENGTH) {
     return NextResponse.json({ error: "execution or request id is required" }, { status: 400 });
   }
+  const blocked = productionUserDataBlock();
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
 
   const body = await request.json().catch(() => ({})) as {
     projectId?: string;
@@ -196,7 +199,7 @@ export async function POST(
 
     return NextResponse.json(
       { intent, plan, ...result, resumed: true },
-      { status: result.execution.status === "completed" ? 200 : 422 },
+      { status: result.execution.status === "completed" ? 200 : result.execution.status === "partial" ? 207 : 422 },
     );
   } catch (error) {
     await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
