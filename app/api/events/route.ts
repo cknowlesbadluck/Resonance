@@ -58,8 +58,15 @@ export async function POST(request: Request) {
   if (externalId !== null && (typeof externalId !== "string" || externalId.length > MAX_EXTERNAL_ID_LENGTH)) return NextResponse.json({ error: "external_id is invalid." }, { status: 400 });
   const supabase = client();
   if (!supabase) return NextResponse.json({ error: "Supabase is not configured" }, { status: 503 });
-  const event = { project_id: projectId, source, type, status, payload, external_id: externalId };
-  const { data, error } = await supabase.from("events").insert(event).select().single();
+  const args = {
+    p_project_id: projectId,
+    p_source: source,
+    p_type: type,
+    p_status: status,
+    p_payload: payload,
+    ...(externalId !== null ? { p_external_id: externalId } : {})
+  };
+  const { data, error } = await supabase.rpc("emit_event", args).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ event: data }, { status: 201 });
 }

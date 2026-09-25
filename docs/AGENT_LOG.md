@@ -362,3 +362,49 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Tests added and all 23 test suites pass cleanly (`npm run test`).
 - Type verification succeeded (`npm run typecheck`).
 - Code reviewed and certified for merge readiness.
+
+## 2026-09-25 — Jules (Use `emit_event` RPC for Database Event Insertions)
+
+**Checked:**
+- Identified all locations directly inserting or upserting into the `events` table via the Supabase client:
+  - `app/api/events/route.ts`
+  - `app/api/nexus/executions/route.ts`
+  - `app/api/nexus/executions/[id]/resume/route.ts`
+  - `app/api/webhooks/github/route.ts`
+
+**Decided / Done:**
+- Refactored all direct `.from('events').insert` and `.from('events').upsert` logic to utilize the `emit_event` RPC (`.rpc('emit_event', args)`).
+- This aligns the codebase with memory directives to automatically handle raw event deduplication via the RPC logic instead of relying on the application layer.
+
+**Verified:**
+- `npm run typecheck` passed cleanly.
+- `npm run test` (139 passed | 1 skipped) passed cleanly.
+- `npm run build` compiled without errors.
+
+## 2026-09-25 — Jules (Fix `emit_event` RPC to preserve ID, Actor ID, and Timestamp)
+
+**Checked:**
+- Received a code review indicating that refactoring `.insert` and `.upsert` to the `emit_event` RPC silently dropped data `id`, `actor_id`, and `created_at` because the `emit_event` RPC didn't map those fields originally.
+- This caused data loss breaking audit trails and correlations.
+
+**Decided / Done:**
+- Created a new migration `supabase/migrations/20260925000000_emit_event_audit_fields.sql` that modifies the `emit_event` RPC to accept `p_id`, `p_actor_id`, and `p_created_at`.
+- Updated `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts` to supply `p_id`, `p_actor_id`, and `p_created_at` to the RPC using the values that were previously being passed to the `upsert` payload.
+
+**Verified:**
+- `npm run typecheck` passed cleanly.
+- `npm run test` (139 passed | 1 skipped) passed cleanly.
+
+## 2026-09-25 — Jules (Fix `emit_event` RPC Upsert Logic)
+
+**Checked:**
+- The previous implementation of the `emit_event` RPC had a syntactically invalid `ON CONFLICT` clause (`where p_external_id is not null` instead of `where external_id is not null`).
+- The previous implementation also failed to update `status` and `payload` fields on conflict, leading to data staleness.
+
+**Decided / Done:**
+- Updated the migration `supabase/migrations/20260925000000_emit_event_audit_fields.sql` to fix the `ON CONFLICT` index inference by using the actual column name (`external_id`).
+- Added updates for `status` and `payload` inside the `do update set` clause to properly emulate upsert functionality.
+
+**Verified:**
+- `npm run typecheck` passed cleanly.
+- `npm run test` (139 passed | 1 skipped) passed cleanly.
