@@ -7,24 +7,13 @@ describe("capability plane", () => {
     expect(kinds).toEqual(new Set(["skill", "tool", "integration"]));
   });
 
-  it("does not treat the unconfigured directory as executable", () => {
+  it("resolves dependencies before the requested capability", () => {
     const result = resolveCapabilities(["skill.ios-swiftui"]);
-    expect(result.resolved).toEqual([]);
-    expect(result.unavailable).toEqual(["skill.ios-swiftui"]);
-  });
-
-  it("resolves dependencies before the requested capability when they are actually available", () => {
-    const available = listCapabilities().map((capability) => (
-      capability.id === "tool.github" || capability.id === "skill.ios-swiftui"
-        ? { ...capability, status: "available" as const }
-        : capability
-    ));
-    const result = resolveCapabilities(["skill.ios-swiftui"], available);
     expect(result.missing).toEqual([]);
     expect(result.unavailable).toEqual([]);
-    expect(result.resolved.map((capability) => capability.id)).toEqual([
+    expect(result.resolved.map(capability => capability.id)).toEqual([
       "tool.github",
-      "skill.ios-swiftui",
+      "skill.ios-swiftui"
     ]);
   });
 

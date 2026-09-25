@@ -42,6 +42,12 @@ jobs:
           path: artifacts/github-vertical-slice.json
           if-no-files-found: warn
       - run: npm run build
+      # Advisory only: current findings are postcss transitively via next, and
+      # clearing them needs a next@16 major upgrade. Surfaced, not gating.
+      - name: Dependency advisories (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: npm audit --audit-level=high
 
   ios:
     runs-on: macos-latest

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
-import { composeNexusIntent, nexusAdapters } from "../../../../src/nexus/runtime";
+import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
+import { nexusAdapters } from "../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
@@ -146,11 +147,11 @@ export async function POST(request: Request) {
   }
 
   if (db) {
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-    const { count: recentCount, error: rateError } = await db.from("nexus_execution_requests").select("id", { count: "exact", head: true }).eq("project_id", intent.projectId).gte("created_at", windowStart);
-    if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
-    if ((recentCount ?? 0) >= RATE_LIMIT_MAX_REQUESTS) return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
-
+    // Claim first, then count. Counting before inserting left a TOCTOU window in which
+    // N concurrent requests could each observe a under-limit count and all proceed.
+    // Because every caller has already inserted its own row before counting, concurrent
+    // callers see each other and exactly the overflow is rejected. Replays (duplicate
+    // key) skip the check entirely — returning a stored response costs nothing.
     const claim = await db.from("nexus_execution_requests").insert({
       project_id: intent.projectId,
       idempotency_key: idempotencyKey,
@@ -158,6 +159,26 @@ export async function POST(request: Request) {
       status: "accepted",
       claim_token: claimToken,
     });
+
+    if (!claim.error) {
+      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+      const { count: recentCount, error: rateError } = await db
+        .from("nexus_execution_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", intent.projectId)
+        .gte("created_at", windowStart);
+      if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
+      if ((recentCount ?? 0) > RATE_LIMIT_MAX_REQUESTS) {
+        // Release our own claim so the key is not burned by a throttled attempt.
+        await db
+          .from("nexus_execution_requests")
+          .delete()
+          .eq("project_id", intent.projectId)
+          .eq("idempotency_key", idempotencyKey)
+          .eq("claim_token", claimToken);
+        return NextResponse.json({ error: "Execution rate limit exceeded. Retry after the current window." }, { status: 429, headers: { "Retry-After": "60" } });
+      }
+    }
 
     if (claim.error) {
       const { data: existing, error: lookupError } = await db
@@ -207,7 +228,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const plan = composeNexusIntent(intent);
+    const plan = await composeNexusIntent(intent);
     if (plan.approvalRequired) {
       const response = { intent, plan, status: "approval_required" };
       if (db) {

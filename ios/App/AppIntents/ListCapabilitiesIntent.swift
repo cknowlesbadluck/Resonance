@@ -32,11 +32,6 @@ struct ListCapabilitiesIntent: AppIntent {
     }
 
     private func dialog(for error: NexusClientError) -> IntentDialog {
-        switch error {
-        case .httpStatus(401, _): return "Authentication required. Open Resonance and sign in."
-        case .httpStatus(let code, let message):
-            return IntentDialog(stringLiteral: "HTTP \(code): \(message ?? "error")")
-        default: return IntentDialog(stringLiteral: String(describing: error))
-        }
+        IntentDialog(stringLiteral: error.userFacingMessage)
     }
 }

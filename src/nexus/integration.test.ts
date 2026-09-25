@@ -34,9 +34,14 @@ describe("Nexus heterogeneous bridge proof", () => {
     const capabilities = listRuntimeCapabilities();
     expect(capabilities.filter((capability) => capability.provenance === "fixture").every((capability) => capability.availability === "unavailable")).toBe(true);
     const github = capabilities.find((capability) => capability.id === "github.repository.read");
-    expect(github).toBeTruthy();
-    expect(github?.availability).toBe(process.env.GITHUB_TOKEN?.trim() ? "available" : "unavailable");
-    expect(github?.provenance).not.toBe("fixture");
+    if (process.env.GITHUB_TOKEN?.trim()) {
+      expect(github).toBeTruthy();
+      expect(github?.availability).toBe("available");
+      expect(github?.provenance).not.toBe("fixture");
+    } else {
+      // Unconfigured providers are absent, not advertised-and-broken.
+      expect(github).toBeUndefined();
+    }
   });
 
   it("composes one intent across HTTP and MCP without provider-specific core logic", () => {

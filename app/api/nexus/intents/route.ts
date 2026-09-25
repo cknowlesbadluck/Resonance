@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
-import { composeNexusIntent } from "../../../../src/nexus/runtime";
+import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
 import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/types";
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       contextRefs: body.contextRefs ?? [],
       metadata: body.metadata ?? {},
     };
-    return NextResponse.json({ intent, plan: composeNexusIntent(intent) }, { status: 200 });
+    return NextResponse.json({ intent, plan: await composeNexusIntent(intent) }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
   }

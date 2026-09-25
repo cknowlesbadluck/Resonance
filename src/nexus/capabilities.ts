@@ -20,6 +20,10 @@ export function capabilityMatches(capability: NexusCapability, requirement: Capa
 
 export function sortCapabilities(candidates: NexusCapability[]): NexusCapability[] {
   return [...candidates].sort((a, b) => {
+    // A capability this deployment can actually invoke always outranks one it cannot,
+    // regardless of how attractive the unbound one looks on risk or cost.
+    const executable = Number(a.executable === false) - Number(b.executable === false);
+    if (executable) return executable;
     const availability = availabilityRank[a.availability ?? "available"] - availabilityRank[b.availability ?? "available"];
     if (availability) return availability;
     const risk = riskRank[a.risk] - riskRank[b.risk];

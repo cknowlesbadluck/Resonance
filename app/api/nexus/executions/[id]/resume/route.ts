@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest } from "../../../../../../src/auth/nexus-request";
-import { composeNexusIntent, nexusAdapters } from "../../../../../../src/nexus/runtime";
+import { composeIntentWithCatalog as composeNexusIntent } from "../../../../../../src/composition/root";
+import { nexusAdapters } from "../../../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
 import { productionUserDataBlock } from "../../../../../../src/nexus/production-boundary";
@@ -138,7 +139,7 @@ export async function POST(
   }
 
   try {
-    const plan = composeNexusIntent(intent);
+    const plan = await composeNexusIntent(intent);
 
     // The human approved the plan that was originally shown to them (recorded in
     // `originalPlan` at compose time). Recomposing here must not silently escalate
