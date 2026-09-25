@@ -15,7 +15,7 @@ type ExecutionResponse = {
   execution?: { id?: string; status?: string; output?: unknown; error?: string; stepOutcomes?: Array<{ stepId: string; ok: boolean; error?: string }> };
   evidence?: Array<{ id: string; summary: string; type: string }>;
 };
-type Ready = { status?: string; authMode?: string; persistenceConfigured?: boolean; githubAdapterConfigured?: boolean; missingRequired?: string[] };
+type Ready = { status?: string; authMode?: string; authModeOk?: boolean; persistenceConfigured?: boolean; githubAdapterConfigured?: boolean; missingRequired?: string[]; production?: boolean };
 type History = { source?: string; executions?: Array<{ id: string; status: string; error?: string }>; evidence?: Array<{ id: string; summary: string; type: string }> };
 
 const DEFAULT_PROJECT_ID = process.env.NEXT_PUBLIC_RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
@@ -115,8 +115,10 @@ export default function Home() {
     };
   }
 
+  const hostReady = ready?.status === "ready";
+
   async function previewPlan() {
-    if (!selected || selected.availability !== "available" || previewing) return;
+    if (!hostReady || !selected || selected.availability !== "available" || previewing) return;
     setPreviewing(true);
     setExecution(null);
     try {
@@ -137,7 +139,7 @@ export default function Home() {
   }
 
   async function composeIntent() {
-    if (!selected || selected.availability !== "available" || executing) return;
+    if (!hostReady || !selected || selected.availability !== "available" || executing) return;
     setExecuting(true);
     const key = idempotencyKey ?? crypto.randomUUID();
     setIdempotencyKey(key);
@@ -163,7 +165,7 @@ export default function Home() {
   }
 
   async function resume(approved: boolean) {
-    if (!idempotencyKey || executing) return;
+    if (!hostReady || !idempotencyKey || executing) return;
     setExecuting(true);
     try {
       const token = await accessToken();
@@ -218,8 +220,8 @@ export default function Home() {
           <p className="lede">Discover capabilities, review the plan, approve privileged work, and read the evidence. A fixture or unconfigured directory slot stays visibly unavailable.</p>
           {ready?.status !== "ready" && (
             <div className="execution-status">
-              <strong>This host is not ready for durable execution</strong>
-              <small>{ready?.missingRequired?.length ? `Missing ${ready.missingRequired.join(", ")}.` : "Readiness has not been confirmed."} Auth mode: {ready?.authMode ?? "unknown"}. GitHub adapter: {ready?.githubAdapterConfigured ? "configured" : "not configured"}.</small>
+              <strong>Ready-or-refuse: compose and execute are disabled</strong>
+              <small>{ready?.missingRequired?.length ? `Missing ${ready.missingRequired.join(", ")}.` : "Readiness has not been confirmed."} Auth mode: {ready?.authMode ?? "unknown"}{ready?.authModeOk === false ? " (not ok)" : ""}. Persistence: {ready?.persistenceConfigured ? "configured" : "not configured"}. GitHub adapter: {ready?.githubAdapterConfigured ? "configured" : "not configured"}.</small>
             </div>
           )}
           <div className="composer">
@@ -233,11 +235,11 @@ export default function Home() {
             )}
           </div>
           <div className="hero-actions">
-            <button className="primary" onClick={() => void previewPlan()} disabled={!selected || selected.availability !== "available" || previewing}>
-              <Play size={16} /> {previewing ? "Composing…" : "Preview plan"}
+            <button className="primary" onClick={() => void previewPlan()} disabled={!hostReady || !selected || selected.availability !== "available" || previewing}>
+              <Play size={16} /> {!hostReady ? "Host not ready" : previewing ? "Composing…" : "Preview plan"}
             </button>
-            <button className="primary" onClick={() => void composeIntent()} disabled={!selected || selected.availability !== "available" || executing || !execution?.plan}>
-              {executing ? "Executing…" : "Execute plan"}
+            <button className="primary" onClick={() => void composeIntent()} disabled={!hostReady || !selected || selected.availability !== "available" || executing || !execution?.plan}>
+              {executing ? "Executing…" : !hostReady ? "Execute locked" : "Execute plan"}
             </button>
             <div className="policy-badge"><ShieldCheck size={16} /> {sessionLabel}</div>
           </div>
@@ -262,8 +264,8 @@ export default function Home() {
               ) : null}
               {(execution.status === "approval_required" || execution.status === "waiting" || execution.execution?.status === "waiting") && (
                 <div className="hero-actions">
-                  <button className="primary" type="button" onClick={() => void resume(true)} disabled={executing}>Approve and resume</button>
-                  <button className="primary" type="button" onClick={() => void resume(false)} disabled={executing}>Cancel</button>
+                  <button className="primary" type="button" onClick={() => void resume(true)} disabled={!hostReady || executing}>Approve and resume</button>
+                  <button className="primary" type="button" onClick={() => void resume(false)} disabled={!hostReady || executing}>Cancel</button>
                 </div>
               )}
             </div>
