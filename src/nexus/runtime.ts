@@ -3,6 +3,7 @@ import { DefaultNexusPolicy } from "./policy";
 import { HttpAdapter } from "./adapters/http";
 import { McpAdapter } from "./adapters/mcp";
 import { GitHubAdapter, githubRepositoryReadCapability } from "./adapters/github";
+import { LinearAdapter, linearIssueReadCapability } from "./adapters/linear";
 import { composeIntent } from "./composer";
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusCapability, NexusIntent } from "./types";
@@ -22,13 +23,21 @@ const mcpAdapter = new McpAdapter("mcp-demo", {
 });
 
 const githubAdapter = process.env.GITHUB_TOKEN?.trim() ? new GitHubAdapter(process.env.GITHUB_TOKEN) : null;
-export const nexusAdapters: NexusAdapter[] = githubAdapter
-  ? [httpAdapter, mcpAdapter, githubAdapter]
-  : [httpAdapter, mcpAdapter];
+const linearAdapter = process.env.LINEAR_API_KEY?.trim() ? new LinearAdapter(process.env.LINEAR_API_KEY) : null;
+
+// Credential presence is what binds a provider. An adapter with no key is absent
+// rather than present-and-broken, so capability discovery reports the truth.
+export const nexusAdapters: NexusAdapter[] = [
+  httpAdapter,
+  mcpAdapter,
+  ...(githubAdapter ? [githubAdapter] : []),
+  ...(linearAdapter ? [linearAdapter] : []),
+];
 
 export const nexusRegistry = new InMemoryCapabilityRegistry();
 demoCapabilities.forEach((capability) => nexusRegistry.register(capability));
 if (githubAdapter) nexusRegistry.register(githubRepositoryReadCapability);
+if (linearAdapter) nexusRegistry.register(linearIssueReadCapability);
 export const nexusPolicy = new DefaultNexusPolicy();
 
 export function composeNexusIntent(intent: NexusIntent) { return composeIntent(intent, nexusRegistry, nexusPolicy, nexusAdapters); }

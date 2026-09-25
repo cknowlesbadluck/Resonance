@@ -141,12 +141,7 @@ struct ContentView: View {
                 lastExecutionStatus = "Completed"
             }
         } catch let error as NexusClientError {
-            switch error {
-            case .httpStatus(let code, let message):
-                lastExecutionStatus = "HTTP \(code): \(message ?? "error")"
-            default:
-                lastExecutionStatus = String(describing: error)
-            }
+            lastExecutionStatus = error.userFacingMessage
         } catch {
             lastExecutionStatus = error.localizedDescription
         }

@@ -25,10 +25,14 @@ public enum NexusClientFactory {
             ?? KeychainTokenStore.load()
             ?? ProcessInfo.processInfo.environment[bearerTokenKey]
 
-        let resolvedProject = projectId
-            ?? ProcessInfo.processInfo.environment[projectIdKey]
-            ?? UserDefaults.standard.string(forKey: projectIdKey)
-            ?? "demo"
+        // No "demo" fallback: the control plane rejects any non-UUID projectId with a
+        // 400 before doing work, so a placeholder guarantees failure on every call.
+        // An unset project is surfaced as nil and caught by NexusClient, not the server.
+        let resolvedProject = [
+            projectId,
+            ProcessInfo.processInfo.environment[projectIdKey],
+            UserDefaults.standard.string(forKey: projectIdKey),
+        ].compactMap { $0 }.first { NexusProjectID.isValid($0) }
 
         var headers = NexusRequestHeaders()
         headers.authorizationBearer = resolvedToken

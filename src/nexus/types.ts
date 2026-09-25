@@ -37,6 +37,17 @@ export interface NexusCapability {
   version?: string;
   cost?: number;
   latencyMs?: number;
+  /**
+   * Whether *this deployment* can actually invoke the capability, i.e. whether an
+   * adapter is bound to it here. Distinct from `availability`, which describes the
+   * upstream provider. A capability may be `availability: "available"` upstream and
+   * `executable: false` locally because no adapter is configured. Advertising a
+   * capability without this distinction is what made the catalog plane a promise the
+   * runtime could not keep.
+   */
+  executable?: boolean;
+  /** Human-readable reason when `executable` is false. */
+  unexecutableReason?: string;
 }
 
 export interface CapabilityRequirement { key: string; requiredPermissions?: string[]; resourceType?: string; preferredProviderIds?: string[]; maxRisk?: CapabilityRisk; tags?: string[]; }

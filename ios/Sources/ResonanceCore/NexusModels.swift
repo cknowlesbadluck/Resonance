@@ -169,6 +169,11 @@ public struct NexusCapabilityResolution: Codable, Sendable, Equatable {
 // MARK: - Intent / Plan / Execution
 
 public struct NexusIntentRequest: Codable, Sendable, Equatable {
+    /// Matches the control plane's own development fallback. Still a real UUID, so it
+    /// fails on project membership rather than on shape — the previous "demo" default
+    /// was rejected with a 400 by every deployment that had auth or persistence on.
+    public static let unscopedProjectID = "00000000-0000-4000-8000-000000000001"
+
     public let id: String?
     public let projectId: String
     public let objective: String
@@ -178,7 +183,7 @@ public struct NexusIntentRequest: Codable, Sendable, Equatable {
 
     public init(
         id: String? = nil,
-        projectId: String = "demo",
+        projectId: String = NexusIntentRequest.unscopedProjectID,
         objective: String,
         requestedBy: String,
         requirements: [NexusCapabilityRequirement],
