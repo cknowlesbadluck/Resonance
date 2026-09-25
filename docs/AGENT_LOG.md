@@ -408,3 +408,15 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verified:**
 - `npm run typecheck` passed cleanly.
 - `npm run test` (139 passed | 1 skipped) passed cleanly.
+
+## 2026-09-25 — Jules (CI Failure Noted)
+
+**Checked:**
+- CI failed in the `github-advanced-security` check with `SessionModelError: Execution failed: CAPIError: 400 The requested model is not supported`.
+- According to memory, this is a spurious infrastructure error external to the repo code.
+
+**Decided / Done:**
+- Noted the failure and will resubmit the PR. No repo fixes are necessary.
+
+**Next:**
+- Resubmit the PR.
