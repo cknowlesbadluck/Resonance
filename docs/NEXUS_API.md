@@ -1,18 +1,18 @@
 # Nexus API Reference
 
-The Nexus API provides a contract-driven control plane for discovering capabilities, composing intents, managing executions, and tracking events across integrated ecosystems.
+The normative execution request is a flat `NexusIntent` body (`objective`, `projectId`, `requirements`, optional `metadata.input`), not the nested example further down in older sections. Production user-data routes return `503` until persistence is configured and `RESONANCE_AUTH_MODE=required`. A partial DAG result uses execution status `partial` and HTTP `207`. See `docs/EXECUTION_SEMANTICS.md`.
 
 **Base URL:** `https://resonancenexus.netlify.app/api/nexus`
 
 ## Authentication
 
-All Nexus endpoints require:
+When `RESONANCE_AUTH_MODE=required`, Nexus routes require:
 
 ```
 Authorization: Bearer <access_token>
 ```
 
-Tokens are scoped to a single project. Cross-project requests are rejected (CHR-49).
+The token's user must be a member of the requested project. Cross-project requests are rejected. `GET /api/health` and `GET /api/ready` stay unauthenticated. `/api/ready` reports configuration and never echoes secret values.
 
 ## Core Contracts
 

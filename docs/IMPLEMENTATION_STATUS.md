@@ -1,75 +1,45 @@
 # Resonance Implementation Status
 
-## Six-phase sprint status — updated 2026-09-15 (Audit & Strategy Pass)
+Observed 2026-09-25 against `main` `5e427d85a76f74bcdfa1a92bbdb22bb75beadfc8` and the live host. Older notes in this file treated closed issues as finished work. They were closed in a hygiene sweep, not because the acceptance checks passed.
 
-The implementation is advancing additively against canonical `main`: Nexus contracts remain the center, web/iOS are clients, Supabase is the operational persistence foundation, and provider-specific behavior remains behind adapters. The live web host is **Netlify** `resonancenexus` (`https://resonancenexus.netlify.app`). The host is not a Nexus domain object.
+## What was verified
 
-### Phase 1 — Core Resonance
-- Provider-neutral capability contracts remain the core boundary (`NexusCapability`).
-- Catalog plane (`lib/capabilities.ts`) maps into Nexus via `capability-bridge` (`src/nexus/capability-bridge.ts`).
-- Capability ranking considers availability, risk, cost, and latency metadata.
-- Execution plans support bounded retry policy.
-- Executor retries failed adapter calls with linear backoff, preserves correlation IDs, and performs $O(1)$ adapter map lookups.
-- Supabase persistence stores capability cost/latency telemetry.
-- Nexus API surfaces cover capabilities, intents, executions, identities, events, and webhooks.
+| Check | Result |
+| --- | --- |
+| `main` CI [run 35903834598](https://github.com/cknowlesbadluck/Resonance/actions/runs/35903834598) | `web` success, `ios` success (`swift test` on macos-latest), aggregate `CI` success. `production-smoke` skipped (workflow_dispatch only). |
+| Open pull requests | 0 |
+| Open GitHub issues | 0 (closed as trackers, not as proof) |
+| Live host | Netlify `https://resonancenexus.netlify.app` still serves this app. Do not treat Render as production. |
+| `GET /api/health` | 200, `stage: deployment` |
+| `GET /api/ready` | 503. Missing `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESONANCE_PROJECT_ID`, `RESONANCE_AUTH_MODE`. `authMode` is `auto`. `githubAdapterConfigured` is false. `persistenceConfigured` is false. |
 
-### Phase 2 — Web surface
-- Web Nexus surface is connected to the execution endpoint.
-- Compose Intent invokes the Nexus execution API and reports completion, approval-required, or error states.
-- Runtime capability discovery includes configured provider adapters.
+No Supabase migration was applied from this session. The new partial-status migration is in the repo only.
 
-### Phase 3 — Backend/data
-- Resonance Supabase project (`lfdynzionafcpddqipqc`) active; RLS enabled on core tables.
-- Durable idempotency: `Idempotency-Key` required (HTTP 400 if missing). Unique index on `(project_id, idempotency_key)`.
-- Durable-first execution + rate limit (30/min/project) + minimal Chamber primitive merged.
+## Working
 
-### Phase 4 — Integration layer
-- HTTP and MCP remain behind provider-neutral adapter contracts.
-- **GitHub repository adapter implemented** as the first real provider participant (`github.repository.read`).
-- GitHub adapter contract tests cover authenticated headers, successful reads, and provider failures.
-- Failure matrix + policy deny landed on `main`.
+- Provider-neutral Nexus types, composer, policy gate, and executor.
+- GitHub `github.repository.read` adapter with input validation and classified provider failures. CI can run it when `GITHUB_VERTICAL_SLICE=1` and `GITHUB_TOKEN` are set. That test does not prove a durable, authenticated, cross-project production record.
+- Idempotency-Key required on execution create. Durable path uses `(project_id, idempotency_key)` when Supabase is configured.
+- Approval resume refuses to widen a plan that gained new approval requirements.
+- Swift package `ResonanceCore` tests pass on the macOS CI runner. That is not an installed iPhone app.
 
-### Phase 5 — Production hardening
-- CI: web typecheck/test/build + Swift package tests on macos-latest.
-- Branch protection + required status checks active. Aggregate job named `CI` depends on `web` + `ios`.
-- Execution input propagates through normalized intent metadata into execution steps.
-- Event ingestion/query shares the same authentication/membership boundary as Nexus execution when auth is enabled, with bounded payloads.
+## Partial
 
-### Phase 6 — Native iOS
-- Swift 6 package (`ios/`), actor-isolated `NexusClient`, header-aware transport.
-- App Intents: List / Compose / Execute / Open + Keychain token store merged.
-- Dual iOS Capability models being retired.
-- Spatial Nexus UI; SideStore constraints documented.
-- Physical-device end-to-end verification remains outstanding (issue #11). Open PR #49 is the re-cut compose → execute → evidence slice; do not revive #35.
+- Web control surface can select a project, preview a plan, execute, approve or cancel, and show evidence. It tells the truth when the host is not ready. It cannot complete a durable signed-in journey until the host env is set.
+- Chambers can run one bounded scenario in process: agenda, participants, permitted capabilities, seeded context, approval pause, resume or cancel, dissolve, retained audit. Project isolation is covered by `src/nexus/chamber-scenario.test.ts`. This is not yet wired through Supabase or the web UI.
+- Catalog directory entries are `planned` / unavailable. Runtime fixtures are `provenance: "fixture"` and `availability: "unavailable"`. GitHub is available only when `GITHUB_TOKEN` is present.
 
-## Repository health metrics (2026-09-15)
+## Not done
 
-| Metric | Value | Signal |
-|--------|-------|--------|
-| Test Suite Passing | **100%** (90 passed, 1 skipped) | Excellent |
-| Typecheck Status | **Clean** (`tsc --noEmit`) | Excellent |
-| Production Build | **Success** (`next build`) | Excellent |
-| `main` protected | **true** | Good |
-| Required CI status checks | `web` + `ios` + aggregate `CI` | Good |
-| Live host | Netlify `resonancenexus` | Operational |
+- Live credential-backed execution stored in Supabase and readable after a process restart by a project member, and not by another project or an anonymous caller.
+- Production fail-closed behavior on the current Netlify host (it still lacks the required env, so `/api/ready` is 503; user-data routes now return 503 instead of process memory once this revision is deployed).
+- GitHub webhook delivery against the live host (`GITHUB_WEBHOOK_SECRET` and persistence).
+- A buildable signed IPA installed with SideStore on a physical iPhone. `ios/` is a Swift package plus `ios/App` sources. There is no Xcode app target in this revision, and this environment cannot compile Swift or sign an IPA.
+- A second real provider beyond the GitHub read adapter. MCP remains a fixture adapter, not a live MCP session.
 
-**Rule:** If open-PR count or duplicate-branch count trends upward, stop building and start merging/closing.
+## Owner actions still required
 
-## Current execution gates
-
-1. ~~Branch protection / governance / Idempotency-Key~~ **Done**.
-2. ~~Durable execution + Chamber primitive~~ **Done**.
-3. ~~App Intents device agency~~ **Done**.
-4. ~~Stale sprint branch pruning~~ **Done**.
-5. **Real provider vertical slice:** GitHub repository-read capability implemented. Credential-backed execution runs in required `web` CI when `GITHUB_VERTICAL_SLICE=1`. Live host still needs `GITHUB_TOKEN` (issue #32).
-6. **CHR-33 / P2:** `NexusCapability` is the sole public contract. Dual iOS model retirement tracked.
-7. ~~Failure matrix~~ **Done** on `main`.
-8. **P6 deployment contract (CHR-53):** health/ready probes + env contract + production smoke. Live `/api/ready` 200 still an ops gate (`RESONANCE_AUTH_MODE=required`).
-9. **SideStore gate:** release IPA + physical iPhone execution/evidence verification (issue #11).
-
-## Governance process (active)
-
-- `docs/AGENT_LOG.md` — append-only session log.
-- Linear is backlog; GitHub is execution.
-- Two-Key exceptions documented in `docs/ARCHITECTURE.md`.
-- Branch protection live repository-wide.
+1. Set the production env from `.env.example` on the existing Netlify site `resonancenexus`. Do not switch hosts as part of that.
+2. Apply `supabase/migrations` to the Resonance Supabase project, including `20260925120000_execution_partial_status.sql`, and confirm `/api/ready` returns 200.
+3. Set a scoped `GITHUB_TOKEN` (repository read is enough for the first slice) and `GITHUB_WEBHOOK_SECRET`.
+4. On a Mac, create the iOS app target from `ios/App`, archive an IPA without paid entitlements, and install it with SideStore. Record the commit, bundle id, iOS version, and an execution id from the same intent used on the web.

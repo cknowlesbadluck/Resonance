@@ -27,35 +27,30 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 ### P2 — Capability plane convergence (IN PROGRESS)
 - [x] Interim catalog (`lib/capabilities.ts`)
 - [x] Bridge catalog → NexusCapability API payloads (`src/nexus/capability-bridge.ts`)
-- [ ] Retire dual iOS Capability models in `ResonanceCore`
-- [ ] `nexus_capabilities` cut-over / complete model unification
+- [x] Directory slots are `planned` until a configured adapter exists; fixtures publish as unavailable
+- [ ] Retire any remaining client-only capability shape if one is still decoded beside `NexusCapability`
+- [ ] `nexus_capabilities` rows on the live database match that publication
 
 ### P3 — Native execution loop (IN PROGRESS)
-- [ ] iOS compose → execute → result/approval UX (re-cut #49; do not revive #35)
-- [x] Typed HTTP error mapping in UI
-- [x] Unified ResonanceCore package (CHR-38)
-- [ ] Physical device verification and SideStore compatibility
+- [x] Swift package client sends Idempotency-Key and Bearer
+- [x] App sources in `ios/App` can preview a plan only after an Xcode app target exists
+- [ ] Physical device verification and SideStore IPA. Swift package tests are not that proof.
 
 ### P4 — Integration & adapters (IN PROGRESS)
-- [x] GitHub repository-read vertical slice in required `web` CI
-- [x] GitHub failure matrix: 401/403/404/429/5xx/timeout/malformed/invalid input
-- [ ] Production host `GITHUB_TOKEN` (ops — issue #32; host is Netlify `resonancenexus` today)
-- [ ] Inbound webhook signature verification and raw event bus deduplication
+- [x] GitHub repository-read adapter and failure matrix
+- [x] Inbound webhook signature over the raw body, 1 MiB bound, delivery-id dedupe, no ack without persistence (`docs/EXECUTION_SEMANTICS.md`)
+- [ ] Production host `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` on Netlify `resonancenexus`
+- [ ] Authenticated durable evidence for `github.repository.read` after process restart
 
-### P5 — Chamber / composition fabric (PLANNED)
-- [x] Basic Chamber execution primitive in runtime
-- [ ] Agenda scheduling, Chamber lifecycle, toolkit seeding, and approval pauses
-- [ ] Multi-participant coordination engine
+### P5 — Chamber / composition fabric (IN PROGRESS)
+- [x] Bounded chamber scenario: agenda, participants, permitted capabilities, context, approval pause, resume or cancel, dissolve, retained project-scoped audit (`src/nexus/chamber-scenario.ts`)
+- [ ] Same scenario persisted in Supabase and visible from the control surface
 
-### P6 — Release / deployment stage (IN PROGRESS — CHR-53)
-- [x] Host-neutral deploy contract (presence only; never echo secrets)
-- [x] `GET /api/health` liveness and `GET /api/ready` readiness
-- [x] Production smoke cases (Idempotency-Key 400, structured ready, health 200)
-- [x] Aggregate GitHub Actions job named `CI` (depends on `web` + `ios`)
-- [ ] Live host: `RESONANCE_AUTH_MODE=required` + `/api/ready` 200 (ops)
-- [ ] Authenticated GitHub vertical slice evidence on live Netlify host
-- [ ] Branch entropy held flat across consecutive sessions
-- [ ] SideStore IPA / on-device proof (issue #11, I4)
+### P6 — Release / deployment stage (IN PROGRESS)
+- [x] Host-neutral deploy contract and `/api/health` + `/api/ready`
+- [x] Production user-data routes refuse in-memory fallback
+- [ ] Live host env from `.env.example` and `/api/ready` 200
+- [ ] SideStore IPA on a physical iPhone (not a Swift package test)
 
 ## Definition of done
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../src/auth/nexus-request";
+import { productionUserDataBlock } from "../../../src/nexus/production-boundary";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_PAYLOAD_KEYS = 32;
@@ -24,6 +25,8 @@ async function body(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const blocked = productionUserDataBlock();
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId");
   if (authRequired()) {
@@ -40,6 +43,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const blocked = productionUserDataBlock();
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   let input: Record<string, unknown>;
   try { input = await body(request); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
   const projectId = input.project_id;

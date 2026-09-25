@@ -9,8 +9,8 @@ import type { NexusAdapter } from "./adapters/types";
 import type { NexusCapability, NexusIntent } from "./types";
 
 const demoCapabilities: NexusCapability[] = [
-  { id: "http.demo.read", key: "demo.read", name: "HTTP Demo Read", adapterId: "http-demo", requiredPermissions: ["read"], risk: "low", availability: "available", provenance: "nexus-fixture" },
-  { id: "mcp.demo.write", key: "demo.write", name: "MCP Demo Write", adapterId: "mcp-demo", requiredPermissions: ["execute"], risk: "high", availability: "available", provenance: "nexus-fixture" },
+  { id: "http.demo.read", key: "demo.read", name: "HTTP Demo Read", adapterId: "http-demo", requiredPermissions: ["read"], risk: "low", availability: "unavailable", provenance: "fixture" },
+  { id: "mcp.demo.write", key: "demo.write", name: "MCP Demo Write", adapterId: "mcp-demo", requiredPermissions: ["execute"], risk: "high", availability: "unavailable", provenance: "fixture" },
 ];
 
 const httpAdapter = new HttpAdapter("http-demo", {

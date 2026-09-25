@@ -362,3 +362,26 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - Tests added and all 23 test suites pass cleanly (`npm run test`).
 - Type verification succeeded (`npm run typecheck`).
 - Code reviewed and certified for merge readiness.
+
+---
+
+## 2026-09-25 — Grok (fail-closed execution and honest availability)
+
+**Checked:**
+- `main` `5e427d85a76f74bcdfa1a92bbdb22bb75beadfc8`. CI run 35903834598 `web` + `ios` + aggregate `CI` success. No open PRs. Issues #11 and #32 were closed by a hygiene sweep, not by meeting their acceptance text.
+- Live Netlify `https://resonancenexus.netlify.app`: `/api/health` 200, `/api/ready` 503, auth mode `auto`, persistence and GitHub adapter unset. Host was not switched.
+
+**Done:**
+- Production user-data routes return 503 instead of process-memory executions. Dev memory is project-scoped. Non-production idempotency uses a compare-and-set store.
+- GitHub webhooks verify the raw body, bound the payload, require a delivery id, and acknowledge only after persistence (duplicates are unique-violations).
+- Parallel DAG success-plus-failure is status `partial` with `stepsSafeToRetry`. Migration `20260925120000_execution_partial_status.sql` allows that request status. It has not been applied to a live database.
+- Catalog slots are planned. Runtime fixtures are unavailable. GitHub read is available only when `GITHUB_TOKEN` is set.
+- Web control surface shows readiness, plan preview, approval or cancel, and evidence without calling the host ready when it is not.
+- One in-memory Chamber scenario covers approval, cancel, dissolve, and cross-project isolation.
+
+**Not claimed:**
+- Durable live GitHub evidence, applied migrations, or a SideStore IPA on a phone.
+
+**Verified:**
+- `npm test`, `npm run typecheck`, and `npm run build` in this session. Swift package tests were not re-run here; the last macOS CI job is the evidence above.
+
