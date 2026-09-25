@@ -1,21 +1,21 @@
-# 10-Phase Portfolio Roadmap — 2026-09-25 12:07 EDT
+# Portfolio 10-phase roadmap — 2026-09-25 13:00 EDT
 
-One sequence. Exit criteria are live HTTP, stored rows, or a phone IPA. CI green is never sufficient.
+Binding order. Later phases are fiction until earlier exit criteria are live.
 
-0. Freeze and tell the truth (this hour: #105 merged, Conduit #122 merged, #119/#120 frozen).
-1. Resonance host unlock on existing `resonancenexus` only. `/api/ready` 200 with `RESONANCE_AUTH_MODE=required`.
-2. Durable `github.repository.read` evidence after process restart, project-scoped.
-3. Quicksilver device HG on iPhone 16e (CHR-55).
-4. Quicksilver M1-T3 real model path. No mock after bind.
-5. Repair or close Conduit #119/#120. Do not merge red.
-6. Resonance iOS I0–I1 against the ready host. Salvage or delete ios-p4.
-7. Second real adapter with durable evidence.
-8. Chamber durability in Supabase + web surface.
-9. Archive `mcp` + legacy Quicksilver. Prune leftover branches. Project-scope grants.
-10. Release evidence: production-smoke, numbered IPA, documented Render build.
+1. **Resonance ready** — `/api/ready` 200 on `resonancenexus` with `RESONANCE_AUTH_MODE=required` and persistence configured. Owner action. No agent can invent the secrets.
+2. **Durable GitHub read** — authenticated project member executes `github.repository.read`; execution, event, and evidence survive process restart; other project and anonymous caller cannot.
+3. **Quicksilver device HG** — Archive + SideStore install on the physical iPhone. Record commit SHA + first-run notes. Simulator is not acceptance.
+4. **Quicksilver unbound honesty** — Codex/M1-T2/T3 path states unbound instead of fake success. CHR-12 a11y/reduced-motion checked on device.
+5. **Conduit freeze held** — `#119` and `#120` stay draft until their jobs are green. No red merge. Optional later: ordered migrations + SSE admission as a green follow-up, not this hour.
+6. **Resonance iOS I0–I1** — single capability model against the ready host. Salvage or delete `feature/ios-p4-compose-execute-evidence`.
+7. **Second real adapter** — only after Phase 2 evidence exists. Not MCP fixtures.
+8. **Chamber durability** — agenda → form → pause → resume/cancel → dissolve persisted in Supabase and visible on web.
+9. **Hygiene prune of dead surfaces** — archive or clearly mark `cknowlesbadluck/Quicksilver` and `cknowlesbadluck/mcp` as non-canonical. Close stale Conduit claimed tasks owned by other agents only if those agents release them.
+10. **Release evidence pack** — Resonance ready 200 + one durable execution id; Quicksilver SideStore IPA SHA; Conduit live-smoke on current main. No “1.0” language before that pack exists.
 
-Default path: Phase 1. Owner action required. Agents cannot invent Netlify secrets.
+## Explicit non-goals this cycle
 
-Innovations (do not start until Phase 1 exits):
-- Ready-or-refuse chip on web + iOS: if `/api/ready` != 200, compose/execute is disabled with the missing-env list.
-- Evidence receipt card: execution id, capability, persistence class, restart-survived boolean.
+- Switching Resonance hosts to `resonanceplane`.
+- Merging Conduit `#119` / `#120`.
+- Treating another audit document as product progress.
+- Quicksilver waiting on Resonance env to ship on-device work.
