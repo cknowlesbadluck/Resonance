@@ -1,10 +1,10 @@
-# Portfolio 10-phase roadmap — 2026-09-26 05:00 EDT
+# Portfolio 10-phase roadmap — 2026-09-26 06:03 EDT
 
 Update this file and `docs/AUDIT-2026-09-25.md` in place. Do not add hourly audit files.
 CI fails any PR that reintroduces `docs/PORTFOLIO-AUDIT-YYYY-MM-DD-HHMM.md`.
 
 1. Ready-or-refuse on main — DONE (#108). Live still 503 until SERVICE_ROLE + migrations.
-2. Owner sets `SUPABASE_SERVICE_ROLE_KEY` on resonancenexus only. Exit: `/api/ready` 200.
+2. Owner sets `SUPABASE_SERVICE_ROLE_KEY` on resonancenexus only. Exit: `/api/ready` 200. Confirmed missing at 06:03 (env list has URL/anon/auth/project id only).
 3. Durable `github.repository.read` evidence with deny proofs. Needs `GITHUB_TOKEN` + `GITHUB_WEBHOOK_SECRET`.
 4. Quicksilver device HG CHR-55 on iPhone 16e. Simulator CI is not acceptance.
 5. Quicksilver next code slice after HG (CHR-12 a11y or first bound AI turn). P-T2 shipped (#157).
