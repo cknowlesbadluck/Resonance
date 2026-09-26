@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-Observed 2026-09-26 05:00 EDT against live `resonancenexus` and Conduit 0.8.0.
+Observed 2026-09-26 06:03 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
