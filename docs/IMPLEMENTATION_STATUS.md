@@ -1,17 +1,18 @@
 # Resonance Implementation Status
 
-Observed 2026-09-26 03:00 EDT against live `resonancenexus` and Conduit 0.8.0.
+Observed 2026-09-26 04:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
 | Check | Result |
 | --- | --- |
 | Live host | `https://resonancenexus.netlify.app` only |
+| `/api/health` | 200 |
 | `/api/ready` | **503** missing `SUPABASE_SERVICE_ROLE_KEY` |
 | Auth mode | required, ok |
 | Persistence / GitHub adapter | not configured on live |
 | Conduit | health/ready 200, 0.8.0, postgres, diagnostics green |
-| Hygiene | #112 merged; leftover hourly audit files deleted on this branch |
+| Hygiene | #113 squash-merged `d9c5f790`; docs-hygiene workflow on main |
 
 Fail-closed behavior is on main. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
 
