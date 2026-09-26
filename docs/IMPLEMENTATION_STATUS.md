@@ -1,42 +1,23 @@
 # Resonance Implementation Status
 
-Observed 2026-09-25 14:09 EDT against `main` `6eeac948` and the live host.
+Observed 2026-09-25 18:03 EDT against `main` `5bc73db4` and live `resonancenexus`.
 
-## What was verified
+## Verified
 
 | Check | Result |
 | --- | --- |
-| Open pull requests | #107 closed stale; this ready-or-refuse branch |
-| Live host | Netlify `https://resonancenexus.netlify.app`. Do not treat Render or `resonanceplane` as production. |
-| `GET /api/health` | 200 |
-| `GET /api/ready` | **503**. `authMode=required` ok. Missing `SUPABASE_SERVICE_ROLE_KEY`. Persistence and GitHub adapter not configured. |
-| Conduit | health/ready 200; version 0.8.0; persistence postgres |
+| Live host | `https://resonancenexus.netlify.app` only |
+| `/api/ready` | **503** missing `SUPABASE_SERVICE_ROLE_KEY` |
+| Auth mode | required, ok |
+| Persistence / GitHub adapter | not configured on live |
+| Conduit | health/ready 200, 0.8.0, postgres |
+| Open docs PR #111 | closed as duplicate |
 
-Fail-closed user-data behavior is on `main`. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
+Fail-closed behavior is on main. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
 
-No secrets were invented this session.
+## Owner actions
 
-## Working
-
-- Provider-neutral Nexus types, composer, policy gate, executor.
-- Capability plane executable flag on main.
-- GitHub `github.repository.read` adapter with classified failures. CI token tests are not durable production evidence.
-- Idempotency-Key required on execution create.
-- Approval resume refuses to widen a plan that gained new approval requirements.
-- Swift package `ResonanceCore` tests pass on the macOS CI runner. That is not an installed iPhone app.
-- Web ready-or-refuse (this branch): compose/execute locked while host is not ready.
-
-## Not done
-
-- Live credential-backed execution stored in Supabase and readable after restart by a project member only.
-- `/api/ready` 200.
-- GitHub webhook delivery against the live host.
-- SideStore IPA on a physical iPhone.
-- A second real provider with live credentials.
-
-## Owner actions still required
-
-1. Set `SUPABASE_SERVICE_ROLE_KEY` on existing Netlify site `resonancenexus`. Do not switch hosts.
-2. Apply `supabase/migrations` including `20260925120000_execution_partial_status.sql`. Confirm `/api/ready` 200.
+1. Set `SUPABASE_SERVICE_ROLE_KEY` on existing Netlify site `resonancenexus` (`7fc56cb3-d5f7-4bb2-8986-a733b8cfd548`).
+2. Apply `supabase/migrations` including `20260925120000_execution_partial_status.sql`.
 3. Set scoped `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET`.
-4. Create the iOS app target from `ios/App`, archive, SideStore install, record commit + execution id.
+4. Do not switch hosts.
