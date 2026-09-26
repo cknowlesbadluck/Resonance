@@ -6,7 +6,7 @@ struct ListCapabilitiesIntent: AppIntent {
     static var description = IntentDescription("Show capabilities exposed by the Resonance Nexus")
     static var openAppWhenRun: Bool = false
 
-    @Parameter(title: "Project ID", default: "demo")
+    @Parameter(title: "Project ID", default: "00000000-0000-4000-8000-000000000001")
     var projectId: String
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
@@ -17,7 +17,7 @@ struct ListCapabilitiesIntent: AppIntent {
                 return .result(dialog: "No capabilities are currently available.")
             }
             let lines = capabilities.prefix(12).map { cap in
-                "\(cap.name) (\(cap.key)) — \(cap.availability ?? "unknown")"
+                "\(cap.name) (\(cap.key)) — \(cap.availability?.rawValue ?? "unknown")"
             }
             var message = lines.joined(separator: "\n")
             if capabilities.count > 12 {

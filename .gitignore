@@ -6,6 +6,9 @@ node_modules
 .vercel
 artifacts/
 tsconfig.tsbuildinfo
+ios/build/
+ios/.build/
+ios/Resonance.xcodeproj/
 
 # gemini-cli settings
 .gemini/

@@ -2,6 +2,17 @@ import XCTest
 @testable import ResonanceCore
 
 final class NexusClientTests: XCTestCase {
+    func testReadinessPreserves503Diagnostics() async throws {
+        let payload = #"{"status":"not_ready","missingRequired":["SUPABASE_SERVICE_ROLE_KEY"],"authMode":"required","authModeOk":true,"persistenceConfigured":false,"githubAdapterConfigured":false}"#.data(using: .utf8)!
+        let client = NexusClient(transport: StubTransport(getData: payload, status: 503))
+
+        let readiness = try await client.readiness()
+
+        XCTAssertFalse(readiness.isReady)
+        XCTAssertEqual(readiness.missingRequired, ["SUPABASE_SERVICE_ROLE_KEY"])
+        XCTAssertEqual(readiness.persistenceConfigured, false)
+    }
+
     func testDecodesCapabilitiesFromNexusPayload() async throws {
         let payload = #"{"capabilities":[{"id":"cap-1","key":"demo.read","name":"Demo Read","risk":"low","availability":"available"}]}"#.data(using: .utf8)!
         let client = NexusClient(transport: StubTransport(getData: payload))

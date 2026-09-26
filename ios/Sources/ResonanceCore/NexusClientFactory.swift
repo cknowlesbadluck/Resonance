@@ -4,7 +4,7 @@ import Foundation
 /// Token resolution: override → Keychain → env only.
 /// UserDefaults is never used for bearer tokens (IOS-01).
 public enum NexusClientFactory {
-    public static let defaultBaseURLString = "http://localhost:3000"
+    public static let defaultBaseURLString = "https://resonancenexus.netlify.app"
     public static let baseURLKey = "RESONANCE_BASE_URL"
     public static let projectIdKey = "RESONANCE_PROJECT_ID"
     public static let bearerTokenKey = "RESONANCE_BEARER_TOKEN"

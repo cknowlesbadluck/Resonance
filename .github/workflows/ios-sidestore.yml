@@ -1,0 +1,24 @@
+name: iOS SideStore
+on:
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios-sidestore.yml']
+  push:
+    branches: [main]
+    tags: ['ios-v*']
+    paths: ['ios/**', '.github/workflows/ios-sidestore.yml']
+jobs:
+  verify-and-package:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test ResonanceCore
+        run: swift test --package-path ios
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Build unsigned SideStore IPA
+        run: ios/scripts/build-sidestore.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Resonance-unsigned-ipa
+          path: ios/build/Resonance-unsigned.ipa
+          if-no-files-found: error

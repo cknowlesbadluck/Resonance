@@ -9,7 +9,7 @@ struct ComposeNexusIntent: AppIntent {
     @Parameter(title: "Objective")
     var objective: String
 
-    @Parameter(title: "Project ID", default: "demo")
+    @Parameter(title: "Project ID", default: "00000000-0000-4000-8000-000000000001")
     var projectId: String
 
     @Parameter(title: "Capability")

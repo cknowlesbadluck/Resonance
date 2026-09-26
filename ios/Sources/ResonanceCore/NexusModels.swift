@@ -156,6 +156,22 @@ public struct NexusCapabilityResponse: Codable, Sendable, Equatable {
     public let capabilities: [NexusCapability]
 }
 
+// MARK: - Deployment readiness
+
+/// Public contract returned by `/api/ready`. Native clients use this before enabling
+/// execution so a partially configured control plane fails visibly instead of turning
+/// every action into an opaque 5xx response.
+public struct NexusReadiness: Codable, Sendable, Equatable {
+    public let status: String
+    public let missingRequired: [String]
+    public let authMode: String?
+    public let authModeOk: Bool?
+    public let persistenceConfigured: Bool?
+    public let githubAdapterConfigured: Bool?
+
+    public var isReady: Bool { status == "ready" && missingRequired.isEmpty }
+}
+
 /// Mirrors the server's capability-resolution contract (requested/resolved/missing/unavailable).
 /// Not yet called by `NexusClient` — no client method surfaces it. Included for model parity;
 /// wiring a client method is a legitimate follow-up, not part of this consolidation.
