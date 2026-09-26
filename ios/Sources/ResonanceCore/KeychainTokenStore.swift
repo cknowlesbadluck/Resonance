@@ -60,7 +60,11 @@ public enum KeychainTokenStore {
     }
 
     public enum KeychainError: Error {
+        #if canImport(Security)
         case unexpectedStatus(OSStatus)
+        #else
+        case unexpectedStatus(Int32)
+        #endif
         case unavailable
     }
 }

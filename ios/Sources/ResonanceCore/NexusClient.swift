@@ -122,6 +122,17 @@ public actor NexusClient {
         return try decode(NexusCapabilityResponse.self, from: response).capabilities
     }
 
+    public func readiness() async throws -> NexusReadiness {
+        let response = try await transport.getResponse("/api/ready", headers: defaultHeaders)
+        // A readiness probe intentionally returns 503 with a useful diagnostic body.
+        // Decode that body rather than collapsing it into a generic transport error.
+        if response.status == 200 || response.status == 503,
+           let readiness = try? decoder.decode(NexusReadiness.self, from: response.data) {
+            return readiness
+        }
+        return try decode(NexusReadiness.self, from: response)
+    }
+
     public func compose(_ request: NexusIntentRequest) async throws -> NexusIntentResponse {
         let body = try encoder.encode(request)
         let response = try await transport.postResponse("/api/nexus/intents", body: body, headers: defaultHeaders)

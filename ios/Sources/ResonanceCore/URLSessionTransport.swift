@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 @available(macOS 12.0, *)
 public struct URLSessionNexusTransport: NexusTransport {

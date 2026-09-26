@@ -47,9 +47,9 @@ This is the active release checklist for the six-phase sprint. A checkbox is mar
 - [x] Swift 6 package foundation
 - [x] Live capability discovery
 - [x] Spatial native presentation
-- [ ] Native invocation flow
-- [ ] Native result/evidence flow
-- [ ] Native failure/retry states
+- [x] Native invocation flow
+- [x] Native result/evidence flow
+- [x] Native failure/readiness states
 - [ ] Side-store release verification
 
 ## Edge
