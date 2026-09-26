@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-Observed 2026-09-25 18:03 EDT against `main` `5bc73db4` and live `resonancenexus`.
+Observed 2026-09-26 03:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
@@ -10,8 +10,8 @@ Observed 2026-09-25 18:03 EDT against `main` `5bc73db4` and live `resonancenexus
 | `/api/ready` | **503** missing `SUPABASE_SERVICE_ROLE_KEY` |
 | Auth mode | required, ok |
 | Persistence / GitHub adapter | not configured on live |
-| Conduit | health/ready 200, 0.8.0, postgres |
-| Open docs PR #111 | closed as duplicate |
+| Conduit | health/ready 200, 0.8.0, postgres, diagnostics green |
+| Hygiene | #112 merged; leftover hourly audit files deleted on this branch |
 
 Fail-closed behavior is on main. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
 
@@ -20,4 +20,4 @@ Fail-closed behavior is on main. It is not proven on the live host until SERVICE
 1. Set `SUPABASE_SERVICE_ROLE_KEY` on existing Netlify site `resonancenexus` (`7fc56cb3-d5f7-4bb2-8986-a733b8cfd548`).
 2. Apply `supabase/migrations` including `20260925120000_execution_partial_status.sql`.
 3. Set scoped `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET`.
-4. Do not switch hosts.
+4. Do not switch hosts. Do not invent secrets.
