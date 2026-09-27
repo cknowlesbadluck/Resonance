@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-Observed 2026-09-27 09:01 EDT against live `resonancenexus` and Conduit 0.8.0.
+Observed 2026-09-27 13:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
@@ -11,8 +11,8 @@ Observed 2026-09-27 09:01 EDT against live `resonancenexus` and Conduit 0.8.0.
 | `/api/ready` | **503** missing `SUPABASE_SERVICE_ROLE_KEY` |
 | Auth mode | required, ok |
 | Persistence / GitHub adapter | not configured on live |
-| Conduit | health/ready 200, 0.8.0, postgres; MCP diagnostics green; HTTP `/diagnostics` **200** after #143 |
-| Hygiene | 06:00 docs #124 on main; 09:01 in-place refresh; QS M1-T8 #177 on main |
+| Conduit | health/ready/diagnostics 200, 0.8.0, postgres; MCP HTTP diagnostics green; MCP initialize 520 this hour |
+| Hygiene | 09:01 docs #125 on main; 13:00 in-place refresh; QS M1-T10 #180 on main |
 
 Fail-closed behavior is on main. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
 
