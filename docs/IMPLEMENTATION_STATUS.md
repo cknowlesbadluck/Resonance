@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-Observed 2026-09-27 16:01 EDT against live `resonancenexus` and Conduit 0.8.0.
+Observed 2026-09-27 19:02 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
@@ -11,7 +11,7 @@ Observed 2026-09-27 16:01 EDT against live `resonancenexus` and Conduit 0.8.0.
 | Auth mode | required, ok |
 | Persistence / GitHub adapter | not configured on live |
 | Conduit | health/ready/diagnostics 200, 0.8.0, postgres |
-| Hygiene | 13:00 docs #126 on main; 16:01 in-place refresh; QS M1-T12 #183 on main |
+| Hygiene | 13:00 docs #126 on main; 19:02 in-place refresh on #127; QS `ff509454` after #183/#185 |
 
 Fail-closed behavior is on main. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
 
