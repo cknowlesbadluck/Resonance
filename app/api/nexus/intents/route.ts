@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusRequest, isUuid, unauthenticatedActor } from "../../../../src/auth/nexus-request";
+import { productionUserDataBlock } from "../../../../src/nexus/production-boundary";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
 import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/types";
 
@@ -15,6 +16,8 @@ function isRequirement(value: unknown): value is CapabilityRequirement {
 }
 
 export async function POST(request: Request) {
+  const blocked = productionUserDataBlock();
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: "Request body exceeds the 64 KiB limit." }, { status: 400 });
   const text = await request.text();
@@ -29,7 +32,8 @@ export async function POST(request: Request) {
   if (!projectId || !isUuid(projectId)) {
     return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
   }
-  let actorId: string | undefined = typeof body.requestedBy === "string" ? body.requestedBy.trim() : undefined;
+  // Unauthenticated callers cannot assert an identity; body.requestedBy is recorded only as an untrusted claim.
+  let actorId: string = unauthenticatedActor(body.requestedBy);
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
@@ -38,7 +42,6 @@ export async function POST(request: Request) {
   if (typeof body.objective !== "string" || !body.objective.trim() || body.objective.length > MAX_OBJECTIVE_LENGTH) {
     return NextResponse.json({ error: "objective is required and must be at most 4000 characters." }, { status: 400 });
   }
-  if (!actorId) return NextResponse.json({ error: "requestedBy is required and must be a non-empty string when auth is not configured" }, { status: 400 });
   if (!Array.isArray(body.requirements) || body.requirements.length === 0 || body.requirements.length > MAX_REQUIREMENTS || !body.requirements.every(isRequirement)) {
     return NextResponse.json({ error: "requirements must contain between 1 and 32 items with a key." }, { status: 400 });
   }

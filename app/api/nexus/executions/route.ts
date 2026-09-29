@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusRequest, isUuid, unauthenticatedActor } from "../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
 import { nexusAdapters } from "../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../src/nexus/executor";
@@ -109,8 +109,11 @@ export async function POST(request: Request) {
   try { body = await readJson(request); }
   catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
 
-  const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
-  let actorId = body.requestedBy;
+  // No hardcoded fallback project: the caller (or deploy env) must name the project.
+  const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID;
+  if (typeof projectId !== "string" || !projectId.trim()) return NextResponse.json({ error: "projectId is required." }, { status: 400 });
+  // Unauthenticated callers cannot assert an identity; body.requestedBy is recorded only as an untrusted claim.
+  let actorId = unauthenticatedActor(body.requestedBy);
   if (authRequired()) {
     const auth = await authenticateNexusRequest(request, projectId);
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
@@ -121,7 +124,6 @@ export async function POST(request: Request) {
   if (!body.requirements.every(isRequirement)) return NextResponse.json({ error: "each requirement must include a non-empty key string." }, { status: 400 });
   if (body.contextRefs !== undefined && (!Array.isArray(body.contextRefs) || body.contextRefs.length > MAX_CONTEXT_REFS || body.contextRefs.some((item) => typeof item !== "string" || item.length > MAX_CONTEXT_REF_LENGTH))) return NextResponse.json({ error: "contextRefs must contain at most 64 strings of at most 500 characters." }, { status: 400 });
   if (body.metadata !== undefined && (!body.metadata || typeof body.metadata !== "object" || Array.isArray(body.metadata) || Object.keys(body.metadata).length > MAX_METADATA_KEYS)) return NextResponse.json({ error: "metadata must be an object with at most 32 keys." }, { status: 400 });
-  if (!actorId) return NextResponse.json({ error: "requestedBy is required when auth is not configured" }, { status: 400 });
   if ((authRequired() || durable) && !isUuid(projectId)) return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
 
   const intent: NexusIntent = {

@@ -9,24 +9,44 @@ export function isUuid(value: unknown): value is string {
 }
 
 /**
+ * Explicit local-development opt-in that allows `auto` mode to run without auth when
+ * Supabase is not configured. Never set this in a deployed environment.
+ */
+export const DEV_ANONYMOUS_OPT_IN_ENV = "RESONANCE_DEV_ALLOW_ANONYMOUS";
+
+function devAnonymousOptIn(): boolean {
+  const raw = (process.env[DEV_ANONYMOUS_OPT_IN_ENV] ?? "").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+/**
  * RESONANCE_AUTH_MODE:
  * - required: always demand Bearer + membership (fail closed if env incomplete)
- * - optional: never demand auth
- * - auto (default): demand auth when Supabase URL + service role are configured
+ * - optional: never demand auth (explicit opt-out; production-boundary still refuses it in prod)
+ * - auto (default): demand auth. If Supabase URL + service role are missing this fails
+ *   closed (every request is rejected) unless RESONANCE_DEV_ALLOW_ANONYMOUS=true is set
+ *   for local development.
  */
 export function authRequired(): boolean {
-  const rawMode = process.env.RESONANCE_AUTH_MODE;
-  if (!rawMode) {
-    return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
-  }
-  const mode = rawMode.trim().toLowerCase();
+  const mode = (process.env.RESONANCE_AUTH_MODE ?? "").trim().toLowerCase() || "auto";
   if (mode === "required") return true;
   if (mode === "optional") return false;
   if (mode === "auto") {
-    return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+    const supabaseConfigured = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+    if (supabaseConfigured) return true;
+    return !devAnonymousOptIn();
   }
   // Fail closed on any unrecognized mode
   return true;
+}
+
+/**
+ * When a request is not authenticated, a client-supplied `requestedBy` is only a claim.
+ * Prefix it so it can never be confused with (or impersonate) a verified user id.
+ */
+export function unauthenticatedActor(claimed: unknown): string {
+  const value = typeof claimed === "string" ? claimed.trim().slice(0, 128) : "";
+  return value ? `unauthenticated:${value}` : "unauthenticated";
 }
 
 export async function authenticateNexusRequest(
