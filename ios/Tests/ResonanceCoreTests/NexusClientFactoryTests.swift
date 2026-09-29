@@ -34,6 +34,28 @@ final class NexusClientFactoryTests: XCTestCase {
         )
     }
 
+    func testReleaseBuildUsesInfoPlistBaseURL() throws {
+        let url = try NexusClientFactory.resolveBaseURL(
+            explicit: nil,
+            environmentValue: nil,
+            storedValue: nil,
+            bundleValue: "https://resonancenexus.netlify.app",
+            allowLocalhostDefault: false
+        )
+        XCTAssertEqual(url.host, "resonancenexus.netlify.app")
+    }
+
+    func testStoredValueWinsOverInfoPlist() throws {
+        let url = try NexusClientFactory.resolveBaseURL(
+            explicit: nil,
+            environmentValue: nil,
+            storedValue: "https://stored.example.com",
+            bundleValue: "https://bundle.example.com",
+            allowLocalhostDefault: false
+        )
+        XCTAssertEqual(url.host, "stored.example.com")
+    }
+
     func testAllowsHttpForLoopbackHosts() throws {
         for raw in ["http://localhost:3000", "http://127.0.0.1:3000", "http://[::1]:3000"] {
             let url = try XCTUnwrap(URL(string: raw))

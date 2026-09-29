@@ -43,6 +43,7 @@ public enum NexusClientFactory {
                 explicit: baseURL,
                 environmentValue: ProcessInfo.processInfo.environment[baseURLKey],
                 storedValue: UserDefaults.standard.string(forKey: baseURLKey),
+                bundleValue: Bundle.main.object(forInfoDictionaryKey: baseURLKey) as? String,
                 allowLocalhostDefault: allowsLocalhostDefault
             )
             transport = URLSessionNexusTransport(baseURL: resolvedBase)
@@ -66,6 +67,7 @@ public enum NexusClientFactory {
     }
 
     /// Resolves the control-plane base URL: explicit → environment → stored value →
+    /// Info.plist `RESONANCE_BASE_URL` (how release builds ship their URL) →
     /// (DEBUG only) `http://localhost:3000`.
     ///
     /// The first non-empty configured value wins and must be valid; an invalid value is
@@ -75,12 +77,13 @@ public enum NexusClientFactory {
         explicit: URL?,
         environmentValue: String?,
         storedValue: String?,
+        bundleValue: String? = nil,
         allowLocalhostDefault: Bool
     ) throws -> URL {
         if let explicit {
             return try validateBaseURL(explicit)
         }
-        for raw in [environmentValue, storedValue] {
+        for raw in [environmentValue, storedValue, bundleValue] {
             let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             guard !trimmed.isEmpty else { continue }
             guard let url = URL(string: trimmed) else { throw NexusClientError.invalidBaseURL(trimmed) }

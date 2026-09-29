@@ -51,7 +51,9 @@ const sink = {
       type: event.type,
       status: event.status,
       correlation_id: event.correlationId,
-      actor_id: event.actorId ?? null,
+      // events.actor_id is a uuid column: unauthenticated claims ("unauthenticated:<claim>")
+      // are not user ids, so store null rather than failing the insert.
+      actor_id: isUuid(event.actorId) ? event.actorId : null,
       resource_type: "execution",
       resource_id: event.resourceId ?? null,
       external_id: event.externalId ?? event.id,
