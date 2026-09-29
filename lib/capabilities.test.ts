@@ -28,4 +28,17 @@ describe("capability plane", () => {
     expect(result.resolved).toEqual([]);
     expect(result.missing).toEqual(["missing.capability"]);
   });
+
+  it("resolves capabilities from a custom catalog", () => {
+    const customCatalog = [
+      { id: "custom.skill", name: "Custom Skill", description: "A custom skill", kind: "skill" as const, provider: "Custom", version: "1.0.0", status: "available" as const, permissions: [], dependencies: [], tags: [] }
+    ];
+    const result = resolveCapabilities(["custom.skill"], customCatalog);
+    expect(result.missing).toEqual([]);
+    expect(result.unavailable).toEqual([]);
+    expect(result.resolved.map(capability => capability.id)).toEqual(["custom.skill"]);
+
+    const missingResult = resolveCapabilities(["skill.ios-swiftui"], customCatalog);
+    expect(missingResult.missing).toEqual(["skill.ios-swiftui"]);
+  });
 });

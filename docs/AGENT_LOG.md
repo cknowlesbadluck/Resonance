@@ -385,3 +385,18 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verified:**
 - `npm test`, `npm run typecheck`, and `npm run build` in this session. Swift package tests were not re-run here; the last macOS CI job is the evidence above.
 
+
+## 2026-10-01 — Jules (Custom Capability Catalog in tests)
+
+**Checked:**
+- The `resolveCapabilities` function in `lib/capabilities.ts` was hard-coded to rely on a global `catalog`.
+
+**Decided / Fixed:**
+- Modified `resolveCapabilities` signature to accept an optional `capabilitiesCatalog: Capability[] = catalog` parameter to support custom catalog resolution without mutating the global state.
+- Added a corresponding test case `resolves capabilities from a custom catalog` in `lib/capabilities.test.ts`.
+
+**Verified:**
+- `npm run typecheck` and `npm run test` ran successfully (155 passing tests).
+
+**Next:**
+- Commit and submit changes.
