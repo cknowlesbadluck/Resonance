@@ -400,3 +400,17 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 
 **Next:**
 - Commit and submit changes.
+
+## 2026-10-01 — Jules (Gemini model fix)
+
+**Checked:**
+- The `.github/workflows/gemini.yml` was still using `gemini-1.5-pro`.
+
+**Decided / Fixed:**
+- Modified `gemini.yml` to use `gemini-1.5-flash` model as explicitly required by memory.
+
+**Verified:**
+- `npm run test` still passes.
+
+**Next:**
+- Commit and submit changes.
