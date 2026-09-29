@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-Observed 2026-09-28 18:00 EDT against live `resonancenexus` and Conduit 0.8.0.
+Observed 2026-09-28 22:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
@@ -13,7 +13,7 @@ Observed 2026-09-28 18:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 | Persistence / GitHub adapter | not configured on live |
 | SERVICE_ROLE on Netlify | present as production-context secret (updated 13:01 EDT); live process still missing it |
 | Conduit | health/ready/diagnostics 200, 0.8.0, postgres |
-| Hygiene | 07:00 docs on main `8c65b485` (#129); 18:00 in-place refresh on `docs/hygiene-1000`; QS `652d1070` after #188 |
+| Hygiene | 07:00 docs on main `8c65b485` (#129); 22:00 in-place refresh on `docs/hygiene-1000`; QS `ae28c2f0` after #189 |
 
 Fail-closed behavior is on main. It is not proven on the live host until a production redeploy picks up SERVICE_ROLE, migrations are applied, and `/api/ready` is 200.
 
