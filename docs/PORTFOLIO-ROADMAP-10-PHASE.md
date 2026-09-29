@@ -1,11 +1,11 @@
-# Portfolio 10-phase roadmap — 2026-09-29 01:00 EDT
+# Portfolio 10-phase roadmap — 2026-09-29 04:00 EDT
 
 1. Ready-or-refuse on Resonance main — DONE (#108). Live still 503 until GitHub-backed republish of current main + migrations.
-2. SERVICE_ROLE key exists on resonancenexus production context (updated 13:01 EDT 2026-09-28). Exit is still `/api/ready` 200. Confirmed live miss at 01:00 because production deploy `6ab8ea11` is `5aeffb41`. Redeploy from GitHub; do not upload this sandbox.
-3. Durable `github.repository.read` evidence with deny proofs. Needs live `GITHUB_TOKEN` + `GITHUB_WEBHOOK_SECRET`. Absent at 01:00. #131 is a bounded-read hardening slice and stays blocked.
+2. SERVICE_ROLE key exists on resonancenexus production context (updated 13:01 EDT 2026-09-28). Exit is still `/api/ready` 200. Confirmed live miss at 04:00 because production deploy `6ab8ea11` is `5aeffb41`. Redeploy from GitHub; do not upload this sandbox.
+3. Durable `github.repository.read` evidence with deny proofs. Needs live `GITHUB_TOKEN` + `GITHUB_WEBHOOK_SECRET`. Absent at 04:00. #131 is a bounded-read hardening slice and stays blocked.
 4. Quicksilver device HG CHR-55 on iPhone 16e from `660c2b25` or later. Simulator CI is not acceptance.
-5. Quicksilver M2-T1 — DONE (#188). M2-T2 — DONE (#189). Autonomous aspect #190 — DONE (`660c2b25`). Next slice: M2-T3. P-T4 stays behind M3.5-T4.
-6. Conduit freeze on #119/#120. Repair off current main (`4838170a` after #149) only. Do not merge red. #152 stays open while unstable.
+5. Quicksilver M2-T1 — DONE (#188). M2-T2 — DONE (#189). Autonomous aspect #190 — DONE (`660c2b25`). Next slice: repair #191 Simulator Build, then land M2-T3 + COS-T1. P-T4 stays behind M3.5-T4.
+6. Conduit freeze on #119/#120. Repair off current main (`4838170a` after #149) only. Do not merge red. #152 stays open while unstable. #153 is new and not merged.
 7. Conduit #125 keyset pagination — DONE. HTTP `/diagnostics` — DONE live 200 after #143. #144 memoize and #149 sanitization are on main.
 8. Resonance iOS I1 against a ready host. Blocked by phase 2 exit, not by key-name presence.
 9. Chamber form/work/dissolve with audit. Blocked by phase 2.
