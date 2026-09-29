@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { decideGitHubWebhook, isUniqueViolation } from "../../../../src/nexus/github-webhook";
+import { MAX_GITHUB_WEBHOOK_BYTES, decideGitHubWebhook, isUniqueViolation } from "../../../../src/nexus/github-webhook";
+import { readBoundedText } from "../../../../src/http/bounded-body";
 
 function getDbClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,7 +10,10 @@ function getDbClient() {
 }
 
 export async function POST(request: Request) {
-  const raw = await request.text();
+  // Enforce the 1 MiB cap before buffering: check Content-Length, then stream-cap the read.
+  const body = await readBoundedText(request, MAX_GITHUB_WEBHOOK_BYTES);
+  if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.status });
+  const raw = body.text;
   const db = getDbClient();
   const projectId = process.env.RESONANCE_PROJECT_ID ?? null;
   const decision = decideGitHubWebhook({
