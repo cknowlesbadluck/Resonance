@@ -126,6 +126,15 @@ describe("GitHubAdapter", () => {
     }));
   });
 
+  it("rejects oversized successful metadata without reading an unbounded body", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("x".repeat(1024 * 1024 + 1), { status: 200 })) as typeof fetch;
+    const result = await invoke(new GitHubAdapter("secret-token", { fetchImpl: fetchMock }));
+    expect(result).toEqual(expect.objectContaining({
+      ok: false,
+      evidence: expect.objectContaining({ code: "malformed_response" }),
+    }));
+  });
+
   it("classifies a non-JSON 503 by HTTP status instead of masking it as malformed_response", async () => {
     // Regression for the status-before-parse ordering bug: a non-OK response with
     // an unparseable body (HTML error page from a proxy/LB, empty 503, etc.) must
