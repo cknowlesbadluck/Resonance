@@ -12,3 +12,7 @@ tsconfig.tsbuildinfo
 
 # GitHub App credentials
 gha-creds-*.json
+
+# XcodeGen output (ios/project.yml is the source of truth)
+ios/Resonance.xcodeproj/
+ios/App/Info.plist

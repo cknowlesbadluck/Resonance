@@ -30,3 +30,24 @@ Sources under `App/AppIntents/` (main app target):
 | NexusCapabilityEntity | Rich capability picker |
 
 `ResonanceShortcuts` registers Siri/Spotlight phrases. Token order: Keychain → env → UserDefaults.
+
+## Building the app
+
+`ios/project.yml` (XcodeGen) defines the buildable app:
+
+| Target | Sources | Notes |
+|--------|---------|-------|
+| `Resonance` (iOS app) | `App/` incl. `App/AppIntents/` | Bundle id `com.cknowlesbadluck.resonance`; ships `App/PrivacyInfo.xcprivacy` |
+| `ResonanceCore` (framework) | `Sources/ResonanceCore` | Same sources as the SwiftPM library |
+| `ResonanceCoreTests` | `Tests/ResonanceCoreTests` | Runs on an iOS simulator |
+
+```sh
+brew install xcodegen
+cd ios && xcodegen generate
+open Resonance.xcodeproj   # set your Team for device / SideStore builds
+```
+
+Release builds need a control-plane URL: set `RESONANCE_BASE_URL` (build setting → Info.plist),
+e.g. `xcodebuild ... RESONANCE_BASE_URL=https://your-nexus.example`. `Resonance.xcodeproj` and
+`App/Info.plist` are generated and git-ignored. CI (`ios-app` job) generates the project, builds
+Debug (simulator) and Release (device, unsigned), and runs `ResonanceCoreTests` on a simulator.
