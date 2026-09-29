@@ -7,32 +7,55 @@ on:
   issue_comment:
     types: [created]
 
+# The action only writes its response to the job summary; it never posts comments,
+# so the token needs no write scopes.
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 jobs:
   gemini:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only trusted actors can trigger a run that receives GEMINI_API_KEY:
+    # - issue comments must come from an OWNER/MEMBER/COLLABORATOR
+    # - pull requests must come from a branch in this repository (not a fork)
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
+      (github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'issue_comment' &&
+        contains(github.event.comment.body, '@gemini-cli') &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Run Gemini CLI
+        id: gemini
         uses: google-github-actions/run-gemini-cli@v0.1.22
+        # Advisory reviewer: never block a PR, but surface failures (see next step)
+        # instead of silently reporting success.
         continue-on-error: true
         env:
+          # Gemini CLI refuses to run headless in an untrusted folder. This is only
+          # reachable by trusted actors (see `if:` above) on same-repo code.
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: gemini-1.5-pro
+          gemini_model: gemini-3.5-flash
           prompt: |
             You are assisting on the Resonance project (TypeScript Nexus control plane + Swift ResonanceCore).
             Analyze the current context (PR or issue) and provide helpful, precise feedback.
             Focus on architecture, correctness, security, and modularity.
             If this is a PR, review the changes. If this is an issue or comment, respond helpfully.
+
+      - name: Report Gemini failure
+        if: steps.gemini.outcome == 'failure'
+        run: |
+          echo "::warning title=Gemini CLI failed::The advisory Gemini review did not run successfully (check GEMINI_API_KEY and the model name). This does not block the PR."
+          {
+            echo "### Gemini CLI failed"
+            echo "The advisory review step failed. Check that \`GEMINI_API_KEY\` is a valid Google AI Studio API key."
+          } >> "$GITHUB_STEP_SUMMARY"
