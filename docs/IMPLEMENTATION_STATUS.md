@@ -1,6 +1,6 @@
 # Resonance Implementation Status
 
-Observed 2026-09-29 14:00 EDT against live `resonancenexus` and Conduit 0.8.0.
+Observed 2026-09-29 21:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 
 ## Verified
 
@@ -11,12 +11,11 @@ Observed 2026-09-29 14:00 EDT against live `resonancenexus` and Conduit 0.8.0.
 | GitHub main | `8c65b485` after #129 — not the live process |
 | `/api/health` | 200 `stage=deployment` |
 | `/api/ready` production | **503** |
-| `/api/ready` `main--` | **503** |
 | Auth mode | required, ok |
 | Persistence / GitHub adapter | not configured on live |
 | SERVICE_ROLE key | present by name on production context only (updated 13:01 EDT 2026-09-28); live function does not see it |
 | Conduit | health/ready 200, version 0.8.0, postgres; MCP diagnostics green |
-| Hygiene | in-place 14:00 refresh on `docs/hygiene-1000`; QS `660c2b25` after #190 |
+| Hygiene | in-place 21:00 refresh on `docs/hygiene-1000`; QS `4f9660ff` after #194 |
 
 Fail-closed behavior is on main. It is not proven on the live host until SERVICE_ROLE is injected into a new production deploy, migrations are applied, and `/api/ready` is 200.
 
