@@ -14,6 +14,10 @@ Authorization: Bearer <access_token>
 
 The token's user must be a member of the requested project. Cross-project requests are rejected. `GET /api/health` and `GET /api/ready` stay unauthenticated. `/api/ready` reports configuration and never echoes secret values.
 
+## Skill plane (resolution only)
+
+`GET /api/nexus/skills` and `POST /api/nexus/skills/resolve` expose built-in `NexusSkill` planning inputs. They do not register caller-supplied skills, do not execute anything, and do not grant authority. A composable resolution still requires `POST /api/nexus/executions` with `Idempotency-Key`. The registry is process-local (`persistent: false`) until a durable skill store exists. Auth matches the other Nexus reads: required when `RESONANCE_AUTH_MODE=required`.
+
 ## Core Contracts
 
 ### Idempotency-Key (Mandatory)

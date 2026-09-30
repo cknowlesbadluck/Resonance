@@ -3,9 +3,17 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Activity, ArrowRight, CheckCircle2, CircleAlert, Network, Play, ShieldCheck, Sparkles } from "lucide-react";
+import { canInvokeCapability, capabilityStateLabel } from "../src/control/invoke";
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
-type Capability = { id: string; key: string; name: string; adapterId?: string; risk: string; availability?: string; provenance?: string };
+type Capability = { id: string; key: string; name: string; adapterId?: string; risk: string; availability?: string; provenance?: string; executable?: boolean; unexecutableReason?: string };
+type SkillView = {
+  skill: { id: string; name: string; namespace: string; version: string; description?: string };
+  composable: boolean;
+  approvalRequired: boolean;
+  missing: string[];
+  denied: string[];
+};
 type PlanStep = { id: string; capabilityId: string; adapterId: string; requiresApproval: boolean };
 type ExecutionResponse = {
   status?: string;
@@ -41,16 +49,17 @@ function errorText(payload: unknown, fallback: string): string {
   return typeof error === "string" && error.trim() ? error : fallback;
 }
 
-function badgeClass(availability?: string) {
-  if (availability === "available") return "badge ok";
-  if (availability === "degraded") return "badge warn";
-  return "badge bad";
+function badgeClass(capability: Capability) {
+  if (!canInvokeCapability(capability)) return "badge bad";
+  if (capability.availability === "degraded") return "badge warn";
+  return "badge ok";
 }
 
 export default function Home() {
   const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID);
   const [events, setEvents] = useState<Event[]>([]);
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
+  const [skills, setSkills] = useState<SkillView[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [owner, setOwner] = useState(process.env.NEXT_PUBLIC_GITHUB_OWNER ?? "cknowlesbadluck");
   const [repo, setRepo] = useState(process.env.NEXT_PUBLIC_GITHUB_REPO ?? "Resonance");
@@ -67,7 +76,8 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [sessionLabel, setSessionLabel] = useState(supabase ? "signed out" : "auth not configured");
 
-  const selected = capabilities.find((item) => item.key === selectedKey) ?? capabilities.find((item) => item.availability === "available") ?? capabilities[0];
+  const selected = capabilities.find((item) => item.key === selectedKey) ?? capabilities.find((item) => canInvokeCapability(item)) ?? capabilities[0];
+  const selectedInvocable = canInvokeCapability(selected);
 
   const load = useCallback(async (activeProject = projectId) => {
     setLoading(true);
@@ -75,28 +85,33 @@ export default function Home() {
       const token = await accessToken();
       setSessionLabel(token ? "signed in" : supabase ? "signed out" : "auth not configured");
       const headers = authHeaders(token);
-      const [eventResponse, capabilityResponse, readyResponse, historyResponse] = await Promise.all([
+      const [eventResponse, capabilityResponse, readyResponse, historyResponse, skillResponse] = await Promise.all([
         fetch(`/api/events?limit=8&projectId=${encodeURIComponent(activeProject)}`, { headers }),
         fetch(`/api/nexus/capabilities?projectId=${encodeURIComponent(activeProject)}`, { headers }),
         fetch("/api/ready"),
         fetch(`/api/nexus/executions?projectId=${encodeURIComponent(activeProject)}`, { headers }),
+        fetch(`/api/nexus/skills?projectId=${encodeURIComponent(activeProject)}`, { headers }),
       ]);
       const eventData = await eventResponse.json().catch(() => ({}));
       const capabilityData = await capabilityResponse.json().catch(() => ({}));
       const readyData = await readyResponse.json().catch(() => ({}));
       const historyData = await historyResponse.json().catch(() => ({}));
+      const skillData = await skillResponse.json().catch(() => ({}));
       const failures: string[] = [];
       if (!eventResponse.ok) failures.push(`Events: ${errorText(eventData, `HTTP ${eventResponse.status}`)}`);
       if (!capabilityResponse.ok) failures.push(`Capabilities: ${errorText(capabilityData, `HTTP ${capabilityResponse.status}`)}`);
       if (!historyResponse.ok) failures.push(`History: ${errorText(historyData, `HTTP ${historyResponse.status}`)}`);
+      if (!skillResponse.ok) failures.push(`Skills: ${errorText(skillData, `HTTP ${skillResponse.status}`)}`);
       setEvents(eventResponse.ok ? eventData.events ?? [] : []);
       setCapabilities(capabilityResponse.ok ? capabilityData.capabilities ?? [] : []);
+      setSkills(skillResponse.ok ? skillData.resolutions ?? [] : []);
       setReady(readyData);
       setHistory(historyResponse.ok ? historyData : null);
       setLoadError(failures.length ? failures.join(" · ") : null);
     } catch (error) {
       setEvents([]);
       setCapabilities([]);
+      setSkills([]);
       setLoadError(error instanceof Error ? error.message : "Failed to reach the Nexus API.");
     } finally {
       setLoading(false);
@@ -118,7 +133,7 @@ export default function Home() {
   const hostReady = ready?.status === "ready";
 
   async function previewPlan() {
-    if (!hostReady || !selected || selected.availability !== "available" || previewing) return;
+    if (!hostReady || !selectedInvocable || previewing) return;
     setPreviewing(true);
     setExecution(null);
     try {
@@ -139,7 +154,7 @@ export default function Home() {
   }
 
   async function composeIntent() {
-    if (!hostReady || !selected || selected.availability !== "available" || executing) return;
+    if (!hostReady || !selectedInvocable || executing) return;
     setExecuting(true);
     const key = idempotencyKey ?? crypto.randomUUID();
     setIdempotencyKey(key);
@@ -235,11 +250,11 @@ export default function Home() {
             )}
           </div>
           <div className="hero-actions">
-            <button className="primary" onClick={() => void previewPlan()} disabled={!hostReady || !selected || selected.availability !== "available" || previewing}>
-              <Play size={16} /> {!hostReady ? "Host not ready" : previewing ? "Composing…" : "Preview plan"}
+            <button className="primary" onClick={() => void previewPlan()} disabled={!hostReady || !selectedInvocable || previewing}>
+              <Play size={16} /> {!hostReady ? "Host not ready" : !selectedInvocable ? "Not executable" : previewing ? "Composing…" : "Preview plan"}
             </button>
-            <button className="primary" onClick={() => void composeIntent()} disabled={!hostReady || !selected || selected.availability !== "available" || executing || !execution?.plan}>
-              {executing ? "Executing…" : !hostReady ? "Execute locked" : "Execute plan"}
+            <button className="primary" onClick={() => void composeIntent()} disabled={!hostReady || !selectedInvocable || executing || !execution?.plan}>
+              {executing ? "Executing…" : !hostReady ? "Execute locked" : !selectedInvocable ? "Execute locked" : "Execute plan"}
             </button>
             <div className="policy-badge"><ShieldCheck size={16} /> {sessionLabel}</div>
           </div>
@@ -251,6 +266,12 @@ export default function Home() {
               </div>
               <button className="primary" type="submit">Sign in</button>
             </form>
+          )}
+          {selected && !selectedInvocable && (
+            <div className="execution-status">
+              <strong>{selected.name} is not executable here</strong>
+              <small>{selected.unexecutableReason ?? "Advertised capabilities stay visible. This deployment has no adapter that can run this one."}</small>
+            </div>
           )}
           {loadError && <div className="execution-status"><strong>Nexus fetch error</strong><small>{loadError}</small></div>}
           {execution && (
@@ -275,8 +296,8 @@ export default function Home() {
       </section>
 
       <section className="stats">
-        <div className="stat"><span>AVAILABLE</span><strong>{capabilities.filter((capability) => capability.availability === "available").length}</strong><small>configured capabilities</small></div>
-        <div className="stat"><span>UNAVAILABLE</span><strong>{capabilities.filter((capability) => capability.availability !== "available").length}</strong><small>visible, not executable</small></div>
+        <div className="stat"><span>EXECUTABLE</span><strong>{capabilities.filter((capability) => canInvokeCapability(capability)).length}</strong><small>this deployment can run</small></div>
+        <div className="stat"><span>NOT EXECUTABLE</span><strong>{capabilities.filter((capability) => !canInvokeCapability(capability)).length}</strong><small>visible, not invocable</small></div>
         <div className="stat"><span>EVIDENCE</span><strong>{history?.evidence?.length ?? 0}</strong><small>{history?.source ?? "not loaded"}</small></div>
         <div className="stat"><span>EVENTS</span><strong>{events.length}</strong><small>recent observations</small></div>
       </section>
@@ -294,10 +315,25 @@ export default function Home() {
             style={selected?.id === capability.id ? { borderColor: "#53e0b4" } : undefined}
           >
             <div className="card-icon"><Sparkles size={19} /></div>
-            <div><h3>{capability.name}</h3><p>{capability.key}</p><small>{capability.adapterId ?? capability.provenance ?? "unbound"} · {capability.risk} risk</small></div>
-            <span className={badgeClass(capability.availability)}>{capability.availability === "available" ? <CheckCircle2 size={15} /> : <CircleAlert size={15} />} {capability.availability ?? "unknown"}</span>
+            <div><h3>{capability.name}</h3><p>{capability.key}</p><small>{capability.adapterId ?? capability.provenance ?? "unbound"} · {capability.risk} risk{capability.unexecutableReason ? ` · ${capability.unexecutableReason}` : ""}</small></div>
+            <span className={badgeClass(capability)}>{canInvokeCapability(capability) ? <CheckCircle2 size={15} /> : <CircleAlert size={15} />} {capabilityStateLabel(capability)}</span>
           </article>
         )) : <div className="empty"><CircleAlert size={20} /><span>No capabilities were returned.</span></div>}
+      </section>
+
+      <section className="section-head"><div><p className="eyebrow">SKILL PLANE</p><h2>Planning inputs, not authority</h2></div><span className="muted">Resolution is not execution. A composable skill still needs an explicit request.</span></section>
+      <section className="grid integrations">
+        {loading && !skills.length ? <p className="muted">Loading skills…</p> : skills.length ? skills.map((item) => (
+          <article className="card" key={item.skill.id}>
+            <div className="card-icon"><Sparkles size={19} /></div>
+            <div>
+              <h3>{item.skill.name}</h3>
+              <p>{item.skill.namespace}</p>
+              <small>{item.skill.version}{item.approvalRequired ? " · approval required" : ""}{item.missing.length ? ` · missing ${item.missing.join(", ")}` : ""}{item.denied.length ? ` · denied ${item.denied.join(", ")}` : ""}</small>
+            </div>
+            <span className={item.composable ? "badge ok" : "badge bad"}>{item.composable ? <CheckCircle2 size={15} /> : <CircleAlert size={15} />} {item.composable ? "composable" : "not composable"}</span>
+          </article>
+        )) : <div className="empty"><CircleAlert size={20} /><span>No built-in skills were returned.</span></div>}
       </section>
 
       <section className="lower">
