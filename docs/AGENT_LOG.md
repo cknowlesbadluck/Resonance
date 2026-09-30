@@ -385,3 +385,24 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 **Verified:**
 - `npm test`, `npm run typecheck`, and `npm run build` in this session. Swift package tests were not re-run here; the last macOS CI job is the evidence above.
 
+---
+
+## 2026-09-30 — Grok (production-readiness slice)
+
+**Checked:**
+- `main` was docs-only hygiene after the 2026-09-14 capability-plane fix. Live `/api/ready` was still 503 for missing `SUPABASE_SERVICE_ROLE_KEY`. That secret was not invented and the host was not switched.
+- The web control surface still treated catalog `availability: "available"` as invocable, so descriptor capabilities could be previewed even when `executable` was false.
+- `src/nexus/skills.ts` had no route and no unit tests. The skill spec's acceptance behavior was unreachable.
+
+**Done:**
+- Invoke gate (`src/control/invoke.ts`) is what the control surface uses. Cards show `unexecutableReason`. Preview and execute stay disabled unless this deployment can run the capability.
+- Built-in skill plane: `GET /api/nexus/skills` and `POST /api/nexus/skills/resolve`. Resolution only. No caller registration, no execution, process-local.
+- `next.config.ts` disables `X-Powered-By` and applies nosniff, frame deny, and a CSP without `unsafe-eval`. HSTS is production-only. Supabase is added to `connect-src` only as an https origin.
+
+**Not claimed:**
+- Live `/api/ready` 200, applied migrations, durable skill or chamber rows, or a SideStore IPA.
+
+**Verified:**
+- `npm test`, `npm run typecheck`, and `npm run build` in this session.
+
+

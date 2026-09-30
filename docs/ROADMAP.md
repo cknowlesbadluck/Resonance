@@ -28,6 +28,7 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 - [x] Interim catalog (`lib/capabilities.ts`)
 - [x] Bridge catalog → NexusCapability API payloads (`src/nexus/capability-bridge.ts`)
 - [x] Directory slots are `planned` until a configured adapter exists; fixtures publish as unavailable
+- [x] Control surface gates invoke on `executable` and shows `unexecutableReason` (availability alone is not enough)
 - [ ] Retire any remaining client-only capability shape if one is still decoded beside `NexusCapability`
 - [ ] `nexus_capabilities` rows on the live database match that publication
 
@@ -44,7 +45,8 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 
 ### P5 — Chamber / composition fabric (IN PROGRESS)
 - [x] Bounded chamber scenario: agenda, participants, permitted capabilities, context, approval pause, resume or cancel, dissolve, retained project-scoped audit (`src/nexus/chamber-scenario.ts`)
-- [ ] Same scenario persisted in Supabase and visible from the control surface
+- [x] Skill plane is reachable as resolution-only HTTP (`GET /api/nexus/skills`). It does not execute skill code and is not yet durable
+- [ ] Same chamber scenario persisted in Supabase and visible from the control surface
 
 ### P6 — Release / deployment stage (IN PROGRESS)
 - [x] Host-neutral deploy contract and `/api/health` + `/api/ready`
