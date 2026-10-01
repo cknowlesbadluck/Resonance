@@ -1,24 +1,15 @@
 # Resonance Implementation Status
 
-Observed 2026-09-30 against the repository. Live host probe is unchanged from 2026-09-28 07:00 EDT: this session does not claim a new `/api/ready` result and does not set secrets.
+Observed 2026-10-01 10:00 EDT. Live host probed this pass. No secrets set.
 
-## Verified in code (this session)
-
-| Check | Result |
-| --- | --- |
-| Invoke gate | Control surface offers preview/execute only when `executable === true` and the capability is not planned or unavailable |
-| Skill plane | `GET /api/nexus/skills` and `POST /api/nexus/skills/resolve` resolve built-in skills. No public registration. Not durable |
-| Headers | `next.config.ts` sends nosniff, frame deny, and a CSP without `unsafe-eval`. HSTS only when production |
-
-## Previously verified
+## Live
 
 | Check | Result |
 | --- | --- |
-| Live host | `https://resonancenexus.netlify.app` only |
-| `/api/ready` | **503** missing `SUPABASE_SERVICE_ROLE_KEY` (last probe 2026-09-28; not re-probed as ready) |
-| Auth mode | required, ok on that probe |
-| Persistence / GitHub adapter | not configured on live |
-| Fail-closed | Production user-data routes refuse in-memory fallback |
+| Host | `https://resonancenexus.netlify.app` only |
+| `/api/health` | 200 at 2026-10-01T14:01:31Z |
+| `/api/ready` | **503** `missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]`, `authMode: required`, `authModeOk: true`, `persistenceConfigured: false`, `githubAdapterConfigured: false` |
+| Conduit | `/health` 200, `/ready` 200, version 0.8.0, persistence postgres |
 
 Fail-closed behavior is in the repository. It is not proven on the live host until SERVICE_ROLE is set, migrations are applied, and `/api/ready` is 200.
 
