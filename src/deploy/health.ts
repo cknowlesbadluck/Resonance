@@ -17,6 +17,7 @@ export type Readiness = {
   persistenceConfigured: boolean;
   githubAdapterConfigured: boolean;
   missingRequired: string[];
+  ownerActionRequired: boolean;
   timestamp: string;
 };
 
@@ -43,6 +44,7 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
     persistenceConfigured,
     githubAdapterConfigured: contract.githubAdapterConfigured,
     missingRequired: contract.missingRequired,
+    ownerActionRequired: contract.missingRequired.length > 0,
     timestamp: now.toISOString(),
   };
 }

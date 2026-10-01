@@ -1,12 +1,12 @@
-# Portfolio 10-phase roadmap — 2026-09-28 07:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-01 06:00 EDT
 
-1. Ready-or-refuse on main — DONE (#108). Live still 503 until SERVICE_ROLE + migrations.
-2. Owner sets `SUPABASE_SERVICE_ROLE_KEY` on resonancenexus only. Exit: `/api/ready` 200. Confirmed missing at 07:00. Env list still has URL/anon/auth/project id/deploy stage/public project id only.
-3. Durable `github.repository.read` evidence with deny proofs. Needs `GITHUB_TOKEN` + `GITHUB_WEBHOOK_SECRET`.
-4. Quicksilver device HG CHR-55 on iPhone 16e from `efe70f8a` or later. Simulator CI is not acceptance.
-5. Quicksilver next code slice after HG (M2-T1 tests or CHR-12 a11y). M1-T5 through M1-T12 plus #185 Codex P2 docs shipped. P-T4 stays behind M3.5-T4.
-6. Conduit freeze; repair #119/#120 off current main (`ddf0ed34`). Do not merge red. Do not merge #149 until generated d.ts is dropped.
-7. Conduit #125 keyset pagination — DONE. HTTP `/diagnostics` — DONE live 200 after #143. #144 grant-admin memoize is on main.
-8. Resonance iOS I1 against a ready host. Blocked by phase 2.
-9. Chamber form/work/dissolve with audit. Blocked by phase 2.
-10. Release surface: SideStore evidence, unskip production-smoke, owner prune leftover `docs/*`, `codex/*`, `bolt/*`, `develop`, `feature/ios-p4-compose-execute-evidence`, and `release/0.8.0` branches. Archive abandoned `cknowlesbadluck/Quicksilver` and stale `mcp`. No delete-ref tool on this connector.
+1. Keep `/api/ready` fail-closed. Proven live 503.
+2. Owner SERVICE_ROLE on resonancenexus. Exit 200, no secret echo. CHR-54.
+3. Apply migrations on that project and prove persistenceConfigured true.
+4. Configure the GitHub adapter token out of band. Exit githubAdapterConfigured true.
+5. Merge the buildable iOS app target after phase 2. #134.
+6. Wire intent composition to a real approval flow. CHR-39.
+7. Chamber lease, evidence, dissolve. No Quicksilver types in core.
+8. Close superseded docs PRs. Keep one roadmap file.
+9. Capability plane completion against CHR-33 with a heterogeneous fixture, not a provider special case.
+10. Release cut only after phases 2-4 are live. Deploy stage without a database is not a release.
