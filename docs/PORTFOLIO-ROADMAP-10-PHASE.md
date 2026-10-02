@@ -1,12 +1,16 @@
-# Portfolio 10-phase roadmap — 2026-09-28 07:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-01 23:00 EDT
 
-1. Ready-or-refuse on main — DONE (#108). Live still 503 until SERVICE_ROLE + migrations.
-2. Owner sets `SUPABASE_SERVICE_ROLE_KEY` on resonancenexus only. Exit: `/api/ready` 200. Confirmed missing at 07:00. Env list still has URL/anon/auth/project id/deploy stage/public project id only.
-3. Durable `github.repository.read` evidence with deny proofs. Needs `GITHUB_TOKEN` + `GITHUB_WEBHOOK_SECRET`.
-4. Quicksilver device HG CHR-55 on iPhone 16e from `efe70f8a` or later. Simulator CI is not acceptance.
-5. Quicksilver next code slice after HG (M2-T1 tests or CHR-12 a11y). M1-T5 through M1-T12 plus #185 Codex P2 docs shipped. P-T4 stays behind M3.5-T4.
-6. Conduit freeze; repair #119/#120 off current main (`ddf0ed34`). Do not merge red. Do not merge #149 until generated d.ts is dropped.
-7. Conduit #125 keyset pagination — DONE. HTTP `/diagnostics` — DONE live 200 after #143. #144 grant-admin memoize is on main.
-8. Resonance iOS I1 against a ready host. Blocked by phase 2.
-9. Chamber form/work/dissolve with audit. Blocked by phase 2.
-10. Release surface: SideStore evidence, unskip production-smoke, owner prune leftover `docs/*`, `codex/*`, `bolt/*`, `develop`, `feature/ios-p4-compose-execute-evidence`, and `release/0.8.0` branches. Archive abandoned `cknowlesbadluck/Quicksilver` and stale `mcp`. No delete-ref tool on this connector.
+Evidence from live probes at 23:00 EDT. Resonance does not own Quicksilver or Conduit.
+
+1. QuicksilverV1 main is ca83b13 after #201. Twin `cknowlesbadluck/Quicksilver` is archived this pass.
+2. M2-T6 is on Quicksilver main. Not a Resonance change.
+3. Ask-path overlap is on Quicksilver main. Not a Resonance change.
+4. Device HG is CHR-55 on iPhone 16e. Resonance cannot close it.
+5. Owner sets SUPABASE_SERVICE_ROLE_KEY on resonancenexus only. Live GET /api/ready at 2026-10-02T03:00:46Z is 503, missing exactly that key. githubAdapterConfigured is false. Do not invent the secret. Do not switch hosts.
+6. Conduit live ready is 200, postgres, 0.8.0. Freeze #119 #120 #155 #162.
+7. Resonance #141 and #142 stay open while github-advanced-security is red. #132 #133 #134 stay open. Main is d27ffb42.
+8. Quicksilver CHR-12 slice is Reduce Motion policy, PR #202. Not a Resonance runtime change.
+9. SideStore proof does not exist.
+10. Prune non-PR branches. Hourly audit files stay forbidden.
+
+Binding constraints: owner Netlify secret, physical device, Render TLS env.
