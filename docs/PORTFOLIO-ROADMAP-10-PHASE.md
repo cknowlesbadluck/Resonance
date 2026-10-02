@@ -1,12 +1,16 @@
-# Portfolio 10-phase roadmap — 2026-09-28 07:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-02 01:00 EDT
 
-1. Ready-or-refuse on main — DONE (#108). Live still 503 until SERVICE_ROLE + migrations.
-2. Owner sets `SUPABASE_SERVICE_ROLE_KEY` on resonancenexus only. Exit: `/api/ready` 200. Confirmed missing at 07:00. Env list still has URL/anon/auth/project id/deploy stage/public project id only.
-3. Durable `github.repository.read` evidence with deny proofs. Needs `GITHUB_TOKEN` + `GITHUB_WEBHOOK_SECRET`.
-4. Quicksilver device HG CHR-55 on iPhone 16e from `efe70f8a` or later. Simulator CI is not acceptance.
-5. Quicksilver next code slice after HG (M2-T1 tests or CHR-12 a11y). M1-T5 through M1-T12 plus #185 Codex P2 docs shipped. P-T4 stays behind M3.5-T4.
-6. Conduit freeze; repair #119/#120 off current main (`ddf0ed34`). Do not merge red. Do not merge #149 until generated d.ts is dropped.
-7. Conduit #125 keyset pagination — DONE. HTTP `/diagnostics` — DONE live 200 after #143. #144 grant-admin memoize is on main.
-8. Resonance iOS I1 against a ready host. Blocked by phase 2.
-9. Chamber form/work/dissolve with audit. Blocked by phase 2.
-10. Release surface: SideStore evidence, unskip production-smoke, owner prune leftover `docs/*`, `codex/*`, `bolt/*`, `develop`, `feature/ios-p4-compose-execute-evidence`, and `release/0.8.0` branches. Archive abandoned `cknowlesbadluck/Quicksilver` and stale `mcp`. No delete-ref tool on this connector.
+Evidence from this pass. Live probes at 2026-10-02T05:01Z.
+
+1. `/api/health` is 200. `/api/ready` is 503 on production, authMode required, missing exactly `SUPABASE_SERVICE_ROLE_KEY`. This branch adds `ownerActionRequired` so that gap is owner work, not an agent defect.
+2. Do not invent the service-role key. Do not switch hosts. Exit for the owner gate: GET `/api/ready` 200 after the key is set on resonancenexus and this posture change is deployed.
+3. #141 and #142 stay open. github-advanced-security is red. Do not squash them.
+4. #132, #133, and #134 stay open until their required checks are green. Do not merge red security or a red iOS target.
+5. Conduit remains the coordination plane. It is not Resonance runtime. Live Conduit ready is 200, postgres, 0.8.0.
+6. QuicksilverV1 is the mobile client. Device HG on iPhone 16e is CHR-55. Simulator CI is not acceptance.
+7. iOS cockpit stays behind the buildable app target. Do not start a second client in this repo until #134 is green or closed.
+8. Chamber execution stays fail-closed when a capability is not executable. No new provider is added in this pass.
+9. Hourly PORTFOLIO-AUDIT files stay forbidden. Update this file in place.
+10. Post-ready hardening: production smoke against the real 200 body, then revoke any preview secret that was used to prove the gate.
+
+Binding constraint: owner secret on Netlify. Agent work cannot close it.
