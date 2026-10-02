@@ -1,0 +1,59 @@
+import { describe, expect, it } from "vitest";
+import { classifyReadyBody } from "./deployLag";
+
+describe("classifyReadyBody", () => {
+  it("marks the 16:01 production body as deploy lag, adapter gap, and not proof", () => {
+    const live = {
+      status: "not_ready",
+      service: "resonance-nexus",
+      stage: "deployment",
+      production: true,
+      authMode: "required",
+      authModeOk: true,
+      persistenceConfigured: false,
+      githubAdapterConfigured: false,
+      missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+      timestamp: "2026-10-02T20:01:32.631Z",
+    };
+    const result = classifyReadyBody(live);
+    expect(result.deployLag).toBe(true);
+    expect(result.missingContractFields).toContain("ownerActionRequired");
+    expect(result.ownerGateOpen).toBe(true);
+    expect(result.adapterUnconfigured).toBe(true);
+    expect(result.countsAsProof).toBe(false);
+  });
+
+  it("does not call a contract-shaped 503 proof", () => {
+    const result = classifyReadyBody({
+      status: "not_ready",
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: false,
+      missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+    });
+    expect(result.deployLag).toBe(false);
+    expect(result.ownerGateOpen).toBe(true);
+    expect(result.adapterUnconfigured).toBe(false);
+    expect(result.countsAsProof).toBe(false);
+  });
+
+  it("does not open the owner gate from agentActionRequired alone", () => {
+    const result = classifyReadyBody({
+      status: "not_ready",
+      ownerActionRequired: false,
+      ownerKeys: [],
+      agentActionRequired: true,
+      missingRequired: [],
+    });
+    expect(result.deployLag).toBe(false);
+    expect(result.ownerGateOpen).toBe(false);
+    expect(result.countsAsProof).toBe(false);
+  });
+
+  it("rejects a ready body that still omits the contract fields", () => {
+    const result = classifyReadyBody({ status: "ready", missingRequired: [] });
+    expect(result.deployLag).toBe(true);
+    expect(result.ownerGateOpen).toBe(false);
+    expect(result.countsAsProof).toBe(false);
+  });
+});
