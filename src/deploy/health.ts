@@ -1,4 +1,4 @@
-import { evaluateDeployContract, type DeployContract } from "./contract";
+import { evaluateDeployContract, readinessPosture, type DeployContract, type ReadinessPosture } from "./contract";
 
 export type Liveness = {
   status: "ok";
@@ -17,6 +17,10 @@ export type Readiness = {
   persistenceConfigured: boolean;
   githubAdapterConfigured: boolean;
   missingRequired: string[];
+  ownerActionRequired: boolean;
+  ownerKeys: string[];
+  agentActionRequired: boolean;
+  posture: ReadinessPosture["note"];
   timestamp: string;
 };
 
@@ -33,6 +37,7 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
   const persistenceConfigured = contract.keys
     .filter((item) => item.role === "persistence")
     .every((item) => item.present);
+  const posture = readinessPosture(contract);
   return {
     status: contract.ready ? "ready" : "not_ready",
     service: "resonance-nexus",
@@ -43,6 +48,10 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
     persistenceConfigured,
     githubAdapterConfigured: contract.githubAdapterConfigured,
     missingRequired: contract.missingRequired,
+    ownerActionRequired: posture.ownerActionRequired,
+    ownerKeys: posture.ownerKeys,
+    agentActionRequired: posture.agentActionRequired,
+    posture: posture.note,
     timestamp: now.toISOString(),
   };
 }

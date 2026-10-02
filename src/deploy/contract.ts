@@ -39,6 +39,21 @@ export type DeployContract = {
   ready: boolean;
 };
 
+export type ReadinessPosture = {
+  ready: boolean;
+  ownerActionRequired: boolean;
+  ownerKeys: string[];
+  agentActionRequired: boolean;
+  note: string;
+};
+
+const OWNER_SECRET_KEYS = new Set([
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "GITHUB_TOKEN",
+  "GITHUB_WEBHOOK_SECRET",
+  "LINEAR_API_KEY",
+]);
+
 export function envPresent(env: NodeJS.Dict<string>, key: string): boolean {
   return Boolean(env[key]?.trim());
 }
@@ -68,5 +83,41 @@ export function evaluateDeployContract(env: NodeJS.Dict<string> = process.env): 
     missingRequired,
     githubAdapterConfigured: envPresent(env, "GITHUB_TOKEN"),
     ready: missingRequired.length === 0 && authModeOk,
+  };
+}
+
+/**
+ * Split a failed contract into owner work and agent work.
+ * Missing secrets are never an agent defect. Do not invent them.
+ */
+export function readinessPosture(contract: DeployContract): ReadinessPosture {
+  if (contract.ready) {
+    return {
+      ready: true,
+      ownerActionRequired: false,
+      ownerKeys: [],
+      agentActionRequired: false,
+      note: "contract_passed",
+    };
+  }
+  const ownerKeys = contract.missingRequired.filter((key) => OWNER_SECRET_KEYS.has(key));
+  const agentKeys = contract.missingRequired.filter((key) => !OWNER_SECRET_KEYS.has(key));
+  const authBlocked = !contract.authModeOk;
+  const ownerActionRequired = ownerKeys.length > 0 || authBlocked;
+  const agentActionRequired = agentKeys.length > 0;
+  let note = "not_ready";
+  if (ownerKeys.length === 1 && ownerKeys[0] === "SUPABASE_SERVICE_ROLE_KEY" && !agentActionRequired && !authBlocked) {
+    note = "owner_must_set_service_role_on_production_host";
+  } else if (ownerActionRequired && !agentActionRequired) {
+    note = "owner_must_set_production_secret_or_auth_mode";
+  } else if (agentActionRequired) {
+    note = "agent_must_fix_non_secret_contract_gap";
+  }
+  return {
+    ready: false,
+    ownerActionRequired,
+    ownerKeys,
+    agentActionRequired,
+    note,
   };
 }

@@ -55,6 +55,10 @@ describe("health probes", () => {
       persistenceConfigured: false,
       githubAdapterConfigured: false,
       missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: false,
+      posture: "owner_must_set_service_role_on_production_host",
       timestamp: "2026-10-01T03:04:13.136Z",
     });
     expect(readinessStatus(body)).toBe(503);
