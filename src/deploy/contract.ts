@@ -110,6 +110,8 @@ export function readinessPosture(contract: DeployContract): ReadinessPosture {
     note = "owner_must_set_service_role_on_production_host";
   } else if (ownerActionRequired && !agentActionRequired) {
     note = "owner_must_set_production_secret_or_auth_mode";
+  } else if (ownerActionRequired && agentActionRequired) {
+    note = "owner_and_agent_must_both_act";
   } else if (agentActionRequired) {
     note = "agent_must_fix_non_secret_contract_gap";
   }

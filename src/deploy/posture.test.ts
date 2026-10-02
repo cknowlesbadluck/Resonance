@@ -45,4 +45,20 @@ describe("readiness posture", () => {
     expect(posture.ownerActionRequired).toBe(false);
     expect(posture.note).toBe("agent_must_fix_non_secret_contract_gap");
   });
+
+  it("does not hide owner work when an agent gap is also present", () => {
+    const contract = evaluateDeployContract({
+      NODE_ENV: "production",
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+      RESONANCE_AUTH_MODE: "required",
+    });
+    expect(readinessPosture(contract)).toEqual({
+      ready: false,
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: true,
+      note: "owner_and_agent_must_both_act",
+    });
+  });
 });
