@@ -33,6 +33,9 @@ public enum NexusClientError: Error, Sendable, Equatable {
     case missingIdempotencyKey
     /// A `projectId` that the control plane will reject before doing any work.
     case invalidProjectId(String)
+    /// The control-plane base URL is missing (release builds have no localhost default)
+    /// or is not `https` for a non-loopback host.
+    case invalidBaseURL(String?)
 
     /// Maps a status code onto the typed contract. Returns `nil` for success statuses.
     public static func from(status: Int, data: Data, retryAfter: Int? = nil) -> NexusClientError? {
@@ -81,6 +84,8 @@ public enum NexusClientError: Error, Sendable, Equatable {
             return "An idempotency key is required to create an execution."
         case .invalidProjectId(let value):
             return "Project \"\(value)\" is not a valid project id."
+        case .invalidBaseURL:
+            return "Resonance server is not configured. Set RESONANCE_BASE_URL to an https URL."
         }
     }
 
@@ -95,6 +100,9 @@ public enum NexusClientError: Error, Sendable, Equatable {
             return nil
         case .invalidProjectId(let value):
             return "projectId \"\(value)\" is not a UUID."
+        case .invalidBaseURL(let value):
+            return value.map { "Base URL \"\($0)\" must use https (http is only allowed for localhost)." }
+                ?? "No base URL is configured."
         }
     }
 }

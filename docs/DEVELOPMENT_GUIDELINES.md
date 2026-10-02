@@ -21,7 +21,7 @@ Strict rules for humans and agents. Violations block merge.
 ## API contracts
 
 1. Executions require non-blank `Idempotency-Key`.
-2. `RESONANCE_AUTH_MODE`: required | optional | auto.
+2. `RESONANCE_AUTH_MODE`: required | optional | auto (default). `auto` fails closed when Supabase is not configured unless `RESONANCE_DEV_ALLOW_ANONYMOUS=true` (local dev only). Unauthenticated `requestedBy` is recorded as `unauthenticated:<claim>`, never trusted.
 3. Capability API returns **NexusCapability** shapes.
 4. Never expose service-role keys to clients.
 

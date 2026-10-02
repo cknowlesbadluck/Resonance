@@ -9,22 +9,37 @@ struct ComposeNexusIntent: AppIntent {
     @Parameter(title: "Objective")
     var objective: String
 
-    @Parameter(title: "Project ID", default: "demo")
-    var projectId: String
+    /// Optional: falls back to the configured project; Siri prompts when neither exists.
+    @Parameter(title: "Project ID", description: "Resonance project UUID")
+    var projectId: String?
 
     @Parameter(title: "Capability")
     var capability: NexusCapabilityEntity?
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        // Validate before the do/catch below so the needsValue prompts reach Siri /
+        // Shortcuts instead of being rendered as a generic failure dialog.
+        guard let objectiveText = NexusIntentValidation.trimmedObjective(objective) else {
+            throw $objective.needsValueError("What should Resonance do?")
+        }
+        let resolvedProjectId: String
+        switch NexusIntentValidation.resolveProject(projectId) {
+        case .resolved(let value):
+            resolvedProjectId = value
+        case .missing:
+            throw $projectId.needsValueError("Which Resonance project ID should this use?")
+        case .invalid(let value):
+            throw $projectId.needsValueError("\"\(value)\" is not a valid project ID. Enter the project UUID.")
+        }
+        guard let requirements = NexusIntentValidation.requirements(for: capability) else {
+            throw $capability.needsValueError("Which capability should Nexus use?")
+        }
+
         do {
-            let client = NexusClientFactory.makeClient(projectId: projectId)
-            var requirements: [NexusCapabilityRequirement] = []
-            if let key = capability?.key, !key.isEmpty {
-                requirements = [NexusCapabilityRequirement(key: key)]
-            }
+            let client = NexusClientFactory.makeClient(projectId: resolvedProjectId)
             let request = NexusIntentRequest(
-                projectId: projectId,
-                objective: objective,
+                projectId: resolvedProjectId,
+                objective: objectiveText,
                 requestedBy: "ios-app-intent",
                 requirements: requirements
             )
