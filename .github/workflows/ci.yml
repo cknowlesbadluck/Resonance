@@ -57,17 +57,59 @@ jobs:
       - name: Test ResonanceCore
         run: swift test --package-path ios
 
+  ios-app:
+    name: ios-app (XcodeGen build + simulator tests)
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Resonance.xcodeproj
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build app (App + AppIntents) for iOS Simulator
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          xcodebuild -project Resonance.xcodeproj -scheme Resonance \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Build app (Release, device SDK, unsigned)
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          xcodebuild -project Resonance.xcodeproj -scheme Resonance \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Run ResonanceCore tests on an iPhone simulator
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")))')
+          echo "Using simulator $UDID"
+          xcodebuild -project Resonance.xcodeproj -scheme Resonance \
+            -destination "id=$UDID" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
   CI:
     if: always()
-    needs: [web, ios]
+    needs: [web, ios, ios-app]
     runs-on: ubuntu-latest
     steps:
-      - name: Require web and ios
+      - name: Require web, ios and ios-app
         run: |
           echo "web=${{ needs.web.result }}"
           echo "ios=${{ needs.ios.result }}"
+          echo "ios-app=${{ needs.ios-app.result }}"
           test "${{ needs.web.result }}" = "success"
           test "${{ needs.ios.result }}" = "success"
+          test "${{ needs.ios-app.result }}" = "success"
 
   production-smoke:
     if: github.event_name == 'workflow_dispatch'
