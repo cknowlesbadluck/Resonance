@@ -18,6 +18,7 @@ export type Readiness = {
   githubAdapterConfigured: boolean;
   missingRequired: string[];
   ownerActionRequired: boolean;
+  contractRevision: string;
   ownerKeys: string[];
   agentActionRequired: boolean;
   posture: ReadinessPosture["note"];
@@ -49,6 +50,7 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
     githubAdapterConfigured: contract.githubAdapterConfigured,
     missingRequired: contract.missingRequired,
     ownerActionRequired: posture.ownerActionRequired,
+    contractRevision: "2026-10-03-owner-gate",
     ownerKeys: posture.ownerKeys,
     agentActionRequired: posture.agentActionRequired,
     posture: posture.note,
