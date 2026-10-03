@@ -1,4 +1,5 @@
 import { evaluateDeployContract, readinessPosture, type DeployContract, type ReadinessPosture } from "./contract";
+import { EXPECTED_CONTRACT_REVISION } from "./deployLag";
 
 export type Liveness = {
   status: "ok";
@@ -18,6 +19,7 @@ export type Readiness = {
   githubAdapterConfigured: boolean;
   missingRequired: string[];
   ownerActionRequired: boolean;
+  contractRevision: string;
   ownerKeys: string[];
   agentActionRequired: boolean;
   posture: ReadinessPosture["note"];
@@ -49,6 +51,7 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
     githubAdapterConfigured: contract.githubAdapterConfigured,
     missingRequired: contract.missingRequired,
     ownerActionRequired: posture.ownerActionRequired,
+    contractRevision: EXPECTED_CONTRACT_REVISION,
     ownerKeys: posture.ownerKeys,
     agentActionRequired: posture.agentActionRequired,
     posture: posture.note,

@@ -36,7 +36,7 @@ describe("health probes", () => {
     expect(JSON.stringify(body)).not.toContain("example.supabase.co");
   });
 
-  it("matches the live resonancenexus 503 when only SERVICE_ROLE is absent", () => {
+  it("matches the local owner-gate contract when only SERVICE_ROLE is absent", () => {
     const contract = evaluateDeployContract({
       NODE_ENV: "production",
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
@@ -59,6 +59,7 @@ describe("health probes", () => {
       ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
       agentActionRequired: false,
       posture: "owner_must_set_service_role_on_production_host",
+      contractRevision: "2026-10-03-owner-gate",
       timestamp: "2026-10-01T03:04:13.136Z",
     });
     expect(readinessStatus(body)).toBe(503);

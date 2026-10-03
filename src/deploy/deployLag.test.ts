@@ -30,6 +30,7 @@ describe("classifyReadyBody", () => {
       ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
       agentActionRequired: false,
       missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+      contractRevision: "2026-10-03-owner-gate",
     });
     expect(result.deployLag).toBe(false);
     expect(result.ownerGateOpen).toBe(true);
@@ -44,9 +45,39 @@ describe("classifyReadyBody", () => {
       ownerKeys: [],
       agentActionRequired: true,
       missingRequired: [],
+      contractRevision: "2026-10-03-owner-gate",
     });
     expect(result.deployLag).toBe(false);
     expect(result.ownerGateOpen).toBe(false);
+    expect(result.countsAsProof).toBe(false);
+  });
+
+  it("treats a contract-shaped body without the current revision as deploy lag", () => {
+    const result = classifyReadyBody({
+      status: "not_ready",
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: false,
+      missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+    });
+    expect(result.deployLag).toBe(true);
+    expect(result.missingContractFields).toContain("contractRevision");
+    expect(result.ownerGateOpen).toBe(true);
+    expect(result.countsAsProof).toBe(false);
+  });
+
+  it("treats a non-current contractRevision as deploy lag and not proof", () => {
+    const result = classifyReadyBody({
+      status: "not_ready",
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: false,
+      missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+      contractRevision: "2026-10-02-stale",
+    });
+    expect(result.deployLag).toBe(true);
+    expect(result.missingContractFields).toEqual(["contractRevision"]);
+    expect(result.ownerGateOpen).toBe(true);
     expect(result.countsAsProof).toBe(false);
   });
 
