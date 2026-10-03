@@ -1,14 +1,11 @@
-# Portfolio 10-phase roadmap — 2026-10-03 14:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-03 15:00 EDT
 
-Live probes at 2026-10-03T18:00:51Z (Conduit) and 2026-10-03T18:00:54.156Z (Resonance). No secrets invented. A classifier test is not production proof. An open roadmap pull request is not production proof.
+Live probes at 2026-10-03T19:01:37Z. No secrets invented. Refreshed in place on #149. No new roadmap PR.
 
 Evidence:
-- Conduit `GET /health` and `GET /ready` both returned 200 with `version=0.8.0`, `contractRevision=2026-10-03-ready-surface`, ready `persistence=postgres`. Diagnostics ok. `boundAgentId=grok`, `bindingConflict=false`.
-- Resonance `GET https://resonancenexus.netlify.app/api/ready` returned 503. `missingRequired` is exactly `["SUPABASE_SERVICE_ROLE_KEY"]`. Body omitted `ownerActionRequired` and `contractRevision`. Owner gate plus deploy lag. GitHub production deployment status is not this gate.
-- QuicksilverV1 #218 base is `5eb30beb`. Branch list at audit showed main `9b08845e`, so #218 may be behind. #209 UI smoke failed. CHR-55 device HG on iPhone 16e is unobservable from this host.
-- Conduit #172 carries `splitPortfolioActions`. It is not merged. Workers Builds failed; verify and postgres-coordination were green. That failure is not the Render gate.
-- #132, #133, and #134 stay open. Do not start a second iOS client. #149 is this in-place roadmap PR.
-- `activity_prune` removed 0. Legacy `cknowlesbadluck/Quicksilver` is still unarchived. `cknowlesbadluck/mcp` is already archived.
+- Public `GET https://resonancenexus.netlify.app/api/ready` returned 503 at `2026-10-03T19:01:37.226Z`. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Body omitted `ownerActionRequired` and `contractRevision`. `/api/health` was 200. #147 is on main at `a9331e6b` and is not public proof until Netlify serves it.
+- Conduit health and ready were 200 with shared `contractRevision=2026-10-03-ready-surface` and postgres.
+- QuicksilverV1 main is `9b08845e`. Device HG remains CHR-55. This host cannot close it.
 
 ## Phase 1 — Owner gate
 
