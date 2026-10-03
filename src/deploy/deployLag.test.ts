@@ -66,6 +66,21 @@ describe("classifyReadyBody", () => {
     expect(result.countsAsProof).toBe(false);
   });
 
+  it("treats a non-current contractRevision as deploy lag and not proof", () => {
+    const result = classifyReadyBody({
+      status: "not_ready",
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: false,
+      missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+      contractRevision: "2026-10-02-stale",
+    });
+    expect(result.deployLag).toBe(true);
+    expect(result.missingContractFields).toEqual(["contractRevision"]);
+    expect(result.ownerGateOpen).toBe(true);
+    expect(result.countsAsProof).toBe(false);
+  });
+
   it("rejects a ready body that still omits the contract fields", () => {
     const result = classifyReadyBody({ status: "ready", missingRequired: [] });
     expect(result.deployLag).toBe(true);
