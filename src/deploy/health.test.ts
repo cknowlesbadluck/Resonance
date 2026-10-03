@@ -36,7 +36,7 @@ describe("health probes", () => {
     expect(JSON.stringify(body)).not.toContain("example.supabase.co");
   });
 
-  it("matches the live resonancenexus 503 when only SERVICE_ROLE is absent", () => {
+  it("matches the local owner-gate contract when only SERVICE_ROLE is absent", () => {
     const contract = evaluateDeployContract({
       NODE_ENV: "production",
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",

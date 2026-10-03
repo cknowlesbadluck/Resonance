@@ -1,11 +1,11 @@
 # Portfolio 10-phase roadmap — 2026-10-03
 
-Live probes at 2026-10-03T03:05Z.
+Live probes at 2026-10-03T09:02Z.
 
 Evidence:
-- Resonance `/api/health` 200. `/api/ready` 503. Missing exactly `SUPABASE_SERVICE_ROLE_KEY`. Deployed body still omits `ownerActionRequired`. Repo already emits it. This is deploy lag, not an agent-fixable secret.
-- Conduit `/health` 200, `/ready` 200, postgres, version 0.8.0.
-- QuicksilverV1 remains the mobile client. Simulator CI is not device acceptance.
+- Resonance `/api/health` 200. Production `/api/ready` 503 missing exactly `SUPABASE_SERVICE_ROLE_KEY` and still omitting `ownerActionRequired`. Preview 147 returns `ownerActionRequired: true` and `contractRevision: 2026-10-03-owner-gate`. Production is unpublished relative to that preview. #147 is mergeable but blocked by CodeRabbit `CHANGES_REQUESTED`.
+- Conduit `/health` 200 without version. `/ready` 200, postgres, version 0.8.0. Express `/health` in `index.ts` never emitted version; `app-factory.ts` did. That split is a false deploy-lag signal.
+- QuicksilverV1 main is `3d6331ca` after #211. Open PR is dependabot #209 only. Device HG remains CHR-55. Simulator CI is not acceptance.
 
 ## Phase 1 — Owner gate
 Set `SUPABASE_SERVICE_ROLE_KEY` on resonancenexus. Do not invent it. Exit: GET `/api/ready` 200 and body includes `ownerActionRequired: false`.
