@@ -31,6 +31,31 @@ const GITHUB_FAILURE_CODES: ReadonlySet<GitHubFailureCode> = new Set([
   "invalid_input", "unsupported_capability", "unauthorized", "forbidden", "not_found",
   "rate_limited", "unavailable", "timeout", "malformed_response",
 ]);
+const MAX_RESPONSE_BYTES = 1024 * 1024;
+
+async function readBoundedResponse(response: Response): Promise<string | null> {
+  const length = Number(response.headers.get("content-length"));
+  if (Number.isFinite(length) && length > MAX_RESPONSE_BYTES) return null;
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let text = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return text + decoder.decode();
+      bytes += value.byteLength;
+      if (bytes > MAX_RESPONSE_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
 
 interface RepositoryInput { owner: string; repo: string; }
 export interface GitHubAdapterOptions {
@@ -105,9 +130,9 @@ export class GitHubAdapter implements NexusAdapter {
           signal: controller.signal,
         });
 
-        const raw = await response.text();
+        const raw = await readBoundedResponse(response);
         let body: unknown = null;
-        let parseFailed = false;
+        let parseFailed = raw === null;
         if (raw) {
           try {
             body = JSON.parse(raw);

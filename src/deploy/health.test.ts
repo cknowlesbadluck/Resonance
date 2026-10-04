@@ -33,5 +33,37 @@ describe("health probes", () => {
     expect(readinessStatus(body)).toBe(200);
     expect(body.githubAdapterConfigured).toBe(true);
     expect(JSON.stringify(body)).not.toContain("ghs_example");
+    expect(JSON.stringify(body)).not.toContain("example.supabase.co");
+  });
+
+  it("matches the local owner-gate contract when only SERVICE_ROLE is absent", () => {
+    const contract = evaluateDeployContract({
+      NODE_ENV: "production",
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-fixture",
+      RESONANCE_PROJECT_ID: "00000000-0000-4000-8000-000000000001",
+      RESONANCE_AUTH_MODE: "required",
+    });
+    const body = readiness(contract, new Date("2026-10-01T03:04:13.136Z"));
+    expect(body).toEqual({
+      status: "not_ready",
+      service: "resonance-nexus",
+      stage: "deployment",
+      production: true,
+      authMode: "required",
+      authModeOk: true,
+      persistenceConfigured: false,
+      githubAdapterConfigured: false,
+      missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"],
+      ownerActionRequired: true,
+      ownerKeys: ["SUPABASE_SERVICE_ROLE_KEY"],
+      agentActionRequired: false,
+      posture: "owner_must_set_service_role_on_production_host",
+      contractRevision: "2026-10-03-owner-gate",
+      timestamp: "2026-10-01T03:04:13.136Z",
+    });
+    expect(readinessStatus(body)).toBe(503);
+    expect(JSON.stringify(body)).not.toContain("anon-fixture");
+    expect(JSON.stringify(body)).not.toContain("example.supabase.co");
   });
 });
