@@ -1,16 +1,14 @@
-# Resonance Implementation Status
-
-Observed 2026-10-03 12:00 EDT against the repository and the public host. No secrets invented.
+Observed 2026-10-03 21:01 EDT against the repository and the public host. No secrets invented.
 
 ## Verified this session
 
 | Check | Result |
 | --- | --- |
-| Public host | `https://resonancenexus.netlify.app/api/ready` returned **503** at 2026-10-03T16:02:31Z |
+| Public host | `https://resonancenexus.netlify.app/api/ready` returned **503** at 2026-10-04T01:01:23Z |
 | Missing key | exactly `SUPABASE_SERVICE_ROLE_KEY` |
 | Contract fields | body omitted `ownerActionRequired` and `contractRevision` |
-| Source stamp | `EXPECTED_CONTRACT_REVISION` is `2026-10-03-owner-gate` on main `a9331e6b` (`#147`) |
-| Deploy signal | GitHub production deployment `6829196191` succeeded on a Vercel alias. That is not the public gate |
+| Alias host | `https://resonance-2in3qv6ni-inbetweenz.vercel.app/api/ready` returned **302** to Vercel SSO. Not proof |
+| Source stamp | `EXPECTED_CONTRACT_REVISION` is `2026-10-03-owner-gate` on main |
 | Auth mode | required, ok on the public probe |
 | Persistence / GitHub adapter | not configured on the public host |
 
