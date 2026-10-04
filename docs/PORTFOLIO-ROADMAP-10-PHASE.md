@@ -1,53 +1,51 @@
-# Portfolio 10-phase roadmap — 2026-10-03 21:01 EDT
+# Portfolio 10-phase roadmap — 2026-10-03 22:00 EDT
 
-Live probes at 2026-10-04T01:01:23Z. No secrets invented. A classifier is not production proof. A Vercel alias, including a 302 into SSO, is not the public gate.
+Live probes at 2026-10-04T02:00:45Z. No secrets invented. Refreshed in place on #149. Do not open another roadmap PR.
 
 Evidence:
-- Resonance `GET https://resonancenexus.netlify.app/api/ready` returned 503. Body omitted `ownerActionRequired` and `contractRevision`. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Auth mode required and ok. Persistence and GitHub adapter not configured.
-- `GET https://resonance-2in3qv6ni-inbetweenz.vercel.app/api/ready` returned 302 to `vercel.com/sso-api` with body `Protected by Vercel Authentication`. That is an alias challenge, not a deploy success.
-- Conduit `GET /health` and `GET /ready` both returned 200 with `version=0.8.0` and `contractRevision=2026-10-03-ready-surface`. Ready persistence is postgres. Bound agent `grok`, no binding conflict.
-- QuicksilverV1 open work is `#218` (this roadmap refresh) and `#209` (checkout 4 to 7). Device HG remains the product gate. Do not treat simulator CI as that gate.
-- Legacy `cknowlesbadluck/Quicksilver` pulls `#1` and `#2` are the dead twin. Close them. Do not merge Conduit `#119`, `#120`, `#155`.
-- Open feature/harden count on Conduit is over the entropy cap. This refresh updates `#149` and `#174`. It does not open a new pull request.
+- Public `GET /api/ready` returned **503** with `missingRequired=[SUPABASE_SERVICE_ROLE_KEY]`. Body omitted `ownerActionRequired` and `contractRevision`. `authMode=required`, `authModeOk=true`, `persistenceConfigured=false`, `githubAdapterConfigured=false`.
+- Public `GET /api/health` returned **200**.
+- Conduit `/health` and `/ready` both **200**, version `0.8.0`, `contractRevision=2026-10-03-ready-surface`, postgres.
+- Open Resonance pulls: #149 this roadmap, #134 iOS app target, #133 audit fixes, #132 custom catalog. Do not add a fifth.
 
 ## Phase 1 — Owner gate
 
-Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not invent it. Exit: public `GET /api/ready` is 200 and `ownerActionRequired` is false.
+Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not invent it. Exit: public `/api/ready` is 200.
 
-## Phase 2 — Kill the split-brain deploy
+## Phase 2 — Public contract stamp
 
-Public Netlify still omits `contractRevision`. The Vercel alias is SSO-walled. Exit: public ready body contains `contractRevision` equal to `2026-10-03-owner-gate`, and a 302 SSO response cannot be classified as proof.
+Source on main is ahead of the public body. Exit: public ready body includes `contractRevision` and is not a Vercel alias.
 
-## Phase 3 — Conduit contract parity
+## Phase 3 — Conduit parity
 
-Met on the live host at 01:01Z. Exit already held: `/health` and `/ready` share version 0.8.0 and `2026-10-03-ready-surface`. Do not reopen this as an outage.
+Already live. Not a Resonance task.
 
-## Phase 4 — Quicksilver smoke and device gate
+## Phase 4 — Quicksilver device gate
 
-`#209` stays open while UI smoke is red. Exit: contrast audit green, or the bump is closed. Device HG on iPhone 16e still open. Simulator green is not CHR-55.
+Out of this repo. Simulator green is not device acceptance.
 
-## Phase 5 — Persistence proof
+## Phase 5 — Open-PR freeze
 
-After Phase 1, run production smoke against the real 200 body on `resonancenexus`. Exit: smoke passes on that host, not on a Vercel alias.
+Four open pulls is already over a budget of 3. Exit: #132/#133/#134 rebase or close before any new feature branch.
 
-## Phase 6 — Chamber fail-closed stays
+## Phase 6 — Persistence proof
 
-No new provider. Execution stays denied when a capability is not executable. Exit: chamber tests stay red-free.
+Apply `supabase/migrations` only after the service role exists. Exit: smoke on `resonancenexus` with `persistenceConfigured=true`.
 
-## Phase 7 — Hygiene prune
+## Phase 7 — Hygiene
 
-No hourly audit files. One roadmap file, refreshed in place. Close the legacy twin pulls. Do not merge red drafts. Next code change replaces an open pull request; it does not add one.
+No new hourly audit markdown. Update this file in place.
 
 ## Phase 8 — One iOS target
 
-`#134` is diverged from current main. Do not start a second client. Exit: `#134` builds on current main, or it is closed.
+#134 is the only iOS app-target PR. Exit: it builds in CI or it is closed.
 
-## Phase 9 — Grants stay deny-by-default
+## Phase 9 — Adapter substitution stays provider-neutral
 
-Conduit resource records hold no secrets. `#155` stays unmerged until Render TLS env is set. Exit: grant tests green and TLS verify is on without breaking ready.
+No Resonance core import of a vendor SDK. Exit: capability model remains one type.
 
 ## Phase 10 — Cross-plane acceptance
 
-One probe covers Conduit ready, public Resonance ready, and Quicksilver device posture. Exit: all three green on their real hosts. A unit test is not that proof.
+Exit: Conduit ready, Resonance ready, and Quicksilver device HG all green. A classifier unit test is not that proof.
 
-Binding constraint: owner secret on Netlify, plus a deploy that actually reaches that host. Agent work cannot close Phase 1.
+Binding constraint: owner secret on Netlify. Agent work cannot close Phase 1.
