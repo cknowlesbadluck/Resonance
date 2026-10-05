@@ -1,0 +1,23 @@
+name: Public ready pin
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 13 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  pin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pin resonancenexus contract stamp
+        run: node scripts/public-ready-pin.mjs
+        env:
+          PIN_BASE_URL: https://resonancenexus.netlify.app
