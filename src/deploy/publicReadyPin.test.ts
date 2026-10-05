@@ -82,4 +82,24 @@ describe("public ready pin", () => {
     expect(result.note).toBe("canonical_public_host");
     expect(result.countsAsProof).toBe(false);
   });
+
+  it("does not call a stamped ready body an owner gate", () => {
+    const ready = {
+      status: "ready",
+      ownerActionRequired: false,
+      ownerKeys: [],
+      agentActionRequired: false,
+      missingRequired: [],
+      contractRevision: "2026-10-03-owner-gate",
+    };
+    const result = classifyProbeSurface({
+      url: "https://resonancenexus.netlify.app/api/ready",
+      httpStatus: 200,
+      bodyText: JSON.stringify(ready),
+      json: ready,
+    });
+    expect(result.kind).toBe("ready_unproven");
+    expect(result.ownerGateOpen).toBe(false);
+    expect(result.countsAsProof).toBe(false);
+  });
 });

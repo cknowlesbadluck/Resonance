@@ -70,7 +70,7 @@ export function classifyProbeSurface({ url, httpStatus, bodyText, json }) {
   const classified = classifyPublicReady(json);
   return {
     ...classified,
-    kind: classified.deployLag ? "deploy_lag" : "owner_gate",
+    kind: classified.deployLag ? "deploy_lag" : classified.ownerGateOpen ? "owner_gate" : "ready_unproven",
     aliasAbsent: false,
     note: host === CANONICAL_PUBLIC_HOST ? "canonical_public_host" : "unknown_host",
   };
