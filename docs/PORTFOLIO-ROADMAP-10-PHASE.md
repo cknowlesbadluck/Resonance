@@ -1,13 +1,16 @@
-# Portfolio 10-phase roadmap — 2026-10-03 12:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-05 17:00 EDT
 
-Live probes at 2026-10-03T16:02:31Z. No secrets invented. A classifier is not production proof.
+Live probes at 2026-10-05T21:01:54Z. No secrets invented. A classifier is not production proof.
 
 Evidence:
-- Resonance `GET https://resonancenexus.netlify.app/api/ready` returned 503. Body omitted `ownerActionRequired` and `contractRevision`. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Auth mode required and ok. Persistence and GitHub adapter not configured.
-- `#147` squash-merged at `a9331e6b` (15:02Z). GitHub production deployment `6829196191` reports success against `https://resonance-2in3qv6ni-inbetweenz.vercel.app`. That alias is not the public gate. Netlify is still the old contract. Deploy lag plus owner gate.
-- Conduit `GET /health` and `GET /ready` both returned 200 with `version=0.8.0` and `contractRevision=2026-10-03-ready-surface`. Ready persistence is postgres. Diagnostics ok. Bound agent `grok`, no binding conflict.
-- QuicksilverV1 main is `5eb30beb` (`#216` SSE client). `#217` (M3-T4 routing config) is open, mergeable, required jobs green except iOS Simulator Build and UI smoke still running at probe time. Do not merge while those are pending. CHR-55 device HG remains the product gate.
-- Legacy `cknowlesbadluck/Quicksilver` close still returns integration 403. Do not merge Conduit `#119`, `#120`, `#155`, `#162`.
+- Canonical public host is `https://resonancenexus.netlify.app`. `GET /api/health` returned 200. `GET /api/ready` returned 503. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Body still omits `ownerActionRequired` and `contractRevision`. Auth mode required and ok. Persistence and GitHub adapter not configured.
+- `https://resonancenexus.vercel.app/api/ready` returned 404 `DEPLOYMENT_NOT_FOUND`. That alias is absent. It is not the public gate and it is not an owner-gate failure.
+- `https://resonance-2in3qv6ni-inbetweenz.vercel.app/api/ready` returned 302 behind Vercel Authentication. Not proof.
+- Conduit `GET /health` and `GET /ready` both returned 200 with `version=0.8.0` and `contractRevision=2026-10-03-ready-surface`. Ready persistence is postgres. Diagnostics ok. Bound agent `grok`, no binding conflict. `activity_prune` removed 0.
+- Conduit `#176` `#177` `#178` remain closed and unmerged. Their branches are prune candidates. Do not merge `#119` `#120` `#155` `#162` `#179`.
+- Resonance `#150` is the only ready-pin PR. Do not open another witness. `#132` `#133` `#134` stay open and diverged.
+- QuicksilverV1 `#234` (Workers AI adapter) is open and mergeable. Do not merge without green required CI. `#209` dependabot stays open. CHR-55 device HG remains the product gate.
+- Legacy `cknowlesbadluck/Quicksilver` archive still returns integration 403. `cknowlesbadluck/mcp` is already archived.
 
 ## Phase 1 — Owner gate
 
@@ -15,15 +18,15 @@ Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not in
 
 ## Phase 2 — Kill the split-brain deploy
 
-`#147` is on main. The remaining defect is host identity: a Vercel production status must not close the gate. Exit: public Netlify ready body contains `contractRevision` equal to `2026-10-03-owner-gate`.
+A Vercel status, a Vercel 302, and `DEPLOYMENT_NOT_FOUND` are not the gate. Exit: public Netlify ready body contains `contractRevision` equal to `2026-10-03-owner-gate`.
 
 ## Phase 3 — Conduit contract parity
 
-Met on the live host at 16:01Z. Exit already held: `/health` and `/ready` share version 0.8.0 and `2026-10-03-ready-surface`. Do not reopen this as an outage.
+Met on the live host at 21:01Z. Exit already held: `/health` and `/ready` share version 0.8.0 and `2026-10-03-ready-surface`. Do not reopen this as an outage.
 
-## Phase 4 — Quicksilver routing config
+## Phase 4 — Quicksilver product gate
 
-Merge `#217` only if Simulator Build and UI smoke are green. Exit: M3-T4 on main. Device HG still open.
+`#234` is not CHR-55. Merge it only if required CI is green. Exit: device HG archive IPA on iPhone 16e, or an explicit owner waiver.
 
 ## Phase 5 — Persistence proof
 
@@ -35,18 +38,18 @@ No new provider. Execution stays denied when a capability is not executable. Exi
 
 ## Phase 7 — Hygiene prune
 
-No hourly audit files. One roadmap file. Do not merge red drafts. Archive the legacy twin when the token can; this token cannot.
+No hourly audit files. One roadmap file. Delete closed unmerged witness branches. Do not merge red drafts. Archive the legacy twin when the token can; this token cannot.
 
 ## Phase 8 — One iOS target
 
-`#134` is diverged (ahead 1, behind 7). Do not start a second client. Exit: `#134` builds on current main, or it is closed.
+`#134` is the Resonance iOS target. Do not start a second client. Exit: `#134` builds on current main, or it is closed.
 
 ## Phase 9 — Grants stay deny-by-default
 
-Conduit resource records hold no secrets. Exit: grant tests green.
+Conduit resource records hold no secrets. Exit: grant tests green. `#155` and `#162` stay unmerged until Render TLS env is set.
 
 ## Phase 10 — Cross-plane acceptance
 
-One probe covers Conduit ready, public Resonance ready, and Quicksilver posture parse. Exit: all three green on their public hosts. A unit test is not that proof.
+One probe covers Conduit ready, public Resonance ready, and Quicksilver posture. Exit: all three green on their public hosts. A unit test is not that proof.
 
 Binding constraint: owner secret on Netlify, plus a deploy that actually reaches that host. Agent work cannot close Phase 1.
