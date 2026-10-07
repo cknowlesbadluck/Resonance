@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — 2026-10-07 09:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-07 13:00 EDT
 
-Live probes at 2026-10-07T13:01:42Z. No secrets invented. A classifier is not production proof.
+Live probes at 2026-10-07T17:01:14Z. No secrets invented. A classifier is not production proof.
 
 Evidence:
 - Conduit `GET /health` and `GET /ready` returned 200, version `0.8.0`, `contractRevision` `2026-10-03-ready-surface`, persistence `postgres`.
-- Public `GET /api/ready` returned 503. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Body omitted `ownerActionRequired` and `contractRevision`. `GET /api/health` returned 200.
-- `resonancenexus.vercel.app` returned 404 `DEPLOYMENT_NOT_FOUND`. That is alias absence, not the owner gate.
-- Conduit `#184` closed as saturation noise (generated declaration dump). `#183` stays unmerged: Workers Builds failed. `#119` `#120` `#155` `#162` stay unmerged.
-- Legacy `cknowlesbadluck/Quicksilver` archive and pull-request close both returned 403 on this token.
-- `activity_prune` removed 0. No new pull request opened.
+- Public `GET /api/ready` returned 503. Body: `missingRequired` exactly `["SUPABASE_SERVICE_ROLE_KEY"]`. Omitted `ownerActionRequired` and `contractRevision`. `GET /api/health` returned 200.
+- `resonancenexus.vercel.app` returned 404 `DEPLOYMENT_NOT_FOUND`. Alias absence, not the owner gate.
+- Stack collapse refreshes this record. `#150` stays unmerged while required checks are red. `#151` stays open; it is a different theme, not a duplicate of this roadmap.
+- Conduit `#119` `#120` `#155` `#162` stay unmerged. `#183` stays unmerged because Workers Builds is red.
+- Legacy Quicksilver archive is owner-only. `activity_prune` removed 0. No new pull request.
 
 ## Phase 1 — Owner gate
 
@@ -16,15 +16,15 @@ Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not in
 
 ## Phase 2 — Single ready-body pin
 
-`#150` is the only ready-body pin. Exit: public body contains `contractRevision` and `ownerActionRequired`, and required checks are green before merge. Production smoke is currently skipped on that record, so it is not merged in this pass.
+`#150` is the only ready-body pin. Exit: public body contains `contractRevision` and `ownerActionRequired`, and required checks are green before merge.
 
 ## Phase 3 — Coordination host stamp
 
-Done on the live Conduit host. Exit already met.
+Done on the live Conduit host.
 
-## Phase 4 — Saturation governor
+## Phase 4 — Stack collapse
 
-This branch refuses a new pull request while the owner gate is open. Exit: no fourth witness.
+This branch is the Resonance roadmap refresh target. Exit: no new pull request while the owner gate is open.
 
 ## Phase 5 — Alias classification
 
@@ -32,11 +32,11 @@ Done. Exit: 404 `DEPLOYMENT_NOT_FOUND` stays `alias_absent`.
 
 ## Phase 6 — Keep-red fence
 
-Conduit `#119` `#120` `#155` `#162` stay unmerged. Exit: none of those numbers land on main.
+Conduit `#119` `#120` `#155` `#162` stay unmerged.
 
 ## Phase 7 — Hygiene prune
 
-One roadmap file. No hourly audit file. Bolt noise closed on Conduit. Legacy archive is owner-only. Exit: `activity_prune` has run.
+One roadmap file. No hourly audit file. Exit: `activity_prune` has run.
 
 ## Phase 8 — Device gate stays outside this repo
 
