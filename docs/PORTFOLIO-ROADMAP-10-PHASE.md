@@ -1,49 +1,50 @@
-# Portfolio 10-phase roadmap — 2026-10-07 05:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-07 09:00 EDT
 
-Live probes at 2026-10-07T09:01:56Z. No secrets invented. A classifier is not production proof.
+Live probes at 2026-10-07T13:01:42Z. No secrets invented. A classifier is not production proof.
 
 Evidence:
 - Conduit `GET /health` and `GET /ready` returned 200, version `0.8.0`, `contractRevision` `2026-10-03-ready-surface`, persistence `postgres`.
-- Resonance public `GET /api/ready` returned 503. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Body omitted `ownerActionRequired` and `contractRevision`. `GET /api/health` returned 200.
+- Public `GET /api/ready` returned 503. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Body omitted `ownerActionRequired` and `contractRevision`. `GET /api/health` returned 200.
 - `resonancenexus.vercel.app` returned 404 `DEPLOYMENT_NOT_FOUND`. That is alias absence, not the owner gate.
-- Saturation governor on this branch refuses a new pull request and classifies the alias 404 as absence.
-- `#150` remains the only ready-body pin. Do not merge it while required checks are red.
+- Conduit `#184` closed as saturation noise (generated declaration dump). `#183` stays unmerged: Workers Builds failed. `#119` `#120` `#155` `#162` stay unmerged.
+- Legacy `cknowlesbadluck/Quicksilver` archive and pull-request close both returned 403 on this token.
+- `activity_prune` removed 0. No new pull request opened.
 
 ## Phase 1 — Owner gate
 
-Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Exit: public `GET /api/ready` is 200.
+Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not invent it. Exit: public `GET /api/ready` is 200 and `ownerActionRequired` is false.
 
 ## Phase 2 — Single ready-body pin
 
-`#150` only. Exit: public body contains `contractRevision` and `ownerActionRequired` after a green merge.
+`#150` is the only ready-body pin. Exit: public body contains `contractRevision` and `ownerActionRequired`, and required checks are green before merge. Production smoke is currently skipped on that record, so it is not merged in this pass.
 
 ## Phase 3 — Coordination host stamp
 
-Done on the live Conduit host. Not this repo.
+Done on the live Conduit host. Exit already met.
 
 ## Phase 4 — Saturation governor
 
-`src/deploy/saturation.ts`. Exit: owner-blocked plus an open roadmap record yields `refresh_in_place` or `close_noise`, never a new witness.
+This branch refuses a new pull request while the owner gate is open. Exit: no fourth witness.
 
 ## Phase 5 — Alias classification
 
-Done. 404 `DEPLOYMENT_NOT_FOUND` is `alias_absent`.
+Done. Exit: 404 `DEPLOYMENT_NOT_FOUND` stays `alias_absent`.
 
 ## Phase 6 — Keep-red fence
 
-Conduit `#119` `#120` `#155` `#162` stay unmerged. This repo has no keep-red records.
+Conduit `#119` `#120` `#155` `#162` stay unmerged. Exit: none of those numbers land on main.
 
 ## Phase 7 — Hygiene prune
 
-One roadmap file. No hourly audit file. No orphan branches outside open pull requests.
+One roadmap file. No hourly audit file. Bolt noise closed on Conduit. Legacy archive is owner-only. Exit: `activity_prune` has run.
 
 ## Phase 8 — Device gate stays outside this repo
 
-QuicksilverV1 CHR-55 on iPhone 16e is the device gate. This web plane does not claim it.
+QuicksilverV1 CHR-55 on iPhone 16e. Simulator CI is not that gate.
 
 ## Phase 9 — Deny-by-default grants
 
-No secrets in client records. Adapter calls stay denied without a grant.
+No secrets in resource records. Bridge calls stay denied without a grant.
 
 ## Phase 10 — Cross-plane acceptance
 
