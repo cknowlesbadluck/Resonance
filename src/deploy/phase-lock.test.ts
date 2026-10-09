@@ -13,7 +13,7 @@ describe("phase lock", () => {
   it("closes superseded families and never opens a new witness", () => {
     const decision = decidePhaseLock({ latticeOpen: true, pulls });
     expect(decision.openNewWitness).toBe(false);
-    expect(decision.revision).toBe("2026-10-08-phase-lock");
+    expect(decision.revision).toBe("2026-10-08-2300-collapse");
     expect(decision.closeNumbers.sort((a, b) => a - b)).toEqual([150, 151, 153]);
     expect(decision.holdNumbers).toContain(241);
     for (const number of KEEP_RED) {
