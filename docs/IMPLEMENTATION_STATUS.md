@@ -23,3 +23,7 @@ Fail-closed behavior is in the repository. It is not proven on the public host u
 3. Apply `supabase/migrations` including `20260925120000_execution_partial_status.sql`.
 4. Set scoped `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET`.
 5. Do not switch hosts. Do not invent secrets.
+
+## Probe 2026-10-09 08:02 EDT
+
+Public `GET https://resonancenexus.netlify.app/api/ready` returned 503 at 2026-10-09T12:02:13Z. Missing exactly `SUPABASE_SERVICE_ROLE_KEY`. Body still omitted `ownerActionRequired` and `contractRevision`. `https://resonanceplane.vercel.app/api/ready` returned 404 `DEPLOYMENT_NOT_FOUND`. Retired unused `lib/integrations.ts` in this pass. No secret invented.
