@@ -406,3 +406,11 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+
+### $(date -u +"%Y-%m-%d") - Removed `lib/integrations.ts`
+
+**Intent**: Retire remaining client-only capability shapes.
+**What changed**: Deleted `lib/integrations.ts` which exported a deprecated, non-canonical `Capability` interface that was conflicting with `NexusCapability`.
+**Verified locally**: Verified the usage of `lib/integrations.ts` across the codebase using `grep`, finding none except `lib/integrations.ts` itself. Verified typecheck and tests pass successfully.
+**Pending verification**: Verify CI tests in GitHub Actions.
+**Not fixed / out of scope**: iOS swift capabilities models have not been modified here since the issue pertained to removing a `client-only capability shape if one is still decoded beside NexusCapability`.
