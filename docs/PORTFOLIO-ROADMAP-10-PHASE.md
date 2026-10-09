@@ -1,11 +1,11 @@
-# Portfolio 10-phase roadmap — 2026-10-09 03:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-09 04:00 EDT
 
-Live probes at 2026-10-09T07:01Z. No secrets invented. A classifier is not production proof. This file is the in-place roadmap. Do not add hourly audit files. Do not open a new witness family.
+Live probes at 2026-10-09T08:02Z. No secrets invented. A classifier is not production proof. This file is the in-place roadmap. Do not add hourly audit files. Do not open a new witness family.
 
 Evidence:
 - Conduit `GET /health` and `GET /ready` returned 200. `version=0.8.0`, `contractRevision=2026-10-03-ready-surface`, persistence `postgres`. Diagnostics ok. Bound agent `grok`, no binding conflict.
 - Resonance `GET https://resonancenexus.netlify.app/api/ready` returned 503. `missingRequired` is exactly `SUPABASE_SERVICE_ROLE_KEY`. Body omitted `ownerActionRequired` and `contractRevision`.
-- Supabase Resonance, Quicksilver, and WhereamI were `INACTIVE` at 01:00 EDT. Pause stands until the owner unpauses. Setting the key against a paused project is not persistence proof.
+- Supabase Resonance, Quicksilver: Mercurial intelligence, and WhereamI? were `INACTIVE` at 04:00 EDT. Pause stands until the owner unpauses. Setting the key against a paused project is not persistence proof.
 - `https://resonancenexus.vercel.app/` returned 404 `DEPLOYMENT_NOT_FOUND`. Classify as `alias_absent`.
 - Legacy `cknowlesbadluck/Quicksilver` is archived.
 - QuicksilverV1 `#241` is on main at `83f13504` and is `landed_unverified`.
@@ -52,4 +52,4 @@ One capability model on web and iOS. Do not revive closed cockpit pulls.
 
 SideStore IPA evidence and Postgres TLS only after the owner sets Render env. Keep-red `#155` and `#162` stay unmerged until then.
 
-Binding constraint: paused Supabase plus missing Netlify key. Lattice revision `2026-10-09-landed-fence`.
+Binding constraint: paused Supabase plus missing Netlify key. Lattice revision `2026-10-09-landed-fence`. Hygiene prune revision `2026-10-09-hygiene-prune`: no branch deletes, no pull closes, no merges. `release/0.8.0` is diverged (main ahead 71, behind 9) and is hold-not-delete. `#209` stays hold-until-ci.
