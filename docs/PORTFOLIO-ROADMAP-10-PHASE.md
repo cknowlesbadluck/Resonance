@@ -1,13 +1,13 @@
-# Portfolio 10-phase roadmap — 2026-10-09 08:02 EDT
+# Portfolio 10-phase roadmap — 2026-10-09 19:01 EDT
 
-Live probes at 2026-10-09T12:02:13Z. No secrets invented. A classifier test is not production proof. This pass did not merge the cutover-lattice PRs.
+Live probes at 2026-10-09T23:01:14Z. No secrets invented. A classifier test is not production proof. This pass did not merge the cutover-lattice PRs.
 
 Evidence:
 - Resonance public host `GET https://resonancenexus.netlify.app/api/ready` returned **503**. Body: `status=not_ready`, `missingRequired=[SUPABASE_SERVICE_ROLE_KEY]`, `authMode=required`, `authModeOk=true`, `persistenceConfigured=false`, `githubAdapterConfigured=false`. Body omitted `ownerActionRequired` and `contractRevision`. Source on main already stamps both. That is owner gate plus deploy lag.
 - `https://resonanceplane.vercel.app/api/ready` returned **404** `DEPLOYMENT_NOT_FOUND`. Alias absent. Not the owner gate.
 - Conduit `GET https://conduit-feco.onrender.com/health` and `/ready` both returned 200, `version=0.8.0`, `contractRevision=2026-10-03-ready-surface`, ready `persistence=postgres`. Header parity holds. Not a grant or TLS proof.
-- QuicksilverV1 main includes the device-acceptance fence (`deviceAcceptance=not_recorded`, gate CHR-55). `mercury-gateway.cknowlesbadluck.workers.dev` did not resolve. Simulator CI is not device acceptance.
-- Open and held: QuicksilverV1 #242 and #209, Resonance #154 and #155, Conduit #187 #188 #162 #155 #120 #119. Lattice PRs say do not merge. Conduit #119/#120 stay draft red. Conduit #155 stays unmerged until the Render TLS env is set.
+- QuicksilverV1 main includes the device-acceptance fence (`deviceAcceptance=not_recorded`, gate CHR-55). Simulator CI is not device acceptance. Open held: #242 (lattice, do not merge), #209 (dependabot).
+- Open and held: Resonance #154 (lattice) and #157 (chamber dissolve), Conduit #187 #190 #188 #162 #155 #120 #119. Lattice PRs say do not merge. Conduit #119/#120 stay draft red. Conduit #155 stays unmerged until the Render TLS env is set.
 
 ## Phase 1 — Owner gate
 Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not invent it. Exit: public `GET /api/ready` is 200 and `ownerActionRequired` is false.
@@ -25,10 +25,10 @@ Gateway health must keep `deviceAcceptance=not_recorded`. Exit: CHR-55 remains t
 After Phase 1, run production smoke against the real 200 body. Exit: smoke passes on `resonancenexus`, not a Vercel alias.
 
 ## Phase 6 — Chamber fail-closed stays
-No new provider. Execution stays denied when a capability is not executable. Exit: chamber tests stay red-free on main.
+No new provider. Execution stays denied when a capability is not executable. Exit: chamber tests stay red-free on main. #157 is the current dissolve-guard slice; keep it unmerged until verified inside the repo.
 
 ## Phase 7 — Hygiene prune
-No hourly audit files. One roadmap file per repo. Do not merge #119, #120, or Conduit #155. Lattice PRs stay open until a session verifies them inside the target repo. Legacy `cknowlesbadluck/Quicksilver` is archived and is not the product.
+No hourly audit files. One roadmap file per repo. Do not merge #119, #120, or Conduit #155. Lattice PRs stay open until a session verifies them inside the target repo. Legacy `cknowlesbadluck/Quicksilver` is archived and is not the product. Dependabot mediums on vitest/postcss remain open; bump only after a green CI run on the target branch.
 
 ## Phase 8 — iOS cockpit only after the public contract is live
 Do not start a second client. Resonance iOS work waits until Phase 2 is visible on Netlify.
