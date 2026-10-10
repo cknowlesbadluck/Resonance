@@ -1,4 +1,5 @@
 "use client";
+import type { NexusCapability } from "../src/nexus/types";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
@@ -6,7 +7,7 @@ import { Activity, ArrowRight, CheckCircle2, CircleAlert, Network, Play, ShieldC
 import { canInvokeCapability, capabilityStateLabel } from "../src/control/invoke";
 
 type Event = { id: string; source: string; type: string; status: string; created_at: string };
-type Capability = { id: string; key: string; name: string; adapterId?: string; risk: string; availability?: string; provenance?: string; executable?: boolean; unexecutableReason?: string };
+
 type SkillView = {
   skill: { id: string; name: string; namespace: string; version: string; description?: string };
   composable: boolean;
@@ -49,7 +50,7 @@ function errorText(payload: unknown, fallback: string): string {
   return typeof error === "string" && error.trim() ? error : fallback;
 }
 
-function badgeClass(capability: Capability) {
+function badgeClass(capability: NexusCapability) {
   if (!canInvokeCapability(capability)) return "badge bad";
   if (capability.availability === "degraded") return "badge warn";
   return "badge ok";
@@ -58,7 +59,7 @@ function badgeClass(capability: Capability) {
 export default function Home() {
   const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID);
   const [events, setEvents] = useState<Event[]>([]);
-  const [capabilities, setCapabilities] = useState<Capability[]>([]);
+  const [capabilities, setCapabilities] = useState<NexusCapability[]>([]);
   const [skills, setSkills] = useState<SkillView[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [owner, setOwner] = useState(process.env.NEXT_PUBLIC_GITHUB_OWNER ?? "cknowlesbadluck");
@@ -120,7 +121,7 @@ export default function Home() {
 
   useEffect(() => { void load(projectId); }, [load, projectId]);
 
-  function intentBody(capability: Capability) {
+  function intentBody(capability: NexusCapability) {
     return {
       objective: objective.trim() || `Read ${capability.name}`,
       requestedBy: "web-user",

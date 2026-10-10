@@ -406,3 +406,15 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+## 2026-10-10 - Jules (Retire client-only capability shape)
+
+**Checked:**
+- Identified that `app/page.tsx` was still declaring a localized `Capability` type, and `src/control/invoke.ts` was using a localized `InvokeView` type, violating the roadmap goal of standardizing on `NexusCapability`.
+
+**Decided / Done:**
+- Replaced the local `Capability` and `InvokeView` type definitions with the shared `NexusCapability` type imported from `src/nexus/types.ts`.
+- Updated React component hooks (`useState<NexusCapability[]>`) and helper methods to consume `NexusCapability` or `Partial<NexusCapability>`.
+- Updated test data structures in `src/control/invoke.test.ts` to match the stricter `NexusCapability` typings.
+
+**Verified:**
+- `npm run typecheck`, `npm run test`, and `npm run build` all pass cleanly.
