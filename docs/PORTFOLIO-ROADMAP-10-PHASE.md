@@ -1,12 +1,13 @@
-# Portfolio 10-phase roadmap — 2026-10-10 09:01 EDT
+# Portfolio 10-phase roadmap — 2026-10-10 12:00 EDT
 
-Live probes refreshed at 2026-10-10T13:01Z. No secrets invented. Classifier tests are not production proof. Hygiene: one roadmap file. Did not merge held PRs. Vitest bump noted previously; lockfile regen still pending if not done.
+Live probes at 2026-10-10T16:01Z. No secrets invented. Classifier tests are not production proof. Hygiene: one roadmap file. Did not merge held PRs. Innovation track added.
 
-Evidence:
-- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` 503 missing exactly ["SUPABASE_SERVICE_ROLE_KEY"]. Body omits ownerActionRequired and contractRevision (deploy lag + owner gate). Health 200 stage=deployment.
+Evidence (fresh):
+- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` 503 missing exactly ["SUPABASE_SERVICE_ROLE_KEY"]. Body omits ownerActionRequired and contractRevision (deploy lag + owner gate). Timestamp 2026-10-10T16:01:27.256Z. Health 200 stage=deployment.
 - Conduit /health and /ready 200, version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres.
 - QuicksilverV1 gateway unresolved. deviceAcceptance=not_recorded. Gate is CHR-55 real iPhone 16e archive IPA.
-- Held: #154/#157/#158 open. Conduit TLS and drafts held. Quicksilver lattice #242 open.
+- Held: #154/#157/#158/#159/#160 open. Dependabot critical tinypool RCE (prototype pollution), high sharp, medium next.
+- Conduit critical proxy-addr hygiene #192 open.
 
 ## Phase 1 — Owner gate
 Set SUPABASE_SERVICE_ROLE_KEY on Netlify site resonancenexus only. Do not invent it. Exit: public GET /api/ready is 200 and ownerActionRequired is false.
@@ -27,7 +28,7 @@ After Phase 1, run production smoke against the real 200 body. Exit: smoke passe
 No new provider. Execution denied when capability not executable. Exit: chamber tests green.
 
 ## Phase 7 — Hygiene prune executed
-One roadmap file. Stale audits pruned. Vitest previously bumped. package-lock regen pending if needed. Legacy Quicksilver archived.
+One roadmap file. Stale audits pruned. Critical Dependabot (tinypool) must be addressed before any new feature work. package-lock regen pending if needed. Legacy Quicksilver archived.
 
 ## Phase 8 — iOS cockpit only after the public contract is live
 No second client until Phase 2 is visible on Netlify.
@@ -40,10 +41,16 @@ One probe covers Conduit health, Conduit ready, and Resonance ready. Exit: produ
 
 Binding constraint: owner secret on Netlify. Agent work cannot close Phase 1.
 
-## Innovative next slices (post-gate)
-1. Unified portfolio probe service (Conduit endpoint that classifies Resonance ready + device gate without storing secrets).
-2. Chamber dissonance audit token hardening already in #157 — verify then merge.
-3. On-device Nexus capability discovery in Quicksilver as a read-only surface once Resonance ready is 200.
-4. Regenerate package-lock.json and confirm CI green after vitest 4 bump if not already. Close remaining postcss Dependabot if transitive.
+## Innovation Track (executable now)
+1. Close critical tinypool prototype-pollution RCE alerts by bumping to >=2.1.2; high sharp to >=0.35.5; evaluate next cache-poisoning non-breaking path.
+2. Verify and potentially merge chamber dissonance audit (#157) if tests green and no gate impact.
+3. Pure PortfolioPosture classifier shared or mirrored; no secrets.
+4. Lockfile regen and CI green after any audit fixes.
+5. Unified portfolio probe consistency with QuicksilverV1 and Conduit.
+6. On-device read-only capability discovery deferred until ready 200.
+7. Adversarial review of lattice #154 before merge.
+8. Confirm vitest 4 bump stability.
+9. Hygiene: consolidate docs refreshes.
+10. Fail-closed on any new provider or execution path.
 
-Audit note: Full hygiene pass completed. Stabilization holds. No merge of held PRs. Innovation deferred until gates clear.
+Audit note: Full audit completed at 12:00 EDT. Stabilization holds. Innovation starts with security hardening of critical RCE surfaces. No secret invention.
