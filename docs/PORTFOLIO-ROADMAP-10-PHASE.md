@@ -1,12 +1,12 @@
-# Portfolio 10-phase roadmap — 2026-10-10 03:02 EDT
+# Portfolio 10-phase roadmap — 2026-10-10 03:01 EDT
 
-Live probes at 2026-10-10T03:00Z. No secrets invented. Classifier tests are not production proof. This pass pruned stale audit artifacts and did not merge held PRs.
+Live probes at 2026-10-10T07:01Z. No secrets invented. Classifier tests are not production proof. This pass refreshed live evidence and did not merge held PRs.
 
 Evidence:
-- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` returned **503**. Body: `status=not_ready`, `missingRequired=[SUPABASE_SERVICE_ROLE_KEY]`, `authMode=required`, `authModeOk=true`, `persistenceConfigured=false`, `githubAdapterConfigured=false`. Body omitted `ownerActionRequired` and `contractRevision`. Source on main already stamps both. That is owner gate plus deploy lag.
+- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` returned **503**. Body: `status=not_ready`, `missingRequired=["SUPABASE_SERVICE_ROLE_KEY"]`, `authMode=required`, `authModeOk=true`, `persistenceConfigured=false`, `githubAdapterConfigured=false`. Body omitted `ownerActionRequired` and `contractRevision`. Source on main already stamps both. That is owner gate plus deploy lag. Health 200.
 - Conduit `/health` and `/ready` 200, `version=0.8.0`, `contractRevision=2026-10-03-ready-surface`, `persistence=postgres`.
-- QuicksilverV1 gateway remains liveness-only. `deviceAcceptance=not_recorded`. Gate is CHR-55 real iPhone 16e archive IPA.
-- Held: #154/#157 open. Dependabot medium vitest path-traversal (dev-server only). Stale audits pruned.
+- QuicksilverV1 gateway remains unresolved. `deviceAcceptance=not_recorded`. Gate is CHR-55 real iPhone 16e archive IPA.
+- Held: #154/#157 open. Dependabot medium vitest path-traversal (dev-server only) + postcss residual. Stale audits already pruned.
 
 ## Phase 1 — Owner gate
 Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not invent it. Exit: public `GET /api/ready` is 200 and `ownerActionRequired` is false.
@@ -27,7 +27,7 @@ After Phase 1, run production smoke against the real 200 body. Exit: smoke passe
 No new provider. Execution stays denied when a capability is not executable. Exit: chamber tests stay red-free on main.
 
 ## Phase 7 — Hygiene prune executed
-No hourly audit files. One roadmap file per repo. Stale AUDIT-2026-09-14.md, AUDIT-2026-09-25.md, AUDIT-2026-09-26.md pruned. Lattice PRs stay open until a session verifies them inside the target repo. Legacy `cknowlesbadluck/Quicksilver` is archived and is not the product.
+No hourly audit files. One roadmap file per repo. Stale AUDIT artifacts pruned. Lattice PRs stay open until a session verifies them inside the target repo. Legacy `cknowlesbadluck/Quicksilver` is archived and is not the product.
 
 ## Phase 8 — iOS cockpit only after the public contract is live
 Do not start a second client. Resonance iOS work waits until Phase 2 is visible on Netlify.
