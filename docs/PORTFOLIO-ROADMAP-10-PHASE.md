@@ -1,13 +1,14 @@
-# Portfolio 10-phase roadmap — 2026-10-09 08:02 EDT
+# Portfolio 10-phase roadmap — 2026-10-09 21:00 EDT
 
-Live probes at 2026-10-09T12:02:13Z. No secrets invented. A classifier test is not production proof. This pass did not merge the cutover-lattice PRs.
+Live probes at ~2026-10-10T01:01Z. No secrets invented. A classifier test is not production proof. This pass did not merge the cutover-lattice PRs.
 
 Evidence:
-- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` returned **503**. Body: `status=not_ready`, `missingRequired=[SUPABASE_SERVICE_ROLE_KEY]`, `authMode=required`, `authModeOk=true`, `persistenceConfigured=false`, `githubAdapterConfigured=false`. Body omitted `ownerActionRequired` and `contractRevision`. Source on main already stamps both. That is owner gate plus deploy lag.
-- `https://resonanceplane.vercel.app/api/ready` returned **404** `DEPLOYMENT_NOT_FOUND`. Alias absent. Not the owner gate.
+- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` returned **503**. Body: `status=not_ready`, `missingRequired=[SUPABASE_SERVICE_ROLE_KEY]`, `authMode=required`, `authModeOk=true`, `persistenceConfigured=false`, `githubAdapterConfigured=false`. Body omitted `ownerActionRequired` and `contractRevision`. Source on main already stamps both. That is owner gate plus deploy lag. Timestamp ~2026-10-10T01:01:21Z.
+- `https://resonanceplane.vercel.app/api/ready` returned **404** `DEPLOYMENT_NOT_FOUND`. Alias absent. Not the owner gate. Other aliases classified stranger_occupant when 200 HTML.
 - Conduit `GET https://conduit-feco.onrender.com/health` and `/ready` both returned 200, `version=0.8.0`, `contractRevision=2026-10-03-ready-surface`, ready `persistence=postgres`. Header parity holds. Not a grant or TLS proof.
-- QuicksilverV1 main includes the device-acceptance fence (`deviceAcceptance=not_recorded`, gate CHR-55). `mercury-gateway.cknowlesbadluck.workers.dev` did not resolve. Simulator CI is not device acceptance.
-- Open and held: QuicksilverV1 #242 and #209, Resonance #154 and #155, Conduit #187 #188 #162 #155 #120 #119. Lattice PRs say do not merge. Conduit #119/#120 stay draft red. Conduit #155 stays unmerged until the Render TLS env is set.
+- QuicksilverV1 main includes the device-acceptance fence (`deviceAcceptance=not_recorded`, gate CHR-55). Simulator CI is not device acceptance.
+- Open and held: QuicksilverV1 #242 and #209, Resonance #154 and #157, Conduit #187 #188 #162 #155 #120 #119. Lattice PRs say do not merge. Conduit #119/#120 stay draft red. Conduit #155 stays unmerged until the Render TLS env is set.
+- Activity prune this pass removed 0 rows.
 
 ## Phase 1 — Owner gate
 Set `SUPABASE_SERVICE_ROLE_KEY` on Netlify site `resonancenexus` only. Do not invent it. Exit: public `GET /api/ready` is 200 and `ownerActionRequired` is false.
@@ -40,3 +41,8 @@ A resource record is not a grant. Exit: grant tests green and no resource record
 One probe covers Conduit health, Conduit ready, and Resonance ready. Exit: production verdict accepted. A fixture test is not that proof.
 
 Binding constraint: owner secret on Netlify. Agent work cannot close Phase 1.
+
+Innovation notes (this pass):
+- Strengthen PortfolioPosture classifier with stranger_occupant and inactive Supabase signals.
+- Chamber dissolve audit token hardening already in #157; land after owner gate clears.
+- Device validation script for CHR-55 remains external.
