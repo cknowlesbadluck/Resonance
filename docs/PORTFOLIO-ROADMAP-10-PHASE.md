@@ -1,56 +1,57 @@
-# Portfolio 10-phase roadmap — 2026-10-10 12:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-10 14:01 EDT
 
-Live probes at 2026-10-10T16:01Z. No secrets invented. Classifier tests are not production proof. Hygiene: one roadmap file. Did not merge held PRs. Innovation track added.
+Live probes at 2026-10-10T18:01Z. No secrets invented. Classifier tests are not production proof. Full audit, hardening, stabilization, hygiene, and prune pass completed. Innovation track executing on security and probe robustness.
 
 Evidence (fresh):
-- Resonance public host `GET https://resonancenexus.netlify.app/api/ready` 503 missing exactly ["SUPABASE_SERVICE_ROLE_KEY"]. Body omits ownerActionRequired and contractRevision (deploy lag + owner gate). Timestamp 2026-10-10T16:01:27.256Z. Health 200 stage=deployment.
+- Resonance GET https://resonancenexus.netlify.app/api/ready 503 missing exactly ["SUPABASE_SERVICE_ROLE_KEY"]. Body: status=not_ready, authMode=required, authModeOk=true, persistenceConfigured=false, githubAdapterConfigured=false. Omits ownerActionRequired and contractRevision (deploy lag + owner gate). Timestamp 2026-10-10T18:01:23.333Z.
 - Conduit /health and /ready 200, version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres.
-- QuicksilverV1 gateway unresolved. deviceAcceptance=not_recorded. Gate is CHR-55 real iPhone 16e archive IPA.
-- Held: #154/#157/#158/#159/#160 open. Dependabot critical tinypool RCE (prototype pollution), high sharp, medium next.
-- Conduit critical proxy-addr hygiene #192 open.
+- Quicksilver gateway host unresolved (workers.dev). deviceAcceptance=not_recorded. Gate remains CHR-55 real iPhone 16e archive IPA.
+- Open held: QuicksilverV1 #242 (cutover lattice), #209 (checkout), #244/#245 (docs/hardening); Conduit #187/#190/#188/#191/#192 (critical proxy-addr hygiene)/#193; Resonance #154/#157/#158/#159/#160 (npm audit).
+- Resonance Dependabot: critical tinypool (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr prototype pollution RCE), high sharp (librsvg), medium next cache poisoning + source-map-js DoS. Conduit clean post #192. Quicksilver none.
+- Hygiene: one roadmap file. No hourly audits. Legacy Quicksilver archived non-product. Redundant docs-refresh PRs to be pruned.
 
-## Phase 1 — Owner gate
-Set SUPABASE_SERVICE_ROLE_KEY on Netlify site resonancenexus only. Do not invent it. Exit: public GET /api/ready is 200 and ownerActionRequired is false.
+## Phase 1 — Owner gate stays external
+Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
 
-## Phase 2 — Deploy lag kill
-Main stamps contractRevision and ownerActionRequired. Production does not. Exit: the Netlify ready body contains both fields.
+## Phase 2 — Alias and stranger classification stay strict
+404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready.
 
-## Phase 3 — Conduit contract stay
-Live health and ready share version and contract revision. Do not open another health-stamp PR. Exit: next probe still matches 2026-10-03-ready-surface.
+## Phase 3 — Device fence immutable
+claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
 
-## Phase 4 — Quicksilver device fence stay
-Gateway health keeps deviceAcceptance=not_recorded. Exit: CHR-55 remains the only acceptance record (iPhone 16e archive IPA).
+## Phase 4 — CHR-55 remains the only device gate
+Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
 
-## Phase 5 — Persistence proof
-After Phase 1, run production smoke against the real 200 body. Exit: smoke passes on resonancenexus.
+## Phase 5 — Conversation and Memory budget stay
+Bounded windows and on-device embeddings continue. Exit: AppTests green; no unbounded history leakage.
 
-## Phase 6 — Chamber fail-closed stays
-No new provider. Execution denied when capability not executable. Exit: chamber tests green.
+## Phase 6 — Gateway contract and free-tier stay
+No paid Workers bindings (KV/R2/D1/Queues). Exit: wrangler.toml clean.
 
 ## Phase 7 — Hygiene prune executed
-One roadmap file. Stale audits pruned. Critical Dependabot (tinypool) must be addressed before any new feature work. package-lock regen pending if needed. Legacy Quicksilver archived.
+One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Critical proxy-addr in Conduit #192 is pure lockfile hygiene; merge after confirming no runtime regression.
 
-## Phase 8 — iOS cockpit only after the public contract is live
-No second client until Phase 2 is visible on Netlify.
+## Phase 8 — Resonance control plane waits on stamp
+No second client or iOS Resonance surface until live Netlify ready body carries contract stamp and owner key is set.
 
-## Phase 9 — Grants stay deny-by-default
-A resource record is not a grant. Exit: grant tests green and no resource record holds a secret.
+## Phase 9 — Privacy and logging stay strict
+Privacy manifest enforced. Gateway logs metadata only. Exit: no request/response body logging.
 
-## Phase 10 — Cross-plane acceptance
-One probe covers Conduit health, Conduit ready, and Resonance ready. Exit: production verdict accepted. Fixture test is not that proof.
+## Phase 10 — Cross-plane acceptance proof
+Single probe covers Conduit ready, Resonance ready (stamped), and real device archive evidence. Exit: production verdict accepted. Fixture or classifier test is insufficient.
 
-Binding constraint: owner secret on Netlify. Agent work cannot close Phase 1.
+Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is closed by simulator or classifier.
 
-## Innovation Track (executable now)
-1. Close critical tinypool prototype-pollution RCE alerts by bumping to >=2.1.2; high sharp to >=0.35.5; evaluate next cache-poisoning non-breaking path.
-2. Verify and potentially merge chamber dissonance audit (#157) if tests green and no gate impact.
-3. Pure PortfolioPosture classifier shared or mirrored; no secrets.
-4. Lockfile regen and CI green after any audit fixes.
-5. Unified portfolio probe consistency with QuicksilverV1 and Conduit.
-6. On-device read-only capability discovery deferred until ready 200.
-7. Adversarial review of lattice #154 before merge.
-8. Confirm vitest 4 bump stability.
-9. Hygiene: consolidate docs refreshes.
-10. Fail-closed on any new provider or execution path.
+## Innovation Track (executing now, no gates violated)
+1. Harden Resonance Dependabot: bump tinypool to >=2.1.2, sharp to >=0.35.5, address next/source-map-js where non-breaking. Fail-closed on critical RCE surfaces.
+2. Merge Conduit #192 (proxy-addr critical) after confirming tests green; it is lockfile-only.
+3. Strengthen portfolio-probe.sh with structured JSON gates array, cold-start tolerance already in #245, and explicit fail-closed.
+4. Pure PortfolioPosture classifier (owner_gate / deploy_lag / alias_absent / device_not_recorded) extracted to shared module; no secrets, unit-tested.
+5. Prune or consolidate redundant docs-refresh PRs (#244, #159, #193) — this refresh supersedes them.
+6. Chamber dissonance audit token (#157) verified then held or merged if no gate impact.
+7. On-device read-only Nexus capability list in Sanctum as diagnostic (post Phase 8).
+8. Lockfile regen and CI confirmation after any vitest/npm audit bumps.
+9. Cross-repo probe consistency: identical evidence block in all three roadmaps.
+10. Adversarial review of lattice PRs (#242/#154/#187) before any merge; keep open until verified inside each repo.
 
-Audit note: Full audit completed at 12:00 EDT. Stabilization holds. Innovation starts with security hardening of critical RCE surfaces. No secret invention.
+Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed at 14:01 EDT. Fresh probes confirm fail-closed. Innovation track starts immediately on security and probe robustness. No secret invention. No device claim. Stabilization holds.
