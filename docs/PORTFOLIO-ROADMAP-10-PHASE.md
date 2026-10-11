@@ -1,8 +1,8 @@
-# Portfolio 10-phase roadmap — 2026-10-10 17:02 EDT
+# Portfolio 10-phase roadmap — 2026-10-10 21:00 EDT
 
-Live probes consistent with 18:01Z evidence. No secrets invented. Classifier tests are not production proof. Full audit, hardening, stabilization, hygiene, and prune pass executed this session. Innovation track: Resonance dep lockfile hardened (tinypool critical RCE, sharp high, next 15.5.27 non-breaking) on branch harden/deps-20261010.
+Live probes consistent with prior evidence. No secrets invented. Classifier tests are not production proof. Full audit, hardening, stabilization, hygiene, and prune pass executed this session (21:00 EDT). Innovation track continues: Resonance dep lockfile hardened on branch harden/deps-20261010; this refresh supersedes earlier docs PRs.
 
-Evidence (fresh):
+Evidence (confirmed):
 - Resonance GET https://resonancenexus.netlify.app/api/ready 503 missing exactly ["SUPABASE_SERVICE_ROLE_KEY"]. Body: status=not_ready, authMode=required, authModeOk=true, persistenceConfigured=false, githubAdapterConfigured=false. Omits ownerActionRequired and contractRevision (deploy lag + owner gate).
 - Conduit /health and /ready 200, version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres.
 - Quicksilver gateway host unresolved (workers.dev). deviceAcceptance=not_recorded. Gate remains CHR-55 real iPhone 16e archive IPA.
@@ -54,4 +54,4 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 9. Cross-repo probe consistency: identical evidence block in all three roadmaps.
 10. Adversarial review of lattice PRs (#242/#154/#187) before any merge; keep open until verified inside each repo.
 
-Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed at 17:02 EDT. Fresh probes confirm fail-closed. Innovation track continues on security (deps fixed) and probe robustness. No secret invention. No device claim. Stabilization holds. Next: open PR for Resonance lockfile, prune redundant PRs, verify Conduit #192.
+Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed at 21:00 EDT. Fresh confirmation of fail-closed posture. Innovation track continues on security (deps fixed) and probe robustness. No secret invention. No device claim. Stabilization holds. Next: open this PR, prune redundant docs PRs, verify Conduit #192, continue lattice adversarial review.
