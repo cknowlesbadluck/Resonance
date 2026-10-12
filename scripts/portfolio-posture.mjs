@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * PortfolioPosture classifier — pure, no secrets, fail-closed.
- * Classifies live probe responses into owner_gate | deploy_lag | alias_absent | device_not_recorded | cold_start | ready | unknown.
+ * Classifies live probe responses into owner_gate | deploy_lag | alias_absent | device_not_recorded | cold_start | ready | incomplete_ready | unknown.
  * Unit-testable. Used by portfolio-probe.sh and cross-repo evidence.
  */
 
@@ -21,8 +21,11 @@ export function classifyResonanceReady(body, status) {
 
 export function classifyConduitReady(body, status) {
   if (status === 0) return { posture: 'cold_start', reason: 'timeout_or_zero' };
-  if (status === 200 && body?.status === 'ready' && body?.persistence === 'postgres') {
-    return { posture: 'ready', reason: 'stamped', contractRevision: body.contractRevision };
+  if (status === 200 && body?.status === 'ready') {
+    if (body?.persistence === 'postgres' && body?.contractRevision) {
+      return { posture: 'ready', reason: 'stamped', contractRevision: body.contractRevision };
+    }
+    return { posture: 'incomplete_ready', reason: 'missing_stamp_or_persistence', incomplete: true };
   }
   if (status === 503) return { posture: 'deploy_lag', reason: 'not_ready' };
   return { posture: 'unknown', reason: `status_${status}` };
@@ -47,4 +50,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   // CLI smoke
   const sampleResonance = { status: 'not_ready', missingRequired: ['SUPABASE_SERVICE_ROLE_KEY'] };
   console.log(JSON.stringify(classifyResonanceReady(sampleResonance, 503), null, 2));
+  const sampleIncomplete = { status: 'ready' };
+  console.log(JSON.stringify(classifyConduitReady(sampleIncomplete, 200), null, 2));
 }
