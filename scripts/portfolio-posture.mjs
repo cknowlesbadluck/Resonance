@@ -3,9 +3,11 @@
  * PortfolioPosture classifier — pure, no secrets, fail-closed.
  * Classifies live probe responses into owner_gate | deploy_lag | alias_absent | device_not_recorded | cold_start | ready | incomplete_ready | unknown.
  * Unit-testable. Used by portfolio-probe.sh and cross-repo evidence.
+ * 2026-10-13 hygiene: explicit cold-start (status 0 / timeout) handling; postcss override recommended in package.json.
  */
 
 export function classifyResonanceReady(body, status) {
+  if (status === 0 || status === undefined) return { posture: 'cold_start', reason: 'timeout_or_zero' };
   if (status !== 503 && status !== 200) return { posture: 'unknown', reason: `unexpected_status_${status}` };
   if (status === 200) return { posture: 'ready', reason: 'ok' };
   if (!body || typeof body !== 'object') return { posture: 'unknown', reason: 'no_body' };
@@ -20,7 +22,7 @@ export function classifyResonanceReady(body, status) {
 }
 
 export function classifyConduitReady(body, status) {
-  if (status === 0) return { posture: 'cold_start', reason: 'timeout_or_zero' };
+  if (status === 0 || status === undefined) return { posture: 'cold_start', reason: 'timeout_or_zero' };
   if (status === 200 && body?.status === 'ready') {
     if (body?.persistence === 'postgres' && body?.contractRevision) {
       return { posture: 'ready', reason: 'stamped', contractRevision: body.contractRevision };
@@ -52,4 +54,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(JSON.stringify(classifyResonanceReady(sampleResonance, 503), null, 2));
   const sampleIncomplete = { status: 'ready' };
   console.log(JSON.stringify(classifyConduitReady(sampleIncomplete, 200), null, 2));
+  console.log(JSON.stringify(classifyConduitReady(null, 0), null, 2)); // cold start
 }
