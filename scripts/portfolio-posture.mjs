@@ -3,13 +3,29 @@
  * PortfolioPosture classifier — pure, no secrets, fail-closed.
  * Classifies live probe responses into owner_gate | deploy_lag | alias_absent | device_not_recorded | cold_start | ready | incomplete_ready | unknown.
  * Unit-testable. Used by portfolio-probe.sh and cross-repo evidence.
- * 2026-10-13 hygiene: explicit cold-start (status 0 / timeout) handling; postcss override recommended in package.json.
+ * cold_start: no HTTP status (0/undefined/null/NaN = timeout, abort, DNS/connection reset) or a
+ * gateway timeout (504) from a sleeping serverless function. Always retryable, never ready/owner_gate.
  */
 
+const GATEWAY_TIMEOUT = 504;
+
+export function isColdStart(status) {
+  return status === undefined || status === null || status === 0 || Number.isNaN(status) || status === GATEWAY_TIMEOUT;
+}
+
+function coldStart(status) {
+  return { posture: 'cold_start', reason: status === GATEWAY_TIMEOUT ? 'gateway_timeout_504' : 'timeout_or_zero', retryable: true };
+}
+
 export function classifyResonanceReady(body, status) {
-  if (status === 0 || status === undefined) return { posture: 'cold_start', reason: 'timeout_or_zero' };
+  if (isColdStart(status)) return coldStart(status);
   if (status !== 503 && status !== 200) return { posture: 'unknown', reason: `unexpected_status_${status}` };
-  if (status === 200) return { posture: 'ready', reason: 'ok' };
+  // Fail closed: a 200 is only ready when the body says so.
+  if (status === 200) {
+    return body?.status === 'ready'
+      ? { posture: 'ready', reason: 'ok' }
+      : { posture: 'incomplete_ready', reason: 'status_200_without_ready_body', incomplete: true };
+  }
   if (!body || typeof body !== 'object') return { posture: 'unknown', reason: 'no_body' };
   const missing = body.missingRequired || [];
   if (missing.includes('SUPABASE_SERVICE_ROLE_KEY')) {
@@ -22,7 +38,7 @@ export function classifyResonanceReady(body, status) {
 }
 
 export function classifyConduitReady(body, status) {
-  if (status === 0 || status === undefined) return { posture: 'cold_start', reason: 'timeout_or_zero' };
+  if (isColdStart(status)) return coldStart(status);
   if (status === 200 && body?.status === 'ready') {
     if (body?.persistence === 'postgres' && body?.contractRevision) {
       return { posture: 'ready', reason: 'stamped', contractRevision: body.contractRevision };
