@@ -1,17 +1,18 @@
-# Resonance 10-Phase Roadmap (refreshed 2026-10-13 18:00 EDT)
+# Resonance — 10-Phase Production-Readiness Roadmap (2026-10-13, 21:00 EDT)
 
-Evidence: docs/AUDIT-2026-10-13.md. Detailed table: docs/ROADMAP-audit-2026-10.md (#163).
-Gates outside this repo stay open: `SUPABASE_SERVICE_ROLE_KEY` (owner), CHR-55 device acceptance.
+Evidence: docs/AUDIT-2026-10-13.md. Provider-neutral, free-tier only, no secrets in code.
+External gates stay open and are never claimed: `SUPABASE_SERVICE_ROLE_KEY` (owner), CHR-55 device acceptance.
+Baseline: line coverage 61% overall (src+app), **0% on `app/api/**` route handlers**; 4 postcss Dependabot alerts; main CI red.
 
-| # | Phase | Exit criteria | Status |
-|---|---|---|---|
-| 1 | Stabilize CI & supply chain | main green 3×; actions SHA-pinned; Dependabot postcss alerts closed | PRs #161 #162 #164 open |
-| 2 | Branch/PR/doc hygiene | ≤5 live branches; one roadmap; no timestamped refresh PRs | #168 |
-| 3 | Branch protection | direct push to main rejected; `CI` required | #165 (owner setting) |
-| 4 | Redeploy & contract parity | live `/api/ready` carries `contractRevision` = `EXPECTED_CONTRACT_REVISION`; `cross-plane-check --live` passes | blocked on deploy (#170 detects) |
-| 5 | Auth fail-closed | production refuses `optional`/unset auth; route×mode tests | #167 |
-| 6 | Error & input hygiene | no raw Postgres messages; shared body validation | planned |
-| 7 | Supabase hardening | `search_path=''`, single membership helper, RLS tests on branch DB | planned (migrations added, never applied without approval) |
-| 8 | Cross-plane contract | one canonical posture vocabulary shared by Resonance/Conduit/Quicksilver; cold_start retryable everywhere | #169 #170 |
-| 9 | Dependency currency & tests | majors (next 16, lucide 1) in isolated PRs; coverage ≥80% on src/auth, src/nexus | planned |
-| 10 | Owner gate & observability | owner sets service-role key; `/api/ready` 200 with stamp; runbook in DEPLOYMENT.md | owner action |
+| # | Phase | Goal | Deliverables | Exit criteria | Risk |
+|---|---|---|---|---|---|
+| 1 | Green, pinned pipeline | main is always releasable | Lockfile resync (#161), SHA-pinned actions + Gemini gating (#162), Dependabot (#164), branch protection requiring `CI` (#165) | 3 consecutive green main runs; direct push rejected; 0 Dependabot alerts | Low |
+| 2 | One error envelope | No DB internals leak; clients branch on codes | `{ error, code, context }` envelope for every route (`persistence_error` in #172; add `validation_error`, `auth_required`, `rate_limited`, `executor_failed`); request id on every response | grep finds no `error.message` in `app/api`; envelope snapshot tests | Low |
+| 3 | Fail-closed auth in production | Production can never run unauthenticated | `NODE_ENV=production` ⇒ `RESONANCE_AUTH_MODE` forced to `required`; startup self-check surfaced in `/api/ready`; route×mode auth matrix tests | Every route returns 401 without bearer in prod mode; `optional` rejected in prod | Medium: clients without tokens break, so announce first |
+| 4 | Route contract tests | Cover the 0%-covered HTTP surface | In-process tests of each `app/api/**` handler with a fake Supabase client; JSON-schema snapshots of `/api/ready`, `/api/health`, executions, events | `app/api` line coverage ≥70%; schema change fails CI | Low |
+| 5 | Capability gates | Least-privilege execution | Capability manifest per skill/adapter; executor refuses undeclared capabilities; per-project grants (extends `grants.ts`); audit event per denial | Undeclared capability ⇒ 403 + audit row; tests per adapter | Medium |
+| 6 | Database hardening + RLS tests | DB enforces tenancy even if the app is wrong | `search_path=''` (#173, unapplied); pgTAP/SQL RLS tests run against local Postgres in CI (free); consolidate `0001_resonance.sql` ordering | RLS test: non-member reads 0 rows on every table; advisors clean on a branch DB | Medium: migration order |
+| 7 | Pagination & limits | Bounded, predictable reads | Cursor pagination (`created_at,id`) on events/executions/evidence; uniform `limit` caps; body-size caps shared | No unbounded `select`; p95 latency budget documented | Low |
+| 8 | One shared posture contract | Stop three drifting classifier copies | Versioned `posture-contract` (JSON schema + vocabulary + fixtures) published from one repo; Resonance/Conduit/Quicksilver consume and test against the fixtures; `cross-plane-check` (#170) in a scheduled read-only job | All planes pass the same fixtures; vocabulary drift fails CI | Medium: cross-repo coordination |
+| 9 | Deploy parity | Live matches main | `/api/ready` and `/api/health` expose commit SHA + `contractRevision`; scheduled GET-only parity check compares the live SHA to main; read-only smoke split from the write smoke | Parity job green within 1h of merge; drift opens an issue automatically | Low |
+| 10 | Owner gate & operational readiness | Honest 200 from `/api/ready` | Owner sets the service-role key out of band; runbook (DEPLOYMENT.md), structured logs without secrets, error budget/SLOs, iOS client against the stable contract | `/api/ready` 200 with stamp; runbook dry-run done; CHR-55 tracked separately and not claimed | Owner-dependent |
