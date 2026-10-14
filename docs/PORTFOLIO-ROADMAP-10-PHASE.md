@@ -1,22 +1,27 @@
-# Resonance — 10-Phase Production-Readiness Roadmap (2026-10-13, 21:00 EDT)
+# Resonance — 10-Phase Production-Readiness Roadmap (refined 2026-10-14 06:00 EDT)
 
-Evidence: docs/AUDIT-2026-10-13.md. Provider-neutral, free-tier only, no secrets in code.
-External gates stay open and are never claimed: `SUPABASE_SERVICE_ROLE_KEY` (owner), CHR-55 device acceptance.
-Baseline: line coverage 61% overall (src+app), **0% on `app/api/**` route handlers**; 4 postcss Dependabot alerts; main CI red.
+Purpose: Resonance is the provider-neutral Nexus control plane (Next.js 15 + Supabase). It stays independent of Conduit and other repos: no shared runtime code, no cross-repo posture classifiers. Integration with other planes happens only through documented HTTP contracts.
 
-| # | Phase | Goal | Deliverables | Exit criteria | Risk |
-|---|---|---|---|---|---|
-| 1 | Green, pinned pipeline | main is always releasable | Lockfile resync (#161), SHA-pinned actions + Gemini gating (#162), Dependabot (#164), branch protection requiring `CI` (#165) | 3 consecutive green main runs; direct push rejected; 0 Dependabot alerts | Low |
-| 2 | One error envelope | No DB internals leak; clients branch on codes | `{ error, code, context }` envelope for every route (`persistence_error` in #172, `rate_limited` in #175; add `validation_error`, `auth_required`, `rate_limited`, `executor_failed`); request id on every response | grep finds no `error.message` in `app/api`; envelope snapshot tests | Low |
-| 3 | Fail-closed auth in production | Production can never run unauthenticated | `NODE_ENV=production` ⇒ `RESONANCE_AUTH_MODE` forced to `required`; startup self-check surfaced in `/api/ready`; route×mode auth matrix tests (#174) | Every route returns 401 without bearer in prod mode; `optional` rejected in prod | Medium: clients without tokens break, so announce first |
-| 4 | Route contract tests | Cover the 0%-covered HTTP surface | In-process tests of each `app/api/**` handler with a fake Supabase client; JSON-schema snapshots of `/api/ready`, `/api/health`, executions, events | `app/api` line coverage ≥70% (68.5% with #176 + #180); schema change fails CI | Low |
-| 5 | Capability gates | Least-privilege execution | Capability manifest per skill/adapter; executor refuses undeclared capabilities; per-project grants (extends `grants.ts`); audit event per denial | Undeclared capability ⇒ 403 + audit row; tests per adapter | Medium |
-| 6 | Database hardening + RLS tests | DB enforces tenancy even if the app is wrong | `search_path=''` (#173, unapplied); pgTAP/SQL RLS tests run against local Postgres in CI (free); consolidate `0001_resonance.sql` ordering | RLS test: non-member reads 0 rows on every table; advisors clean on a branch DB | Medium: migration order |
-| 7 | Pagination & limits | Bounded, predictable reads | Per-IP limits on `/api/*` (#175); cursor pagination (`created_at,id`) on events/executions/evidence; uniform `limit` caps; body-size caps shared | No unbounded `select`; p95 latency budget documented | Low |
-| 8 | One shared posture contract | Stop three drifting classifier copies | Versioned `posture-contract` (JSON schema + vocabulary + fixtures) published from one repo; Resonance/Conduit/Quicksilver consume and test against the fixtures; `cross-plane-check` (#170) in a scheduled read-only job | All planes pass the same fixtures; vocabulary drift fails CI | Medium: cross-repo coordination |
-| 9 | Deploy parity | Live matches main | `/api/ready` exposes `commitSha` + `scripts/deploy-parity.mjs` (#178) + scheduled report-only workflow (#179) + `contractRevision`; scheduled GET-only parity check compares the live SHA to main; read-only smoke split from the write smoke | Parity job green within 1h of merge; drift opens an issue automatically | Low |
-| 10 | Owner gate & operational readiness | Honest 200 from `/api/ready` | Owner sets the service-role key out of band; runbook (DEPLOYMENT.md), structured logs without secrets, error budget/SLOs, iOS client against the stable contract | `/api/ready` 200 with stamp; runbook dry-run done; CHR-55 tracked separately and not claimed | Owner-dependent |
+Principles: provider-neutral, free-tier only, no secrets in code, every phase reversible, fail-closed by default.
+Owner gates (never claimed here): `SUPABASE_SERVICE_ROLE_KEY` set out of band (prod `/api/ready` is 503 until it is), CHR-55 device acceptance.
+Evidence: docs/AUDIT-2026-10-13.md. Baseline: 61% line coverage, `app/api/**` was 0% (68.5% with #176 + #180). main CI red since e8df8f6 (lockfile drift).
 
-Dead-code candidate: `lib/ai/` (unused fallback cascade). Remove or wire it in, owner decision.
+| # | Phase | Goal | PRs / work | Exit criteria |
+|---|---|---|---|---|
+| 1 | Green, pinned pipeline | main always releasable | #161 lockfile (unblocker), #162 workflow hardening, #164 Dependabot; owner: branch protection (#165), Gemini model decision (#166) | 3 green main runs; direct push blocked; 0 Dependabot alerts |
+| 2 | One error envelope | No DB/executor internals leak | #172 DB errors, #177 422/JSON parse errors | No raw `error.message` in `app/api`; envelope snapshot tests |
+| 3 | Fail-closed auth | Prod never runs unauthenticated | #174 (`optional` dev-only, closes #167 on merge) | Every route 401 without bearer in prod; matrix tests |
+| 4 | Route contract tests | Cover the HTTP surface | #176, #180 | `app/api` ≥ 70%; schema changes fail CI |
+| 5 | Abuse limits & pagination | Bounded, predictable reads | #175 in-memory rate limit; then cursor pagination on events/executions/evidence | No unbounded select; uniform `limit` caps |
+| 6 | Posture correctness | `/api/ready`/posture honest under cold start | #169 cold_start + fail-closed 200; #170 contract self-check (Resonance-local only) | Cold start never reported as ready |
+| 7 | Database hardening | DB enforces tenancy | #173 `search_path=''` (authored, NOT applied); RLS tests on local Postgres in CI | Non-member reads 0 rows; advisors clean on a branch DB |
+| 8 | Deploy parity | Live matches main | #178 `commitSha` + parity script, #179 scheduled report-only check | Parity green within 1h of merge |
+| 9 | Capability gates | Least-privilege execution | Capability manifest per adapter; executor refuses undeclared capability; audit row per denial; retire client-only capability shape (cf. #158, needs rebase) | Undeclared capability ⇒ 403 + audit |
+| 10 | Owner gate & operations | Honest 200 from `/api/ready` | Owner sets service-role key; runbook, structured redacted logs, SLOs; decide `lib/ai/` dead code | `/api/ready` 200 stamped; runbook dry-run; CHR-55 tracked separately |
 
-Status 2026-10-14 04:00 EDT: phases 1–4, 8, 9 have open green PRs awaiting merge; nothing merged. Merge order: #161 → #162/#164 → #172 → #176 → #177 → #178 → #179/#180 → #174/#175 → #169/#170/#173 → #171.
+## Merge order
+1. #161 (unblocks main CI) → 2. #162, #164 (independent, based on main) → 3. stack: #172 → #176 → #177 → #178 → #179 / #180 (each auto-retargets as parent merges) → 4. siblings on #161: #174, #175, #169, #170 → 5. #173 (merge file only; applying the migration is a separate owner step) → 6. #171 (this doc) last.
+
+Held / owner decision: #154 and #157 (lattice/chamber experiments, conflicting with main, labelled do-not-merge), #158 (conflicting; needs rebase if still wanted).
+
+Status 2026-10-14 06:00 EDT: all audit PRs green and mergeable; nothing merged; stale docs/postcss branches pruned (see #168).
