@@ -60,6 +60,7 @@ describe("health probes", () => {
       agentActionRequired: false,
       posture: "owner_must_set_service_role_on_production_host",
       contractRevision: "2026-10-03-owner-gate",
+      commitSha: expect.toSatisfy((v: unknown) => v === null || /^[0-9a-f]{40}$/.test(String(v))),
       timestamp: "2026-10-01T03:04:13.136Z",
     });
     expect(readinessStatus(body)).toBe(503);

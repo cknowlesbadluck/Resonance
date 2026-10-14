@@ -20,11 +20,24 @@ export type Readiness = {
   missingRequired: string[];
   ownerActionRequired: boolean;
   contractRevision: string;
+  /** Deployed commit (40-hex) from the host's build env, or null. Additive; used by scripts/deploy-parity.mjs. */
+  commitSha: string | null;
   ownerKeys: string[];
   agentActionRequired: boolean;
   posture: ReadinessPosture["note"];
   timestamp: string;
 };
+
+const SHA_RE = /^[0-9a-f]{40}$/i;
+
+/** Commit SHA injected by common free hosts/CI at build time. Never a secret; validated as 40-hex. */
+export function deployedCommitSha(env: NodeJS.Dict<string> = process.env): string | null {
+  for (const key of ["RESONANCE_COMMIT_SHA", "COMMIT_REF", "VERCEL_GIT_COMMIT_SHA", "GITHUB_SHA"]) {
+    const value = env[key]?.trim();
+    if (value && SHA_RE.test(value)) return value.toLowerCase();
+  }
+  return null;
+}
 
 export function liveness(now = new Date()): Liveness {
   return {
@@ -52,6 +65,7 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
     missingRequired: contract.missingRequired,
     ownerActionRequired: posture.ownerActionRequired,
     contractRevision: EXPECTED_CONTRACT_REVISION,
+    commitSha: deployedCommitSha(),
     ownerKeys: posture.ownerKeys,
     agentActionRequired: posture.agentActionRequired,
     posture: posture.note,
