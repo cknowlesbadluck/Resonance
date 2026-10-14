@@ -10,7 +10,8 @@ describe("persistenceErrorResponse", () => {
     const res = persistenceErrorResponse("events.insert", raw);
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body).toEqual({ error: PERSISTENCE_ERROR_MESSAGE, code: "persistence_error", context: "events.insert" });
+    expect(body).toEqual({ error: PERSISTENCE_ERROR_MESSAGE, code: "persistence_error", context: "events.insert", requestId: expect.any(String) });
+    expect(res.headers.get("x-request-id")).toBe(body.requestId);
     expect(JSON.stringify(body)).not.toContain("nexus_execution_requests");
   });
 
@@ -36,5 +37,22 @@ describe("publicFailure / bodyErrorMessage", () => {
   it("keeps size limits, hides parser detail", () => {
     expect(bodyErrorMessage(new Error("Request body exceeds the 64 KiB limit."))).toMatch(/64 KiB/);
     expect(bodyErrorMessage(new SyntaxError("Unexpected token s in JSON at position 3: secret"))).toBe("Invalid JSON body.");
+  });
+});
+
+describe("request id correlation", () => {
+  afterEach(() => vi.restoreAllMocks());
+  it("reuses a well-formed inbound X-Request-Id and logs it", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = persistenceErrorResponse("x", new Error("boom"), { headers: new Headers({ "x-request-id": "req_abc12345" }) });
+    expect((await res.json()).requestId).toBe("req_abc12345");
+    expect(spy.mock.calls[0].join(" ")).toContain("requestId=req_abc12345");
+  });
+  it("ignores malformed inbound ids (no log/response injection)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = persistenceErrorResponse("x", new Error("boom"), { headers: new Headers({ "x-request-id": "bad id\\nINJECT" }) });
+    const { requestId } = await res.json();
+    expect(requestId).not.toContain("INJECT");
+    expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
   });
 });

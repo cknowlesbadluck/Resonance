@@ -7,16 +7,29 @@ import { NextResponse } from "next/server";
  */
 export const PERSISTENCE_ERROR_MESSAGE = "Persistence error. Retry later or contact the operator.";
 
-export type PersistenceErrorBody = { error: string; code: "persistence_error"; context: string };
+export type PersistenceErrorBody = { error: string; code: "persistence_error"; context: string; requestId?: string };
 
-export function persistenceErrorBody(context: string): PersistenceErrorBody {
-  return { error: PERSISTENCE_ERROR_MESSAGE, code: "persistence_error", context };
+export function persistenceErrorBody(context: string, requestId?: string): PersistenceErrorBody {
+  return requestId ? { error: PERSISTENCE_ERROR_MESSAGE, code: "persistence_error", context, requestId } : { error: PERSISTENCE_ERROR_MESSAGE, code: "persistence_error", context };
 }
 
-export function persistenceErrorResponse(context: string, cause: unknown) {
+const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{8,128}$/;
+
+/**
+ * Correlation id for an error envelope: reuse a well-formed inbound X-Request-Id
+ * (e.g. from Vercel/proxy) or mint one. Malformed inbound values are ignored so
+ * callers cannot inject arbitrary text into logs or responses.
+ */
+export function resolveRequestId(request?: { headers: Headers }): string {
+  const inbound = request?.headers.get("x-request-id")?.trim();
+  return inbound && SAFE_REQUEST_ID.test(inbound) ? inbound : crypto.randomUUID();
+}
+
+export function persistenceErrorResponse(context: string, cause: unknown, request?: { headers: Headers }) {
+  const requestId = resolveRequestId(request);
   const code = typeof cause === "object" && cause !== null && "code" in cause ? String((cause as { code: unknown }).code) : undefined;
-  console.error(`[resonance] persistence error in ${context}`, code ?? "", cause instanceof Error ? cause.message : cause);
-  return NextResponse.json(persistenceErrorBody(context), { status: 500 });
+  console.error(`[resonance] persistence error in ${context} requestId=${requestId}`, code ?? "", cause instanceof Error ? cause.message : cause);
+  return NextResponse.json(persistenceErrorBody(context, requestId), { status: 500, headers: { "X-Request-Id": requestId } });
 }
 
 /**
