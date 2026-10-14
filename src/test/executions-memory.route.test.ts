@@ -5,6 +5,9 @@ vi.stubEnv("NODE_ENV", "development");
 vi.stubEnv("RESONANCE_AUTH_MODE", "optional");
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
 vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+// CI exports GITHUB_TOKEN for the vertical-slice job; keep this test offline and deterministic.
+vi.stubEnv("GITHUB_TOKEN", "");
+vi.stubEnv("GITHUB_VERTICAL_SLICE", "");
 const executions = await import("../../app/api/nexus/executions/route");
 
 const PROJECT = "00000000-0000-4000-8000-000000000001";
@@ -24,7 +27,9 @@ describe("POST /api/nexus/executions (memory mode)", () => {
     const first = await post("m1", body);
     expect([200, 202, 207, 422]).toContain(first.status);
     const json = await first.json();
-    if (first.status === 422) expect(["composition_error", "executor_failed"]).toContain(json.code);
+    // A thrown failure must use the sanitized envelope; an executed-but-failed result has no code.
+    if (first.status === 422 && "code" in json) expect(["composition_error", "executor_failed"]).toContain(json.code);
+    expect(JSON.stringify(json)).not.toMatch(/ghp_|Bad credentials/);
     const replay = await post("m1", body);
     expect(replay.status).toBe(first.status);
   });
