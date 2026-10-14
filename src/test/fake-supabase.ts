@@ -34,7 +34,7 @@ export function fakeClient(state: FakeState) {
         return state.tables[table] ?? { data: [], error: null };
       };
       const builder: Record<string, unknown> = {};
-      for (const op of ["select", "insert", "update", "delete", "order", "limit", "gte", "lte", "in", "upsert"]) {
+      for (const op of ["select", "insert", "update", "delete", "order", "limit", "gte", "lte", "lt", "in", "upsert"]) {
         builder[op] = (...args: unknown[]) => { state.calls.push({ table, op, args }); return builder; };
       }
       builder.eq = (col: string, value: unknown) => { filters[col] = value; state.calls.push({ table, op: "eq", args: [col, value] }); return builder; };
