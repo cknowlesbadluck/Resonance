@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { persistenceErrorResponse } from "../../../../src/nexus/db-error";
+import { bodyErrorMessage, persistenceErrorResponse, publicFailure } from "../../../../src/nexus/db-error";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
 
   let body: Partial<NexusIntent>;
   try { body = await readJson(request); }
-  catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
+  catch (error) { return NextResponse.json({ error: bodyErrorMessage(error) }, { status: 400 }); }
 
   const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? "00000000-0000-4000-8000-000000000001";
   let actorId = body.requestedBy;
@@ -278,9 +278,9 @@ export async function POST(request: Request) {
         .eq("idempotency_key", idempotencyKey)
         .eq("claim_token", claimToken);
     } else {
-      const response = { error: error instanceof Error ? error.message : String(error) };
+      const response = publicFailure(error);
       memoryIdempotency.finish(intent.projectId, idempotencyKey, claimToken, response, 422, "failed");
     }
-    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
+    return NextResponse.json(publicFailure(error), { status: 422 });
   }
 }

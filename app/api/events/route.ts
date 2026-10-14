@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { persistenceErrorResponse } from "../../../src/nexus/db-error";
+import { bodyErrorMessage, persistenceErrorResponse } from "../../../src/nexus/db-error";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../src/auth/nexus-request";
 import { productionUserDataBlock } from "../../../src/nexus/production-boundary";
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const blocked = productionUserDataBlock();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   let input: Record<string, unknown>;
-  try { input = await body(request); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
+  try { input = await body(request); } catch (error) { return NextResponse.json({ error: bodyErrorMessage(error) }, { status: 400 }); }
   const projectId = input.project_id;
   if (!isUuid(projectId)) return NextResponse.json({ error: "project_id is required and must be a UUID." }, { status: 400 });
   if (authRequired()) {
