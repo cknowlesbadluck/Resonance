@@ -1,4 +1,4 @@
-# Resonance — 10-Phase Production-Readiness Roadmap (refined 2026-10-14 10:00 EDT)
+# Resonance — 10-Phase Production-Readiness Roadmap (refined 2026-10-14 22:05 EDT)
 
 Purpose: Resonance is the provider-neutral Nexus control plane (Next.js 15 + Supabase). It stays independent of Conduit and other repos: no shared runtime code, no cross-repo posture classifiers. Integration with other planes happens only through documented HTTP contracts.
 
@@ -25,3 +25,16 @@ Evidence: docs/AUDIT-2026-10-13.md. Baseline: 61% line coverage, `app/api/**` wa
 Held / owner decision: #154 and #157 (lattice/chamber experiments, conflicting with main, labelled do-not-merge), #158 (conflicting; needs rebase if still wanted).
 
 Status 2026-10-14 10:00 EDT: no merges/commits/issues since 06:00; all audit PRs green and mergeable (incl. #181); Dependabot #1–#4 (postcss) covered by #161, no extra bump PR; prod `/api/ready` not re-verified (production URL not discoverable from the repo; preview is Vercel-auth protected) — assume 503 until the service-role key is set.
+
+## Latest live probe (2026-10-14 22:05 EDT, #218 probe, 1 run + 1 /health call)
+
+| Target | Outcome |
+|---|---|
+| conduit-feco.onrender.com /health, /ready | **ready** 200, 0.8.0, contractRevision 2026-10-03-ready-surface (recovered; was edge-503 down 18:02–18:13 EDT, then a Cloudflare challenge) |
+| resonancenexus.netlify.app/api/ready | not_ready 503, missing [SUPABASE_SERVICE_ROLE_KEY] |
+| Supabase Resonance / Quicksilver / WhereamI? | INACTIVE (paused), read-only API |
+| resonance.vercel.app, quicksilver.vercel.app | stranger_occupant (no service stamp) |
+| resonancenexus.vercel.app, quicksilverv1.vercel.app | alias_absent 404 |
+| Device CHR-55 | not_recorded |
+
+Roadmap summary: phases 1–2 are blocked on merges (Resonance #161; Conduit #197 → #211). Phases 3–6 and 9 are authored and green, waiting on review. Phase 5 TLS and phase 10 are owner-gated (Render DB TLS env; restoring the Supabase DB + setting the service-role key). Innovate: I1 scheduled report-only probe = Conduit #219 (on #218); I2–I4 not started.
