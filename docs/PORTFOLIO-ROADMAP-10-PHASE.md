@@ -8,7 +8,7 @@ Conduit `conduit-feco.onrender.com/ready` 200 (0.8.0, contractRevision 2026-10-0
 ## Phases
 | # | Phase | Quicksilver (read-only here) | Resonance | Conduit |
 |---|---|---|---|---|
-| 1 | Green, pinned CI | main green; 8 PRs merged 10-15 | **#161, #162, #164 merged 15:15**; owner: branch protection #165 | **#197, #214 merged**; #227 coverage rebaseline (main verify red after #222/#225: branches 71.32% < 74); #198; owner: disconnect Workers Builds |
+| 1 | Green, pinned CI | main green; 8 PRs merged 10-15 | **#161, #162, #164 merged 15:15**; owner: branch protection #165 | **#197, #214 merged**; **#227 merged** (branch-coverage gate rebaselined 74→70 after #222/#225); #198; owner: disconnect Workers Builds |
 | 2 | Lean code | #283–#287 (#252) consolidate | #183 lib/ai prune; chambers decision | **#220 merged**; #210 legacy posture script |
 | 3 | Fail-closed auth/lockdown | (n/a) | #174 auth, #185 prod detection | #206 → #211, #212; **#222 merged** (every tool scope-gated) |
 | 4 | Bounded surface | bounded memory (#296) | #175 rate limit, #186 idempotency bound | #217 SSE cap (on #211), #208, #207, #213, #223 activity retention |
@@ -23,5 +23,5 @@ Conduit `conduit-feco.onrender.com/ready` 200 (0.8.0, contractRevision 2026-10-0
 
 ## Merge order (actual bases)
 - **Resonance** (all on main unless noted; owner merges only — Netlify publishes prod once its build link is restored): #172 → #176 → #177 → {#181, #178 → {#179, #180}} (still stacked on audit/* branches) · independent: #169, #170, #173, #174, #175, #182–#188, #191 · then #171. Dependabot #189 (actions majors) / #190 (npm group) are not duplicates: owner review.
-- **Conduit:** #197 → #198 → #206 → {#211 → #217, #212} → #209 → #207, #208, #213 → #204 → #216 → #214 → #220, #222, #224, #225 (merged) → #227 (CI) → #226 (test) → #223 (runtime) → #210 or #203 → #218 → #219 → #155 (after Render TLS env) → #205.
+- **Conduit:** #197 → #198 → #206 → {#211 → #217, #212} → #209 → #207, #208, #213 → #204 → #216 → #214 → #220, #222, #224, #225 (merged) → #227 (merged) → #226 (test) → #223 (runtime) → #210 or #203 → #218 → #219 → #155 (after Render TLS env) → #205.
 - **Held:** Conduit #119/#120 (draft), #162 (split), #187/#190 (experiments). Resonance #154/#157 (experiments), #158 (rebase). Closed 10-15: Conduit #221 (superseded by #204).
