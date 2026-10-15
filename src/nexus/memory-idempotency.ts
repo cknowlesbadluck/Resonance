@@ -17,8 +17,25 @@ interface MemoryIdempotencyRecord {
  * Single-threaded compare-and-set for non-production fallback.
  * Production must use the database unique index instead of this store.
  */
+export const DEFAULT_MEMORY_IDEMPOTENCY_MAX = 1000;
+
 export class MemoryIdempotencyStore {
   private readonly records = new Map<string, MemoryIdempotencyRecord>();
+
+  /** Bounded: beyond maxRecords, the oldest *finished* record is evicted first; in-flight claims last. */
+  constructor(private readonly maxRecords = DEFAULT_MEMORY_IDEMPOTENCY_MAX) {
+    if (!(maxRecords >= 1)) throw new Error("maxRecords must be >= 1");
+  }
+
+  size() { return this.records.size; }
+
+  private evict() {
+    while (this.records.size > this.maxRecords) {
+      let victim: string | undefined;
+      for (const [id, record] of this.records) { if (record.status !== "accepted") { victim = id; break; } }
+      this.records.delete(victim ?? this.records.keys().next().value as string);
+    }
+  }
 
   begin(projectId: string, key: string, hash: string, now = Date.now(), staleMs = 5 * 60 * 1000): MemoryIdempotencyDecision {
     const id = `${projectId}\n${key}`;
@@ -26,6 +43,7 @@ export class MemoryIdempotencyStore {
     if (!existing) {
       const claimToken = crypto.randomUUID();
       this.records.set(id, { hash, status: "accepted", claimToken, updatedAt: now });
+      this.evict();
       return { kind: "start", claimToken };
     }
     if (existing.hash !== hash) return { kind: "conflict" };
