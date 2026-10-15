@@ -1,4 +1,4 @@
-# Portfolio — 10-Phase Production-Readiness Roadmap (refined 2026-10-15 13:05 EDT)
+# Portfolio — 10-Phase Production-Readiness Roadmap (refined 2026-10-15 14:30 EDT)
 
 Products: **QuicksilverV1** (primary product, iOS, owned by Quicksilver Dev), **Resonance** (provider-neutral integration plane), **Conduit** (MCP coordination bridge). These are separate repos with no shared runtime; they talk only through documented HTTP/MCP contracts. Agents never merge, apply migrations or change prod config. Current audit: `docs/AUDIT-2026-10-15.md`.
 
@@ -8,14 +8,14 @@ Conduit `/ready` 200 (0.8.0, postgres) · Resonance Netlify `/api/ready` 503, mi
 ## Phases
 | # | Phase | Quicksilver (read-only here) | Resonance | Conduit |
 |---|---|---|---|---|
-| 1 | Green, pinned CI | main green; 8 PRs merged 10-15 | #161 (unblocker), #162, #164; owner: branch protection #165 | #197, #198; owner: disconnect Workers Builds |
-| 2 | Lean code | #283–#287 (#252) consolidate | #183 lib/ai prune; chambers decision | #220 neon.ts, #210 legacy posture script |
+| 1 | Green, pinned CI | main green; 8 PRs merged 10-15 | #161 (blocked: Netlify auto-publish), #162, #164; owner: branch protection #165 | **#197, #214 merged**; #198; owner: disconnect Workers Builds |
+| 2 | Lean code | #283–#287 (#252) consolidate | #183 lib/ai prune; chambers decision | **#220 merged**; #210 legacy posture script |
 | 3 | Fail-closed auth/lockdown | (n/a) | #174 auth, #185 prod detection | #206 → #211, #212; #222 every tool scope-gated |
 | 4 | Bounded surface | bounded memory (#296) | #175 rate limit, #186 idempotency bound | #217 SSE cap (on #211), #208, #207, #213, #223 activity retention |
 | 5 | Transport/data security | restore its Supabase | #173 search_path (NOT applied); RLS tests next | #155 TLS (after Render env); cursors split from #162 |
 | 6 | Honest posture | (n/a) | #169, #170; #178 → #179 deploy parity | #203 or #210; #218 probe → #219 schedule |
-| 7 | Capability gates / composition | device plans call Resonance capabilities | #182 adapter contract; manifest + refusal (CHR-33) | capability metadata in tools/list |
-| 8 | Cross-plane proof | contract client | #184 /api/ready + envelope contract | tool-list snapshot contract |
+| 7 | Capability gates / composition | device plans call Resonance capabilities | #182 adapter contract; #188 provider failover; manifest + refusal (CHR-33) | capability metadata in tools/list |
+| 8 | Cross-plane proof | contract client | #184 /api/ready + envelope contract | #225 tool-surface snapshot |
 | 9 | Contract + coverage | tests merged 10-15 (#289–#291) | #176 → #177 → #181, #180 | #214 coverage gate, #204 perf, #216 timeouts |
 | 10 | Operable release | CHR-55 device acceptance (real evidence only); fresh Archive IPA | owner: restore DB + key → `/api/ready` 200 (CHR-54); runbook | SSE drain (#119 rest), tag 0.9.0, runbook |
 
