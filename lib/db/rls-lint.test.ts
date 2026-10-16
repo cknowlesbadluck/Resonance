@@ -26,7 +26,7 @@ function sqlStatements(text: string): string[] {
       cur += text.slice(i, j + 1); i = j + 1; continue;
     }
     if (ch === "$") {
-      const tag = /^\$[A-Za-z_]*\$/.exec(text.slice(i))?.[0];
+      const tag = /^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/.exec(text.slice(i))?.[0];
       if (tag) { const end = text.indexOf(tag, i + tag.length); const stop = end < 0 ? text.length : end + tag.length; cur += text.slice(i, stop); i = stop; continue; }
     }
     if (ch === ";") { if (cur.trim()) out.push(cur.trim()); cur = ""; i++; continue; }
@@ -43,12 +43,19 @@ const created = new Set<string>();
 const rls = new Set<string>();
 const live = new Map<string, string>();
 for (const stmt of statements) {
-  const t = stmt.match(/^create table (?:if not exists )?([\w."]+)/);
+  const t = stmt.match(/^create (?:unlogged )?table (?:if not exists )?([\w."]+)/);
   if (t) created.add(name(t[1]));
   const r = stmt.match(/^alter table (?:if exists )?(?:only )?([\w."]+)\s+(enable|disable) row level security/);
   if (r) { if (r[2] === "enable") rls.add(name(r[1])); else rls.delete(name(r[1])); }
   const dt = stmt.match(/^drop table (?:if exists )?([\w."]+)/);
-  if (dt) { created.delete(name(dt[1])); rls.delete(name(dt[1])); }
+  if (dt) {
+    const tbl = name(dt[1]);
+    created.delete(tbl); rls.delete(tbl);
+    // Dropping a table drops its policies too.
+    for (const k of [...live.keys()]) if (k.startsWith(`${tbl}:`)) live.delete(k);
+  }
+  const rn = stmt.match(/^alter policy\s+("[^"]+"|\w+)\s+on\s+([\w."]+)\s+rename to\s+("[^"]+"|\w+)/);
+  if (rn && live.delete(`${name(rn[2])}:${name(rn[1])}`)) live.set(`${name(rn[2])}:${name(rn[3])}`, name(rn[2]));
   const c = stmt.match(/^create policy\s+("[^"]+"|\w+)[\s\S]*?\son\s+([\w."]+)/);
   if (c) live.set(`${name(c[2])}:${name(c[1])}`, name(c[2]));
   const d = stmt.match(/^drop policy (?:if exists )?("[^"]+"|\w+)\s+on\s+([\w."]+)/);
