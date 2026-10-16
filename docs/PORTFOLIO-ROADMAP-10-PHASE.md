@@ -1,43 +1,57 @@
-# Portfolio 10-phase roadmap — 2026-10-09 09:00 EDT
+# Portfolio 10-phase roadmap — 2026-10-13 10:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes at 2026-10-09T13:02:05Z. No secrets invented. A classifier test is not production proof. This pass did not merge lattice pulls.
+Live probes at 2026-10-13T14:01Z. Resonance /api/ready 503 owner-gated (missing SUPABASE_SERVICE_ROLE_KEY exactly). Conduit /ready 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). Quicksilver gateway host unresolved (000); deviceAcceptance=not_recorded; CHR-55 remains sole gate. Vercel: resonance.vercel.app and quicksilver.vercel.app 200 stranger_occupant; resonancenexus.vercel.app and quicksilverv1.vercel.app 404 alias_absent. No secrets invented. Classifier tests ≠ production proof.
 
 Evidence:
-- Resonance `GET https://resonancenexus.netlify.app/api/ready` returned 503. Body missing exactly `SUPABASE_SERVICE_ROLE_KEY`. `ownerActionRequired` and `contractRevision` omitted on the host. `/api/health` was 200.
-- `https://resonancenexus.vercel.app/api/ready` returned 404 `DEPLOYMENT_NOT_FOUND`. Classified `alias_absent`. Not the owner gate.
-- Conduit `/health` and `/ready` returned 200, version `0.8.0`, contractRevision `2026-10-03-ready-surface`, persistence `postgres`.
-- QuicksilverV1 #243 squash-merged at `8bc9b571`. Alias-absent classification is on main. CHR-55 is still the only device gate.
-- Held: Conduit #119 #120 #155 #162, Conduit #188, lattice #187 #154 #242, Dependabot #209. `release/0.8.0` is hold-not-delete.
-- Pruned: Resonance closed-unmerged head `chore/retire-client-only-capability-shape-2342893878072645481` after confirming `lib/integrations.ts` is already absent on main.
+- Resonance: {"status":"not_ready","service":"resonance-nexus","stage":"deployment","production":true,"authMode":"required","authModeOk":true,"persistenceConfigured":false,"githubAdapterConfigured":false,"missingRequired":["SUPABASE_SERVICE_ROLE_KEY"],"timestamp":"2026-10-13T14:01:13.311Z"} HTTP 503.
+- Conduit ready: 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). /health 200. Classifier rejects incomplete_ready.
+- Hygiene prune: single roadmap file policy holds. Superseded docs-refresh PRs (#244 QuicksilverV1, #159 Resonance, #193 Conduit) presented for close (interactive forms rendered). Activity prune removed 0.
+- Open held: QuicksilverV1 #242/#209/#245 (lattice/hardening); Conduit #187/#190/#188/#191/#194/#195/#196; Resonance #154/#157/#158. Dependabot: Resonance postcss (high GHSA-r28c-9q8g-f849 / medium GHSA-fxqj-rqcc-2cmp path traversal) still open — lockfile follow-up next (no deploy).
+- No hourly audits. Legacy Quicksilver archived.
+- Full brutal audit note added: docs/AUDIT-2026-10-13.md (portfolio scores ~5/10, structural weaknesses listed).
 
-## Phase 1 — Owner persistence gate
-Unpause Resonance Supabase, then set `SUPABASE_SERVICE_ROLE_KEY` on Netlify `resonancenexus` only. Do not invent it. Exit: public `GET /api/ready` is 200.
+## Phase 1 — Owner gate stays external
+Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
 
-## Phase 2 — Deploy lag kill
-Production ready body carries `contractRevision` and `ownerActionRequired`. A Vercel 404 does not count. Exit: live body matches the source contract.
+## Phase 2 — Alias and stranger classification stay strict
+404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready.
 
-## Phase 3 — Entropy collapse
-Discretionary open pulls at or under 2 per active repo. Automation holds and keep-red do not count. Exit: lattice pulls merged or closed only after Phase 1, and no new witness pull.
+## Phase 3 — Device fence immutable
+claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
 
-## Phase 4 — Persistence proof
-Apply `supabase/migrations` on the unpaused project. Exit: production smoke against `resonancenexus`.
+## Phase 4 — CHR-55 remains the only device gate
+Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
 
-## Phase 5 — Idempotent execution
-Duplicate requests do not double-execute. Exit: Idempotency-Key replay does not double-write on the production host.
+## Phase 5 — Conversation and Memory budget stay
+Bounded windows and on-device embeddings continue. Exit: AppTests green; no unbounded history leakage.
 
-## Phase 6 — Chamber dissolve invariant
-Dissonance may dissolve a work chamber and must leave an audit token. A watch chamber cannot dissolve. Exit: `chamber-dissolve` tests green. Durable evidence still waits on Phase 4.
+## Phase 6 — Gateway contract and free-tier stay
+No paid Workers bindings (KV/R2/D1/Queues). Exit: wrangler.toml clean.
 
-## Phase 7 — Adapter substitution stay
-GitHub, Linear, HTTP, and MCP adapters already sit behind the nexus port. Exit: a substitution test stays green and core does not import a vendor SDK.
+## Phase 7 — Hygiene prune executed
+One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Superseded docs-refresh PRs closed. Audit note mirrored.
 
-## Phase 8 — iOS peer contract
-One capability model on web and iOS. Do not revive closed cockpit pulls. Exit: contract test fails if the iOS model diverges.
+## Phase 8 — Resonance control plane waits on stamp
+No second client or iOS Resonance surface until live Netlify ready body carries contract stamp and owner key is set.
 
-## Phase 9 — Device acceptance
-Owner records the iPhone 16e archive IPA. Simulator CI and gateway health are not CHR-55.
+## Phase 9 — Privacy and logging stay strict
+Privacy manifest enforced. Gateway logs metadata only. Exit: no request/response body logging.
 
-## Phase 10 — Release hardening
-Postgres TLS and signed cursors only after the owner sets the Render env. Keep-red #155 and #162 stay unmerged until then. `release/0.8.0` is hold, not delete.
+## Phase 10 — Cross-plane acceptance proof
+Single probe covers Conduit ready, Resonance ready (stamped), and real device archive evidence. Exit: production verdict accepted. Fixture or classifier test is insufficient.
 
-Binding constraint: owner persistence gate. Agent work cannot close Phase 1 or CHR-55.
+Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is closed by simulator or classifier.
+
+## Innovation Track (advanced — no gates violated)
+1. Pure PortfolioPosture classifier (scripts/portfolio-posture.mjs) — unit-tested, no secrets. Fail-closed. Explicitly rejects incomplete_ready.
+2. portfolio-probe.sh: structured JSON, cold-start handling, --json, fail-closed. Live-verified at 14:01Z.
+3. Hygiene prune: outdated docs-refresh PRs presented for close this session (interactive).
+4. Adversarial review of lattice PRs (#242/#154/#187) — keep open until verified.
+5. Bolt performance opts (#188/#191/#194/#195/#196) reviewed — low risk, tests claimed green; merge candidates after re-verify.
+6. Postcss Dependabot in Resonance: lockfile bump to >=8.5.23 next (no secret, no deploy). High/medium path traversal residual (GHSA-r28c-9q8g-f849 / GHSA-fxqj-rqcc-2cmp).
+7. Cross-repo consistency: this evidence block is canonical; mirrored this session.
+8. Chamber dissonance (#157) held pending no-gate confirmation.
+9. On-device Nexus capability list diagnostic (post Phase 8 only).
+10. Fresh 10:00 EDT probe confirms identical fail-closed posture. No regression.
+
+Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed 10:00 EDT. Fresh probes confirm fail-closed posture. Innovation: roadmap refreshed with live evidence; classifier and probe tools hold; superseded PRs presented for close; durable AUDIT-2026-10-13.md added. No secret invention. No device claim. Stabilization holds. Highest-value next: address postcss lockfile (high severity path traversal), re-verify Bolt opts for merge, CHR-55 device archive remains sole hard gate.
