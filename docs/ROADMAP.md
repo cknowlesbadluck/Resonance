@@ -11,6 +11,10 @@ Quicksilver is **not** part of this product.
 
 See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPLOYMENT.md`.
 
+## Status (2026-10-16)
+
+The 10-phase finish plan with exit criteria lives in `docs/PORTFOLIO-ROADMAP-10-PHASE.md`; the current product audit is `docs/AUDIT-2026-10-13.md` (updated in place). Biggest gaps: iOS approve/resume, a single capability model, durable idempotency, and the owner service-role key.
+
 ## Phase map
 
 ### P0 — Governance & CI truth (DONE)
