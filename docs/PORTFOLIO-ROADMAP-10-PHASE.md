@@ -23,5 +23,5 @@ Conduit `conduit-feco.onrender.com/ready` 200 (0.8.0, contractRevision 2026-10-0
 
 ## Merge order (actual bases)
 - **Resonance** (all on main unless noted; owner merges only — Netlify publishes prod once its build link is restored): #172 → #176 → #177 → {#181, #178 → {#179, #180}} (still stacked on audit/* branches) · independent: #169, #170, #173, #174, #175, #182–#188, #191 · then #171. Dependabot #189 (actions majors, CI green) / #190 (npm group, CI green, behind main; lucide-react 0.468→0.577 is a 0.x minor, so check icons render) are ready for owner review. #192 prune is independent.
-- **Conduit:** #197 → #198 → #206 → {#211 → #217, #212} → #209 → #207, #208, #213 → #204 → #216 → #214 → #220, #222, #224, #225 (merged) → #227 (merged) → #226 (test) → #223 (runtime) → #228 (runtime, redaction) → #210 or #203 → #218 → #219 → #155 (after Render TLS env) → #205.
+- **Conduit:** #197 → #198 → #206 → {#211 → #217, #212} → #209 → #207, #208, #213 → #204 → #216 → #214 → #220, #222, #224, #225 (merged) → #227 (merged) → #226 (merged) → #223 (runtime) → #228 (runtime, redaction) → #210 or #203 → #218 → #219 → #155 (after Render TLS env) → #205.
 - **Held:** Conduit #119/#120 (draft), #162 (split), #187/#190 (experiments). Resonance #154/#157 (experiments), #158 (rebase). Closed 10-15: Conduit #221 (superseded by #204).
