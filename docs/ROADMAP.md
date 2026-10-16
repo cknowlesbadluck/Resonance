@@ -13,7 +13,7 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 
 ## Status (2026-10-16)
 
-The 10-phase finish plan with exit criteria lives in `docs/PORTFOLIO-ROADMAP-10-PHASE.md`; the current product audit is `docs/AUDIT-2026-10-13.md` (updated in place). Biggest gaps: no iOS app target and no iOS approve/resume, hand-mirrored capability types, a durable idempotency store, and the owner service-role key.
+The 10-phase finish plan with exit criteria lives in `docs/PORTFOLIO-ROADMAP-10-PHASE.md`; the current product audit is `docs/AUDIT-2026-10-13.md` (updated in place). Biggest gaps: no iOS app target and no iOS approve/resume, hand-mirrored capability types, a durable idempotency store, and the owner service-role key. Live 2026-10-16 18:04 EDT: `/api/ready` 503 (missing `SUPABASE_SERVICE_ROLE_KEY`), and production is behind main (`npm run parity`, #202).
 
 ## Phase map
 
