@@ -40,35 +40,47 @@ WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
 
 -- 2b) Per-policy comparison against what the migrations declare for those tables
---     (kept in sync by hand; lib/db/rls-lint.test.ts pins the same set). Any row whose
+--     (kept in sync by hand with supabase/migrations; PR #195 adds lib/db/rls-lint.test.ts,
+--     which pins the same policy names in CI once merged). Any row whose
 --     status is not 'ok' is drift: a missing policy, a wrong command, or an extra policy.
-WITH expected(tablename, policyname, cmd) AS (
+WITH expected(tablename, policyname, cmd, roles, qual_like, check_like) AS (
+  -- qual_like / check_like: NULL = must be absent; otherwise a LIKE pattern the live
+  -- expression must match (pg_policies stores the deparsed expression text).
   VALUES
-    ('capabilities',             'authenticated users can read capabilities',             'SELECT'),
-    ('capability_dependencies',  'authenticated users can read capability dependencies',  'SELECT'),
-    ('nexus_execution_requests', 'nexus_execution_requests_member_select',                'SELECT'),
-    ('nexus_execution_requests', 'nexus_execution_requests_member_insert',                'INSERT'),
-    ('nexus_execution_requests', 'nexus_execution_requests_member_update',                'UPDATE')
+    ('capabilities',             'authenticated users can read capabilities',            'SELECT', '{authenticated}', 'true', NULL),
+    ('capability_dependencies',  'authenticated users can read capability dependencies', 'SELECT', '{authenticated}', 'true', NULL),
+    ('nexus_execution_requests', 'nexus_execution_requests_member_select',               'SELECT', '{public}', '%is_project_member(project_id)%', NULL),
+    ('nexus_execution_requests', 'nexus_execution_requests_member_insert',               'INSERT', '{public}', NULL, '%is_project_member(project_id)%'),
+    ('nexus_execution_requests', 'nexus_execution_requests_member_update',               'UPDATE', '{public}', '%is_project_member(project_id)%', '%is_project_member(project_id)%')
 ), live AS (
-  SELECT tablename::text, policyname::text, cmd::text, permissive::text
+  SELECT tablename::text, policyname::text, cmd::text, permissive::text,
+         roles::text AS roles, qual::text AS qual, with_check::text AS with_check
   FROM pg_catalog.pg_policies
   WHERE schemaname = 'public'
     AND tablename IN ('capabilities', 'capability_dependencies', 'nexus_execution_requests')
+), compared AS (
+  SELECT COALESCE(e.tablename, l.tablename)   AS table_name,
+         COALESCE(e.policyname, l.policyname) AS policy_name,
+         e.cmd AS expected_cmd, l.cmd AS live_cmd,
+         e.roles AS expected_roles, l.roles AS live_roles,
+         l.qual AS live_using, l.with_check AS live_with_check,
+         CASE
+           WHEN l.policyname IS NULL THEN 'MISSING live'
+           WHEN e.policyname IS NULL THEN 'EXTRA live (not in migrations)'
+           WHEN l.cmd <> e.cmd THEN 'MISMATCH cmd'
+           WHEN l.permissive <> 'PERMISSIVE' THEN 'MISMATCH not permissive'
+           WHEN l.roles <> e.roles THEN 'MISMATCH roles'
+           WHEN (e.qual_like IS NULL) <> (l.qual IS NULL)
+             OR (e.qual_like IS NOT NULL AND l.qual NOT LIKE e.qual_like) THEN 'MISMATCH using predicate'
+           WHEN (e.check_like IS NULL) <> (l.with_check IS NULL)
+             OR (e.check_like IS NOT NULL AND l.with_check NOT LIKE e.check_like) THEN 'MISMATCH with check predicate'
+           ELSE 'ok'
+         END AS status
+  FROM expected e
+  FULL OUTER JOIN live l ON l.tablename = e.tablename AND l.policyname = e.policyname
 )
-SELECT COALESCE(e.tablename, l.tablename)   AS table_name,
-       COALESCE(e.policyname, l.policyname) AS policy_name,
-       e.cmd                                AS expected_cmd,
-       l.cmd                                AS live_cmd,
-       CASE
-         WHEN l.policyname IS NULL THEN 'MISSING live'
-         WHEN e.policyname IS NULL THEN 'EXTRA live (not in migrations)'
-         WHEN l.cmd <> e.cmd THEN 'MISMATCH cmd'
-         WHEN l.permissive <> 'PERMISSIVE' THEN 'MISMATCH not permissive'
-         ELSE 'ok'
-       END                                  AS status
-FROM expected e
-FULL OUTER JOIN live l ON l.tablename = e.tablename AND l.policyname = e.policyname
-ORDER BY (CASE WHEN l.policyname IS NOT NULL AND e.policyname IS NOT NULL AND l.cmd = e.cmd THEN 1 ELSE 0 END), 1, 2;
+SELECT * FROM compared
+ORDER BY (status = 'ok'), table_name, policy_name;
 
 -- 3) Tables the migrations create (kept in sync by hand from supabase/migrations)
 --    that are missing live. A non-empty result means migrations were not all applied.
