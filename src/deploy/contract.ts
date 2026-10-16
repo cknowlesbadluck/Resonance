@@ -62,9 +62,18 @@ export function isProductionRuntime(env: NodeJS.Dict<string> = process.env): boo
   return env.NODE_ENV === "production" || env.RESONANCE_DEPLOY_STAGE === "production";
 }
 
+/** Auth modes that may be echoed by /api/ready. Anything else is reported as "invalid". */
+export const KNOWN_AUTH_MODES = ["required", "optional", "auto"] as const;
+
+/** Normalize RESONANCE_AUTH_MODE to a known mode; never reflect an arbitrary env value. */
+export function normalizeAuthMode(raw: string | undefined): string {
+  const mode = (raw ?? "auto").trim().toLowerCase() || "auto";
+  return (KNOWN_AUTH_MODES as readonly string[]).includes(mode) ? mode : "invalid";
+}
+
 export function evaluateDeployContract(env: NodeJS.Dict<string> = process.env): DeployContract {
   const production = isProductionRuntime(env);
-  const authMode = (env.RESONANCE_AUTH_MODE ?? "auto").trim().toLowerCase() || "auto";
+  const authMode = normalizeAuthMode(env.RESONANCE_AUTH_MODE);
   const keys = DEPLOY_ENV_KEYS.map((spec) => ({
     key: spec.key,
     role: spec.role,
@@ -74,7 +83,8 @@ export function evaluateDeployContract(env: NodeJS.Dict<string> = process.env): 
   const missingRequired = production
     ? keys.filter((item) => item.requiredInProduction && !item.present).map((item) => item.key)
     : [];
-  const authModeOk = !production || authMode === "required";
+  // Fail closed: an unknown mode is never ok, even outside production.
+  const authModeOk = authMode !== "invalid" && (!production || authMode === "required");
   return {
     production,
     authMode,
