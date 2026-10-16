@@ -59,3 +59,6 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 1. On `main` via green PR
 2. Linear Done + AGENT_LOG
 3. No parallel domain model for that concern
+
+## Live evidence update 2026-10-16 16:00 EDT
+Probe: /api/ready still 503 missing SUPABASE_SERVICE_ROLE_KEY. CI green on main. Owner action required for key and deploy parity. Hygiene: open PRs include fail-closed auth mode (#200), privacy tests, prune (#193). Innovation: continue evidence redaction and composition.
