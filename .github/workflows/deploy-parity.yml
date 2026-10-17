@@ -1,0 +1,44 @@
+name: Deploy parity (report-only)
+
+# Read-only: GETs the public /api/ready and compares its field set with main's contract.
+# Uses scripts/deploy-parity.mjs from #202 (merge #202 first; until then this step only warns).
+# Report-only: never fails, never writes, needs no secrets. Free on public repos.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-parity
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+      - name: Compare live /api/ready contract with main (report-only)
+        run: |
+          set +e
+          if [ ! -f scripts/deploy-parity.mjs ]; then echo "::warning title=Deploy parity::scripts/deploy-parity.mjs not on this ref yet (lands with #202)"; exit 0; fi
+          out=$(node scripts/deploy-parity.mjs https://resonancenexus.netlify.app/api/ready --json 2>&1)
+          code=$?
+          echo "$out"
+          {
+            echo "### Deploy parity (report-only, exit $code)"
+            echo '```json'
+            echo "$out"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -ne 0 ] || ! echo "$out" | grep -q '"in_parity"'; then echo "::warning title=Deploy parity::live deploy is not in parity with main"; fi
+          exit 0
