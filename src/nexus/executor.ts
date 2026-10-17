@@ -1,6 +1,6 @@
 import type { NexusAdapter } from "./adapters/types";
-import { classifyRetry, effectiveMaxAttempts, failureCodeOf, retryAfterMsOf, retryDelayMs } from "./retry-policy";
 import type { NexusEvent, NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy, ExecutionStep, StepOutcome } from "./types";
+import { classifyRetry, effectiveMaxAttempts, failureCodeOf, retryAfterMsOf, retryDelayMs } from "./retry-policy";
 
 export interface ExecutionSink {
   recordEvidence(evidence: NexusEvidence): Promise<void>;
