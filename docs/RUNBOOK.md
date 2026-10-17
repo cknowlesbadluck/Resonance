@@ -1,0 +1,61 @@
+# Resonance Runbook
+
+Operational steps for the owner. Production host: **https://resonancenexus.netlify.app** (Netlify project `resonancenexus`). That is the only correct host; `*.vercel.app` names are not ours. Agents do not perform these steps. They need owner credentials, and they change production config or the database.
+
+## 1. Readiness check
+
+```sh
+curl -s -w '\n%{http_code}\n' https://resonancenexus.netlify.app/api/health   # expect 200 {"status":"ok",...}
+curl -s -w '\n%{http_code}\n' https://resonancenexus.netlify.app/api/ready    # expect 200 {"status":"ready",...}
+```
+
+`/api/ready` reports presence only and never echoes values. Fields: `status` (`ready`|`not_ready`), `service`, `stage`, `production`, `authMode`, `authModeOk`, `persistenceConfigured`, `githubAdapterConfigured`, `missingRequired` (env var **names**), `timestamp`. It returns HTTP 503 whenever `status` is `not_ready`.
+
+Observed 2026-10-16 10:02 EDT: 503, `missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]`, `authMode: "required"`, `persistenceConfigured: false`.
+
+## 2. Restore the service-role key (owner only)
+
+1. Make sure the Resonance Supabase project is active. Restore it from the Supabase dashboard if it is paused. That is free-tier; do not upgrade the plan.
+2. In Supabase, go to Project Settings → API Keys and create (or copy) a **secret key** (`sb_secret_…`). Supabase is retiring the legacy JWT `service_role` key, so prefer the new secret key; it goes into the same `SUPABASE_SERVICE_ROLE_KEY` variable with no code change (the value is passed straight to `createClient`). Use the legacy `service_role` key only if the new keys are not yet enabled on the project. Never paste either into chat, issues, PRs, logs or commits.
+3. In Netlify, go to `resonancenexus` → Site configuration → Environment variables. Set `SUPABASE_SERVICE_ROLE_KEY`, scoped to **Functions** only (not Runtime, Builds or Post processing) and the **Production** context only, and mark it secret. Check that `RESONANCE_PROJECT_ID` and `RESONANCE_AUTH_MODE=required` are present (Functions scope), and that `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are present with **Builds** scope as well as Functions: `NEXT_PUBLIC_*` values are inlined into the browser bundle at build time, so a Functions-only value lets `/api/ready` pass while the client ships without Supabase config.
+4. Trigger a production deploy of `main` with Deploys → Trigger deploy → "Deploy project without cache".
+5. Re-run §1. You should see 200, `persistenceConfigured: true` and an empty `missingRequired`. That only proves the variable is **present**: `/api/ready` never calls Supabase, so a mistyped, revoked or wrong-project key also passes.
+6. Prove the key works before closing anything: make one request to a route that reads from Supabase (any persistence-backed `/api/nexus/...` read) and confirm it succeeds, and check Netlify → Logs → Functions and Supabase → Logs → API for that request with no `401`/`Invalid API key`/JWT errors. Also confirm the `NEXT_PUBLIC_SUPABASE_URL` project ref matches the project the key came from. Only then close CHR-54.
+
+If the key may have leaked:
+
+1. Create a replacement secret key in Supabase (do not delete the old one yet).
+2. Update `SUPABASE_SERVICE_ROLE_KEY` in Netlify with the replacement and redeploy (steps 3–4).
+3. Verify with §1 **and** step 6 that production works on the new key, and update any other place that used the old key.
+4. **Retire the compromised key.**
+   - New-style secret key leaked: delete that secret key in Supabase. Nothing else is affected.
+   - Legacy JWT `service_role` key leaked: disabling the legacy keys (or rotating the JWT secret) also kills the legacy `anon` key the browser uses. So **first** create a publishable key (`sb_publishable_…`), set it as `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Builds + Functions scope), redeploy and verify the site and step 6. Only then disable the legacy keys.
+   Until this step, the leaked key still bypasses RLS.
+5. Record the rotation (date, which key, no values) in the incident issue.
+
+## 3. Verify RLS (read-only, PR #196)
+
+> **Deferred until #196 merges.** `scripts/verify-rls.sql` and `docs/VERIFY-RLS.md` are added by #196 and do not exist on `main` yet; until then, run the SQL from that PR's branch or skip this section.
+
+`scripts/verify-rls.sql` only reads catalog state. Run it in the Supabase SQL editor or with `psql` as a privileged role:
+
+```sh
+psql "$DATABASE_URL" -f scripts/verify-rls.sql   # read-only; never run migrations from here
+```
+
+Expect every public table to report RLS **enabled**, with policies that match the intent pinned by the migration lint (#195). Any table with RLS disabled, or any drift from the migrations, is a finding. Record it in an issue. Fix it through a reviewed migration PR that the owner applies. `search_path` hardening (#173) also needs the owner to apply it.
+
+## 4. Netlify deploy checks
+
+- **Is production current?** Netlify → Deploys: the published deploy's commit should equal the current `main` head. Fetch first so you aren't comparing against a stale local ref: `git fetch origin main && git rev-parse origin/main` (or `git ls-remote origin refs/heads/main`). After #178 merges, `/api/ready` also exposes `commitSha`.
+- **No deploy after a merge?** A missing Netlify commit status alone does not prove the Git link is broken (statuses are configurable notifications). Check, in order and independently: (1) Deploys list — was a build created for the merge commit? If it exists but failed, read its log. (2) Site configuration → Build & deploy → Continuous deployment → **Build status**: builds may be *stopped*; re-activating them is a deliberate owner decision. (3) Deploy notifications: is the GitHub commit-status notification configured? (4) Only if the repository link itself is missing or broken, relink it. A stale `package-lock.json` is the usual cause; fix it through a PR, not on the host.
+- **Previews:** PR deploy previews run without production secrets, so `/api/ready` 503 is expected there.
+- **Smoke:** `SMOKE_BASE_URL=https://resonancenexus.netlify.app npm run smoke`.
+
+## 5. Rollback
+
+1. Netlify → Deploys → pick the last good deploy → "Publish deploy".
+2. **Lock it**: on the Deploys page use "Lock to stop auto publishing" so later Git-triggered deploys of `main` can't overwrite the rollback while the revert is in review.
+3. Open a revert PR against `main` (it requires one review). Do not force-push.
+4. While locked, Netlify builds the revert's production deploy but does **not** publish it, so the production URL still serves the rollback. Verify the new deploy on its own deploy permalink (`https://<deploy-id>--resonancenexus.netlify.app/api/ready` and `/api/health`), not the production URL.
+5. Then publish that deploy, **unlock** auto publishing, and re-run §1 against the production URL.
