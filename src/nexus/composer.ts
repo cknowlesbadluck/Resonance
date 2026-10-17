@@ -1,5 +1,6 @@
 import { capabilityMatches, sortCapabilities } from "./capabilities";
 import { normalizeGrants } from "./grants";
+import { sideEffectForGrants } from "./retry-policy";
 import type { CapabilityRegistry } from "./registry";
 import type { NexusAdapter } from "./adapters/types";
 import type { CapabilityRequirement, NexusCapability, NexusIntent, NexusExecutionPlan } from "./types";
@@ -95,6 +96,7 @@ export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry,
       adapterId: adapter.id,
       input: intent.metadata?.input ?? {},
       requiresApproval: decision.requiresApproval,
+      sideEffect: sideEffectForGrants(selected.requiredPermissions),
     };
   });
 
