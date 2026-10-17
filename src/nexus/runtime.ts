@@ -4,6 +4,7 @@ import { HttpAdapter } from "./adapters/http";
 import { McpAdapter } from "./adapters/mcp";
 import { GitHubAdapter, githubRepositoryReadCapability } from "./adapters/github";
 import { LinearAdapter, linearIssueReadCapability } from "./adapters/linear";
+import { webhookAdapterFromEnv, webhookEventDeliverCapability } from "./adapters/webhook";
 import { composeIntent } from "./composer";
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusCapability, NexusIntent } from "./types";
@@ -24,6 +25,8 @@ const mcpAdapter = new McpAdapter("mcp-demo", {
 
 const githubAdapter = process.env.GITHUB_TOKEN?.trim() ? new GitHubAdapter(process.env.GITHUB_TOKEN) : null;
 const linearAdapter = process.env.LINEAR_API_KEY?.trim() ? new LinearAdapter(process.env.LINEAR_API_KEY) : null;
+// Disabled unless RESONANCE_WEBHOOK_URL + RESONANCE_WEBHOOK_SECRET are both set and valid.
+const webhookAdapter = webhookAdapterFromEnv().adapter;
 
 // Credential presence is what binds a provider. An adapter with no key is absent
 // rather than present-and-broken, so capability discovery reports the truth.
@@ -32,12 +35,14 @@ export const nexusAdapters: NexusAdapter[] = [
   mcpAdapter,
   ...(githubAdapter ? [githubAdapter] : []),
   ...(linearAdapter ? [linearAdapter] : []),
+  ...(webhookAdapter ? [webhookAdapter] : []),
 ];
 
 export const nexusRegistry = new InMemoryCapabilityRegistry();
 demoCapabilities.forEach((capability) => nexusRegistry.register(capability));
 if (githubAdapter) nexusRegistry.register(githubRepositoryReadCapability);
 if (linearAdapter) nexusRegistry.register(linearIssueReadCapability);
+if (webhookAdapter) nexusRegistry.register(webhookEventDeliverCapability);
 export const nexusPolicy = new DefaultNexusPolicy();
 
 export function composeNexusIntent(intent: NexusIntent) { return composeIntent(intent, nexusRegistry, nexusPolicy, nexusAdapters); }
