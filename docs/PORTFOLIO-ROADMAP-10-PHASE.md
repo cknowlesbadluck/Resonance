@@ -1,4 +1,4 @@
-# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 12:15 EDT)
+# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 13:40 EDT)
 
 Product-only roadmap; Resonance stays domain-independent. Current audit: `docs/AUDIT-2026-10-13.md`. Engineering phase map: `docs/ROADMAP.md`.
 Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked on owner** (owner action, key, migration or Netlify) · **not started**.
@@ -16,7 +16,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 9 | iOS peer parity | Xcode app target builds `ios/App`; iOS composes, executes **and approves/resumes** through `ResonanceCore`; Swift contract tests share web fixtures; device acceptance with real evidence | **not started** beyond the library (no app target, no resume in NexusClient) |
 | 10 | Finished Nexus | web + iOS end-to-end against production; failover (#188); runbook (#197); 7 consecutive days of `/api/ready` 200 | **blocked on owner** (phase 6), **not started** for the iOS half |
 
-## Status board (2026-10-17 12:15 EDT, corrected: earlier rows said "merged" for PRs that are still open)
+## Status board (2026-10-17 13:40 EDT; main 7ac2ffc, nothing merged)
 
 Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI green · **[blocked]** = needs owner action. Nothing has merged to Resonance main since #192 (7ac2ffc). Every PR listed below is **open**.
 
@@ -27,13 +27,24 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 | 3 Fail-closed auth | [in progress] | #174, #185 open; route auth matrix tested on those branches |
 | 4 Bounded + private surface | [in progress] | #216 (outbound fetch timeouts + guard), #172 stack, #175, #186, #191, #206, #213/#214 open |
 | 5 Data security | [blocked] | owner applies the #173, #207, #208, #214 migrations, then `scripts/verify-rls.sql` (#196) is clean |
-| 6 Honest production | [blocked] | 12:03 EDT: `/api/ready` **503**, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`, prod behind main (no `contractRevision`/`posture`). Owner says the Supabase project is **paused**. **#202** now has `node scripts/deploy-parity.mjs --plan`, which turns the live body into ordered owner steps: restore project → set `SUPABASE_SERVICE_ROLE_KEY` in Netlify Production env → redeploy main → verify (`--strict` + smoke) |
+| 6 Honest production | [blocked] | 13:01 EDT (re-checked): `/api/ready` **503**, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`, prod behind main (no `contractRevision`/`posture`). Owner says the Supabase project is **paused**. **#202** now has `node scripts/deploy-parity.mjs --plan`, which turns the live body into ordered owner steps: restore project → set `SUPABASE_SERVICE_ROLE_KEY` in Netlify Production env → redeploy main → verify (`--strict` + smoke) |
 | 7 Single capability model | [in progress] | #184 contract, #182 adapter contract, #217 policy dry-run open; schema generation not started |
 | 8 Exactly-once execution | [in progress] | #215 journal contract, #209 replay, #206 resume guard, #210 webhook open; Supabase journal store + migration not started (owner applies) |
 | 9 iOS peer parity | not started | app target builds; approve/resume via the journal |
 | 10 Finished Nexus | [blocked] | depends on phase 6; 7 days of `/api/ready` 200 |
 
-Open PRs at 12:15 EDT: 47. No PR met the clearly-superseded bar. Checked with Conduit's report-only `merge-train` tool (Conduit #260): the only duplicate new file is `src/nexus/fair-share.ts` in #213/#214, which is a stack (#214 ⊃ #213), not a duplicate. #190/#194 have an identical file set (package files) but bump disjoint packages. Recommended owner order: #198 → #204 → audit stack #172 → #176 → #177 → #181 → #178 → #179/#180 → #212 → #209 → #213 → #214 → #215/#216/#217 → #202 → rest per the train below.
+Open PRs at 13:40 EDT: 47, unchanged from 12:15 (no merges, no closures). Owner instruction from 13:00 EDT: agents merge nothing. Re-verified at 13:30 EDT:
+- Every open PR is MERGEABLE against main.
+- The audit stack #172 → #176 → #177 → #178 → {#179, #180}, #181 is current with each parent and with main (0 behind).
+- The only red check anywhere is `gemini`. Every failing run inspected (#179, #212 and others) concluded `cancelled` (concurrency), not failed. **#198** fixes it.
+
+`merge-train` (Conduit #260 @ 914fe52, now stacked-aware and treating a cancelled latest run as `rerun`, not red):
+- Duplicate new file `src/nexus/fair-share.ts` in #213/#214. This is an intentional stack that targets `main` so CI runs (#214 ⊃ #213).
+- #190/#194 have identical file sets but bump disjoint packages. Their lockfiles will conflict, so regenerate the second one after the first merges.
+- #181/#172 share the same 4 files because #181 is stacked on that chain.
+- Hotspot: `app/api/nexus/executions/route.ts` (6 PRs).
+
+Recommended owner order: #198 → #204 → audit stack #172 → #176 → #177 → #181 → #178 → #179/#180 → #212 → #209 → #213 → #214 → #215/#216/#217 → #202 → rest per the train below.
 
 ## Merge train (2026-10-17 07:25 EDT)
 
