@@ -1,4 +1,4 @@
-# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 13:40 EDT)
+# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 13:10 EDT)
 
 Product-only roadmap; Resonance stays domain-independent. Current audit: `docs/AUDIT-2026-10-13.md`. Engineering phase map: `docs/ROADMAP.md`.
 Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked on owner** (owner action, key, migration or Netlify) · **not started**.
@@ -16,7 +16,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 9 | iOS peer parity | Xcode app target builds `ios/App`; iOS composes, executes **and approves/resumes** through `ResonanceCore`; Swift contract tests share web fixtures; device acceptance with real evidence | **not started** beyond the library (no app target, no resume in NexusClient) |
 | 10 | Finished Nexus | web + iOS end-to-end against production; failover (#188); runbook (#197); 7 consecutive days of `/api/ready` 200 | **blocked on owner** (phase 6), **not started** for the iOS half |
 
-## Status board (2026-10-17 13:40 EDT; main 7ac2ffc, nothing merged)
+## Status board (2026-10-17 13:10 EDT; main 7ac2ffc, nothing merged)
 
 Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI green · **[blocked]** = needs owner action. Nothing has merged to Resonance main since #192 (7ac2ffc). Every PR listed below is **open**.
 
@@ -33,7 +33,7 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 | 9 iOS peer parity | not started | app target builds; approve/resume via the journal |
 | 10 Finished Nexus | [blocked] | depends on phase 6; 7 days of `/api/ready` 200 |
 
-Open PRs at 13:40 EDT: 47, unchanged from 12:15 (no merges, no closures). Owner instruction from 13:00 EDT: agents merge nothing. Re-verified at 13:30 EDT:
+Open PRs at 13:10 EDT: 47, unchanged from 12:15 (no merges, no closures). Owner instruction from 13:00 EDT: agents merge nothing. Re-verified at 13:05 EDT:
 - Every open PR is MERGEABLE against main.
 - The audit stack #172 → #176 → #177 → #178 → {#179, #180}, #181 is current with each parent and with main (0 behind).
 - The only red check anywhere is `gemini`. Every failing run inspected (#179, #212 and others) concluded `cancelled` (concurrency), not failed. **#198** fixes it.
