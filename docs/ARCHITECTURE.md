@@ -108,6 +108,26 @@ The current Next.js surface is the web control plane. It exposes Nexus discovery
 
 Future surfaces may include iOS and MCP-facing control interfaces, but they are clients of the Nexus rather than the Nexus itself.
 
+## Composition and coordination without domination
+
+Invariant 1 ("integration without domination") made operational:
+
+1. **Provider-neutral ranking with failover.** Composition ranks candidates by capability fit, not by provider. When the best candidate is denied or unbound, it fails over to the next-ranked one (#188), so no single provider is load-bearing by default.
+2. **Fair share at execution time.** Every adapter invocation holds a per-project slot, then a per-adapter slot (`src/nexus/fair-share.ts`, #213; defaults 4 and 8, bounded FIFO queues, fail-safe config). One project's wide plan or flood can't starve other projects, and one busy provider can't take unbounded concurrency. The scope today is per instance, and a cross-instance lease is a roadmap item.
+3. **Bounded admission.** Execution creation is rate-windowed per project (durable mode) and body-bounded, and public routes are rate limited (#175). Overload returns 429 or `fair_share_queue_full`, never a hang.
+4. **Policy decides, never the adapter.** Connection does not imply authority. Unknown permissions fail closed, and `execute`-level or `critical` capabilities require explicit approval before the executor runs them. Resume is CAS-claimed so only one party advances a waiting execution (#206).
+5. **Evidence for every step.** Each invocation records attributable, redacted evidence (#191), so coordination is auditable after the fact.
+6. **Peers, not owners.** Web and iOS are clients of the Nexus. Conduit is a separate coordination bridge reached only over HTTP/MCP. Quicksilver is independent and shapes nothing in core.
+
+## Integration hygiene rules
+
+- **Adapters are off by default.** An adapter exists only when its credential or config is present and valid (GitHub, Linear, and the signed webhook in #210). Absent means not registered, never present-and-broken.
+- **Destination from config only.** Outbound targets come from server config (for example `RESONANCE_WEBHOOK_URL`), never from intent input. They're SSRF-guarded (HTTPS, no private, loopback or link-local addresses, redirects refused).
+- **Approval-gated outbound.** Outbound side-effect capabilities normalise to `execute` (for example `webhook.deliver`), so the default policy requires explicit approval.
+- **Idempotent delivery.** Execution creation requires `Idempotency-Key`. Events replay duplicates instead of erroring (#209). Webhook deliveries carry a deterministic `X-Resonance-Delivery` id and `Idempotency-Key`, so receivers can dedupe executor retries. Rate-limit and idempotency stores are per instance until a shared store lands.
+- **One service-role construction site.** Server code builds Supabase service-role clients only through `createServiceRoleClient` (#212). The browser anon client stays separate.
+- **No secrets in flight records.** Errors are sanitised (#172/#177), evidence is redacted (#191), and `/api/ready` echoes names only.
+
 ## Domain-independence rule
 
 For every proposed core abstraction:
