@@ -16,7 +16,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 9 | iOS peer parity | Xcode app target builds `ios/App`; iOS composes, executes **and approves/resumes** through `ResonanceCore`; Swift contract tests share web fixtures; device acceptance with real evidence | **not started** beyond the library (no app target, no resume in NexusClient) |
 | 10 | Finished Nexus | web + iOS end-to-end against production; failover (#188); runbook (#197); 7 consecutive days of `/api/ready` 200 | **blocked on owner** (phase 6), **not started** for the iOS half |
 
-## Status board (2026-10-17 14:10 EDT; main 7ac2ffc, nothing merged)
+## Status board (2026-10-17 15:15 EDT; main 7ac2ffc, nothing merged; prod `/api/ready` still 503 `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`, owner-blocked)
 
 Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI green · **[blocked]** = needs owner action. Nothing has merged to Resonance main since #192 (7ac2ffc). Every PR listed below is **open**.
 
@@ -32,6 +32,8 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 | 8 Exactly-once execution | [in progress] | #215 journal contract, #209 replay, #206 resume guard, #210 webhook, **#218 retry classification** open (`src/nexus/retry-policy.ts`: permanent codes never retry; ambiguous `timeout`/`unavailable` never blindly re-run a step whose grants are ≥ `modify`, derived from the single capability model in `grants.ts`; `execution.retry_skipped` event); Supabase journal store + migration not started (owner applies) |
 | 9 iOS peer parity | not started | app target builds; approve/resume via the journal |
 | 10 Finished Nexus | [blocked] | depends on phase 6; 7 days of `/api/ready` 200 |
+
+**15:15 EDT:** 48 open, unchanged (no merges, no closures). The only failing PR check is still `gemini` (20 PRs, all `cancelled`; #198). `merge-train` (#260 @ 914fe52) + sequential `git merge-tree` simulation: the 22 candidates (#173, #182, #184, #186, #188, #198, #208, #215, #169, #170, #175, #193, #183, #187, #185, #190, #189, #191, #202, #172, #214) land clean in order except **#194 after #190** (`package.json`/lockfile, as expected: regenerate the second). New collision found and fixed: **#218 × #213/#214** (adjacent import lines in `src/nexus/executor.ts`) → #218 moved its `retry-policy` import below `./types` (6c25ab3); #218 + #214 merged locally passes `tsc` and 164 nexus tests.
 
 **14:10 EDT:** 48 open (47 + #218; no merges, no closures, nothing clearly superseded). `npm audit` 0 vulnerabilities; all workflow actions SHA-pinned; #194 already carries next 15.5.28, vitest 4.1.12, @types/node 22.20.5 (patch only). The only failing PR check is `gemini` (`cancelled`, concurrency; #198). No branch without an open PR is free of unique commits, so none deleted. Linear (read-only): CHR-54 `/api/ready` 200 still Todo/Urgent; CHR-33, CHR-24, CHR-25, CHR-39, CHR-45, CHR-46 in progress.
 
