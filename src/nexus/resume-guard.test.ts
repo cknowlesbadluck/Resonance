@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_RESUME_BODY_BYTES, RESUME_STALE_MS, isValidResumeId, parseResumeBody, resumeEligibility } from "./resume-guard";
+import { MAX_RESUME_BODY_BYTES, RESUME_STALE_MS, conditionalUpdateOutcome, isValidResumeId, parseResumeBody, resumeEligibility } from "./resume-guard";
 
 const PROJECT = "11111111-1111-4111-8111-111111111111";
 const NOW = Date.parse("2026-10-17T04:00:00Z");
@@ -71,5 +71,14 @@ describe("resumeEligibility", () => {
   });
   it("treats a missing updated_at as not stale", () => {
     expect(resumeEligibility({ status: "accepted", updated_at: null, response: stored }, NOW)).toMatchObject({ ok: false, status: 409 });
+  });
+});
+
+describe("conditionalUpdateOutcome", () => {
+  it("distinguishes a DB error from a lost compare-and-set race", () => {
+    expect(conditionalUpdateOutcome({ data: { id: "x" }, error: null })).toBe("updated");
+    expect(conditionalUpdateOutcome({ data: null, error: null })).toBe("not_matched");
+    expect(conditionalUpdateOutcome({ data: null, error: { message: "connection reset" } })).toBe("db_error");
+    expect(conditionalUpdateOutcome({ data: { id: "x" }, error: { message: "partial" } })).toBe("db_error");
   });
 });

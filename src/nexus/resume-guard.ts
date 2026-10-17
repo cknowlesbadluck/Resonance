@@ -70,3 +70,14 @@ export function resumeEligibility(existing: StoredExecutionRequest, now = Date.n
   }
   return { ok: true, stuck: stale };
 }
+
+/**
+ * Outcome of a conditional (compare-and-set) update on nexus_execution_requests.
+ * A Supabase error is NOT "someone else claimed it": reporting it as 409 hid
+ * transient DB failures behind a non-retryable conflict. Errors map to
+ * `db_error` (route answers a generic 500, logs server-side, never echoes it).
+ */
+export function conditionalUpdateOutcome(result: { data: unknown; error: unknown }): "updated" | "not_matched" | "db_error" {
+  if (result.error) return "db_error";
+  return result.data ? "updated" : "not_matched";
+}
