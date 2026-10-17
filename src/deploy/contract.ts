@@ -58,8 +58,16 @@ export function envPresent(env: NodeJS.Dict<string>, key: string): boolean {
   return Boolean(env[key]?.trim());
 }
 
+/**
+ * Fail closed on host signals too: a production deploy that forgot NODE_ENV must still be
+ * treated as production (no in-memory user data, auth required). Netlify sets
+ * CONTEXT=production for production deploys; Vercel sets VERCEL_ENV=production.
+ */
 export function isProductionRuntime(env: NodeJS.Dict<string> = process.env): boolean {
-  return env.NODE_ENV === "production" || env.RESONANCE_DEPLOY_STAGE === "production";
+  return env.NODE_ENV === "production"
+    || env.RESONANCE_DEPLOY_STAGE === "production"
+    || env.CONTEXT === "production"
+    || env.VERCEL_ENV === "production";
 }
 
 export function evaluateDeployContract(env: NodeJS.Dict<string> = process.env): DeployContract {
