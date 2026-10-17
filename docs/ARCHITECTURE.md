@@ -128,6 +128,50 @@ Invariant 1 ("integration without domination") made operational:
 - **One service-role construction site.** Server code builds Supabase service-role clients only through `createServiceRoleClient` (#212). The browser anon client stays separate.
 - **No secrets in flight records.** Errors are sanitised (#172/#177), evidence is redacted (#191), and `/api/ready` echoes names only.
 
+## Durable execution journal (RFC, 2026-10-17)
+
+Status: **proposed**. Interface + in-memory implementation prepared (`src/nexus/journal.ts`, 5 tests; PR not yet opened). No migration exists or is applied; the Supabase store comes with an owner-applied migration in a later PR.
+
+**Why.** Approvals and resumes live in request memory and `nexus_executions` status columns today. A restart or a second instance can lose a pending approval or double-resume. The iOS peer needs an approve/resume path that is safe to retry over a flaky mobile network.
+
+**Journal table shape (proposed, not applied):**
+
+```sql
+create table public.nexus_execution_journal (
+  execution_id    uuid        not null references public.nexus_executions(id) on delete cascade,
+  project_id      uuid        not null,
+  seq             integer     not null check (seq >= 1),
+  kind            text        not null check (kind in ('planned','step_started','step_completed','step_failed',
+                                'approval_requested','approved','rejected','resumed','completed','failed','cancelled')),
+  at              timestamptz not null default now(),
+  actor_id        text,
+  idempotency_key text,
+  approval_id     text,
+  step_id         text,
+  detail          jsonb check (detail is null or pg_column_size(detail) <= 8192),
+  primary key (execution_id, seq),
+  unique (execution_id, idempotency_key)
+);
+-- RLS on; service role only; project-scoped reads through the API. Append-only: no UPDATE/DELETE grants.
+```
+
+**Semantics.**
+- *Append-only, state by fold.* `foldJournal(entries)` derives `phase` (`running`, `waiting_approval`, `approved`, `rejected`, `completed`, `failed`, `cancelled`), `pendingApprovalId` and `resumableApprovalId`. Nothing else stores state, so a restart rebuilds exactly the same view.
+- *Optimistic concurrency.* Every write carries `expectedSeq = lastSeq`; the `(execution_id, seq)` primary key turns a race into a conflict (`JournalConflictError` → HTTP 409), never a lost or double write.
+- *Approve.* `decide({approvalId, approve, actorId, idempotencyKey})` is allowed only when `approvalId` is the pending one. The same key replays the original entry (200, `replayed: true`). A different key after the decision is `already_decided` (409). Reusing a key for another approval is `approval_mismatch`.
+- *Resume.* `resume({idempotencyKey})` consumes exactly one granted approval. Same key replays; a different key after the resume is `already_resumed`; no granted approval is `not_resumable`; terminal phases are `terminal`.
+- *Idempotency.* The key is required on approve and resume (matches the existing `Idempotency-Key` contract) and unique per execution, so retries across instances converge on one row.
+- *Scope and privacy.* Each execution is pinned to one project (`project_mismatch`). `detail` is small, already-redacted metadata (evidence privacy floor, #191), never credentials or provider bodies.
+
+**iOS peer flow.**
+1. iOS composes and starts an execution (`POST /api/nexus/executions`, `Idempotency-Key`); the executor appends `planned` and `step_*`.
+2. A gated step appends `approval_requested(approvalId)`; iOS polls `GET …/journal?afterSeq=n` (paged, max 500) or receives a push, and renders the approval.
+3. The user approves: `POST …/approvals/{approvalId}` with a client-generated `Idempotency-Key` kept until a 2xx/409. Network retries replay safely.
+4. iOS (or web) resumes: `POST …/resume` with its own key. Only one resume wins; the loser gets `already_resumed` and refreshes from the journal.
+5. `ResonanceCore` (Swift) mirrors `JournalEntry`/`DecisionResult` from shared JSON fixtures, the same contract-test pattern as `/api/ready`.
+
+**Rollout.** (1) interface + memory store (prepared); (2) Supabase store + migration, applied by the owner; (3) wire the resume route behind the journal with the old path as fallback; (4) iOS approve/resume against the journal; (5) remove the fallback after 7 days of clean probes.
+
 ## Domain-independence rule
 
 For every proposed core abstraction:
