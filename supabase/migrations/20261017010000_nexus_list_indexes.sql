@@ -10,8 +10,19 @@
 -- before applying the LIMIT. These composite indexes let Postgres walk the index
 -- in order and stop at the LIMIT.
 --
--- For large tables, consider running the equivalent CREATE INDEX CONCURRENTLY statements
--- by hand outside a transaction instead of applying this file as-is.
+-- Safe deployment path (REQUIRED if either table has meaningful write traffic or size):
+-- `supabase db push` runs migrations inside a transaction, where CONCURRENTLY is not
+-- allowed, and a plain CREATE INDEX blocks writes while it builds. So FIRST run these
+-- two statements by hand (SQL editor, outside a transaction):
+--
+--   create index concurrently if not exists idx_nexus_executions_project_started
+--     on public.nexus_executions (project_id, started_at desc);
+--   create index concurrently if not exists idx_nexus_evidence_project_created
+--     on public.nexus_evidence (project_id, created_at desc);
+--
+-- and only then apply this file. The `if not exists` statements below become no-ops,
+-- and migration history stays consistent. On empty or small tables (the current state:
+-- production persistence is not yet enabled) applying this file directly is fine.
 
 create index if not exists idx_nexus_executions_project_started
   on public.nexus_executions (project_id, started_at desc);
