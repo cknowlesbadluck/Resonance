@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "../db/service-client";
 
 export type NexusRequestAuth = { userId: string; projectId: string };
 
@@ -37,13 +37,9 @@ export async function authenticateNexusRequest(
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return null;
   const token = authorization.slice("Bearer ".length).trim();
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!token || !url || !serviceKey) return null;
-
-  const db = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  if (!token) return null;
+  const db = createServiceRoleClient({ autoRefreshToken: false });
+  if (!db) return null;
   const {
     data: { user },
     error: userError,

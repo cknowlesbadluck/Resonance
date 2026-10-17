@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "../../db/service-client";
 import type { NexusEvidence, NexusExecution, NexusCapability, ContextEntry } from "../types";
 
 export interface NexusPersistence {
@@ -11,10 +12,8 @@ export interface NexusPersistence {
 }
 
 export function createNexusPersistenceFromEnv(): NexusPersistence | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return new SupabaseNexusPersistence(createClient(url, key, { auth: { persistSession: false } }));
+  const db = createServiceRoleClient();
+  return db ? new SupabaseNexusPersistence(db) : null;
 }
 
 export class SupabaseNexusPersistence implements NexusPersistence {
