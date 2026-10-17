@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authRequired, authenticateNexusRequest } from "../../../../src/auth/nexus-request";
 import { listAdvertisedCapabilities, resolveCatalogCapabilities } from "../../../../src/composition/root";
+import { parseCapabilityIds } from "../../../../src/composition/discovery-params";
 
 /**
  * Capability discovery returns the normalized NexusCapability contract.
@@ -18,7 +19,9 @@ export async function GET(request: Request) {
     if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
   }
 
-  const ids = searchParams.get("ids")?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
+  const parsedIds = parseCapabilityIds(searchParams);
+  if (!parsedIds.ok) return NextResponse.json({ error: parsedIds.error }, { status: 400 });
+  const ids = parsedIds.value;
   const advertised = await listAdvertisedCapabilities();
   if (ids.length === 0) return NextResponse.json({ capabilities: advertised });
 
