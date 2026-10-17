@@ -4,6 +4,8 @@ import {
   verifyWebhookSignature, webhookAdapterFromEnv, webhookEventDeliverCapability, webhookUrlProblem,
 } from "./webhook";
 import type { InvocationRequest } from "./types";
+import { DefaultNexusPolicy } from "../policy";
+import { normalizeGrant } from "../grants";
 
 const SECRET = "s".repeat(40);
 const URL_OK = "https://hooks.example.com/resonance";
@@ -221,5 +223,12 @@ describe("webhook adapter: runtime wiring", () => {
       vi.unstubAllEnvs();
       vi.resetModules();
     }
+  });
+});
+
+describe("webhook adapter: policy", () => {
+  it("webhook.deliver normalises to execute, so the default policy allows it only with explicit approval", () => {
+    expect(normalizeGrant("webhook.deliver")).toBe("execute");
+    expect(new DefaultNexusPolicy().evaluate("actor-1", webhookEventDeliverCapability)).toEqual({ allowed: true, requiresApproval: true, reason: "Capability requires explicit approval." });
   });
 });
