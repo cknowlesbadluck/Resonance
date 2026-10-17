@@ -5,7 +5,7 @@
 -- nexus_lease_acquire() admits at most p_limit unexpired rows per (scope, key) under a
 -- transaction-scoped advisory lock on that slot, so concurrent acquirers cannot overshoot.
 -- Expired rows are swept on every acquire for that slot. A crashed instance's leases simply time
--- out (TTL), so nothing is held forever. Callers release explicitly on completion.
+-- out (TTL), so nothing is held forever. Holders renew (heartbeat) while running and release on completion.
 --
 -- Access: RLS enabled with no policies and privileges revoked from anon/authenticated.
 -- Only the service role (server-side) reads/writes, and only via the two functions.
@@ -84,8 +84,30 @@ begin
 end;
 $$;
 
+-- Heartbeat: extend a live lease while its invocation is still running, so a long call cannot
+-- outlive its lease and let a new holder overshoot the cap. Returns false when the lease is unknown
+-- or already expired (the caller has lost the slot).
+create or replace function public.nexus_lease_renew(p_lease_id uuid, p_ttl_seconds integer)
+returns boolean
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if p_ttl_seconds is null or p_ttl_seconds < 1 or p_ttl_seconds > 3600 then
+    raise exception 'nexus_lease_renew: invalid arguments' using errcode = '22023';
+  end if;
+  update public.nexus_fair_share_leases
+     set expires_at = pg_catalog.now() + pg_catalog.make_interval(secs => p_ttl_seconds)
+   where lease_id = p_lease_id and expires_at > pg_catalog.now();
+  return found;
+end;
+$$;
+
 revoke all on function public.nexus_lease_acquire(text, text, integer, text, integer) from public, anon, authenticated;
 revoke all on function public.nexus_lease_release(uuid) from public, anon, authenticated;
+revoke all on function public.nexus_lease_renew(uuid, integer) from public, anon, authenticated;
 grant execute on function public.nexus_lease_acquire(text, text, integer, text, integer) to service_role;
 grant execute on function public.nexus_lease_release(uuid) to service_role;
-grant select, insert, delete on table public.nexus_fair_share_leases to service_role;
+grant execute on function public.nexus_lease_renew(uuid, integer) to service_role;
+grant select, insert, update, delete on table public.nexus_fair_share_leases to service_role;

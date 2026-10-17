@@ -29,6 +29,12 @@ function fakeLeaseDb(opts: { now?: () => number } = {}) {
         return { data: id, error: null };
       }
       if (fn === "nexus_lease_release") return { data: leases.delete(args.p_lease_id as string), error: null };
+      if (fn === "nexus_lease_renew") {
+        const l = leases.get(args.p_lease_id as string);
+        if (!l || l.expiresAt <= now()) return { data: false, error: null };
+        l.expiresAt = now() + (args.p_ttl_seconds as number) * 1000;
+        return { data: true, error: null };
+      }
       return { data: null, error: { code: "PGRST202", message: "unknown function" } };
     },
   };
@@ -182,6 +188,67 @@ describe("SharedFairShareGuard", () => {
     expect(result.execution.status).toBe("completed");
     const scopes = db.calls.filter((c) => c.fn === "nexus_lease_acquire").map((c) => `${c.args.p_scope}:${c.args.p_key}`);
     expect(scopes).toEqual(["project:proj-1", "adapter:http"]);
+  });
+});
+
+describe("lease renewal and slot order (CodeRabbit #214)", () => {
+  it("renew extends a live lease, reports a lost one, and never throws", async () => {
+    let t = 0;
+    const db = fakeLeaseDb({ now: () => t });
+    const store = new SharedLeaseStore(db.client, { ttlSeconds: 10, now: () => t });
+    const r = await store.acquire("adapter", "a", 1);
+    if (r.status !== "acquired") throw new Error("expected acquired");
+    t += 9_000;
+    expect(await store.renew(r.leaseId)).toBe(true);
+    t += 9_000; // 18 s after acquire: alive only because of the renewal
+    expect((await store.acquire("adapter", "a", 1)).status).toBe("full");
+    t += 20_000;
+    expect(await store.renew(r.leaseId)).toBe(false);
+    expect(await new SharedLeaseStore({ rpc: () => Promise.reject(new Error("x")) }).renew("x")).toBe(false);
+    expect(store.status()).toMatchObject({ renewals: 1, renewErrors: 1 });
+  });
+
+  it("heartbeats leases while a long invocation runs, so it never outlives its TTL", async () => {
+    vi.useFakeTimers();
+    try {
+      const db = fakeLeaseDb();
+      const store = new SharedLeaseStore(db.client, { ttlSeconds: 3 });
+      const guard = new SharedFairShareGuard(new FairShareGuard({ perProject: 1, perAdapter: 1 }), store);
+      const gate = deferred();
+      const run = guard.run("p", "a", async () => { await gate.promise; return "done"; });
+      await vi.advanceTimersByTimeAsync(10_000); // > 3x the TTL
+      expect(db.leases.size).toBe(2);
+      // another instance still sees the slot as held
+      expect((await new SharedLeaseStore(db.client, { holder: "B" }).acquire("project", "p", 1)).status).toBe("full");
+      expect(store.status().renewals).toBeGreaterThanOrEqual(6);
+      gate.resolve();
+      await expect(run).resolves.toBe("done");
+      await vi.advanceTimersByTimeAsync(0);
+      expect(db.leases.size).toBe(0);
+      const renewalsAfter = store.status().renewals;
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(store.status().renewals).toBe(renewalsAfter); // heartbeat stopped
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a project waiting on its shared cap does not hold this instance's local adapter slot", async () => {
+    const db = fakeLeaseDb();
+    await new SharedLeaseStore(db.client, { holder: "elsewhere" }).acquire("project", "busy", 1); // busy is at its cluster cap
+    const local = new FairShareGuard({ perProject: 1, perAdapter: 1 });
+    let release!: () => void;
+    const guard = new SharedFairShareGuard(local, new SharedLeaseStore(db.client), {
+      maxWaitMs: 60_000, sleep: () => new Promise<void>((r) => { release = r; }),
+    });
+    const waiting = guard.run("busy", "github", async () => "busy-ran");
+    await tick(); await tick();
+    expect(local.adapters.inFlight("github")).toBe(0); // not held while waiting on the shared project lease
+    await expect(guard.run("free", "github", async () => "free-ran")).resolves.toBe("free-ran");
+    // free the cluster slot and let the waiter proceed
+    for (const [id, l] of db.leases) if (l.key === "busy") db.leases.delete(id);
+    release();
+    await expect(waiting).resolves.toBe("busy-ran");
   });
 });
 

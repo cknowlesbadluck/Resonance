@@ -13,8 +13,11 @@
  *     During cooldown, steps run on local limits only. Missing table or functions are re-checked every 10 minutes.
  *   - A slot that is full cluster-wide is retried with backoff for at most `maxWaitMs` (default 5 s).
  *     After that the step fails fast with `fair_share_shared_busy`, which is retryable and never waits indefinitely.
- *   - Leases carry a TTL (default 120 s). A crashed instance's slots expire on their own. Release is
- *     best-effort and never throws.
+ *   - Leases carry a TTL (default 120 s). A crashed instance's slots expire on their own. While an invocation
+ *     runs, its leases are renewed every TTL/3 (heartbeat), so a long call never outlives its lease. Release
+ *     and renew are best-effort and never throw.
+ *   - Order: local project slot, then shared project lease, then local adapter slot, then shared adapter lease.
+ *     A project waiting on its cluster-wide cap therefore never holds this instance's adapter slots.
  */
 import type { FairShareGuard, FairShareRunner } from "./fair-share";
 import { parseCap } from "./fair-share";
@@ -56,7 +59,7 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
 export class SharedLeaseStore {
   private state: SharedLeaseState = "unknown";
   private retryAt = 0;
-  private counters = { acquired: 0, full: 0, fallbacks: 0, errors: 0, releaseErrors: 0 };
+  private counters = { acquired: 0, full: 0, fallbacks: 0, errors: 0, releaseErrors: 0, renewals: 0, renewErrors: 0 };
   private lastErrorCode: string | null = null;
   readonly holder: string;
   readonly ttlSeconds: number;
@@ -126,6 +129,19 @@ export class SharedLeaseStore {
     }
   }
 
+  /** Heartbeat a live lease. Returns false if the lease was lost (expired or unknown) or the call failed. Never throws. */
+  async renew(leaseId: string, ttlSeconds = this.ttlSeconds): Promise<boolean> {
+    try {
+      const { data, error } = await withTimeout(this.client.rpc("nexus_lease_renew", { p_lease_id: leaseId, p_ttl_seconds: ttlSeconds }), this.rpcTimeoutMs);
+      if (error || data !== true) { this.counters.renewErrors += 1; return false; }
+      this.counters.renewals += 1;
+      return true;
+    } catch {
+      this.counters.renewErrors += 1;
+      return false;
+    }
+  }
+
   /**
    * Fixed-window-ish rate limit primitive shared across instances: each allowed call holds a `rate`
    * lease for `windowSeconds` and is never released, so at most `limit` calls per key per window.
@@ -171,19 +187,32 @@ export class SharedFairShareGuard implements FairShareRunner {
     }
   }
 
+  /** Renew `leases` every TTL/3 until the returned stop function is called. */
+  private heartbeat(leases: string[]): () => void {
+    const everyMs = Math.max(1000, Math.floor((this.store.ttlSeconds * 1000) / 3));
+    const timer = setInterval(() => { for (const lease of leases) void this.store.renew(lease); }, everyMs);
+    (timer as { unref?: () => void }).unref?.();
+    return () => clearInterval(timer);
+  }
+
   async run<T>(projectId: string, adapterId: string, fn: () => Promise<T>): Promise<T> {
-    return this.local.run(projectId, adapterId, async () => {
-      const leases: string[] = [];
+    const leases: string[] = [];
+    const releaseLocalProject = await this.local.projects.acquire(projectId);
+    try {
+      const projectLease = await this.acquireShared("project", projectId, this.local.projects.limit);
+      if (projectLease) leases.push(projectLease);
+      // Only now take the local adapter slot, so a project waiting on its shared cap never holds adapter slots.
+      const releaseLocalAdapter = await this.local.adapters.acquire(adapterId);
       try {
-        const projectLease = await this.acquireShared("project", projectId, this.local.projects.limit);
-        if (projectLease) leases.push(projectLease);
         const adapterLease = await this.acquireShared("adapter", adapterId, this.local.adapters.limit);
         if (adapterLease) leases.push(adapterLease);
-        return await fn();
-      } finally {
-        for (const lease of leases) void this.store.release(lease);
-      }
-    });
+        const stopHeartbeat = leases.length ? this.heartbeat(leases) : () => {};
+        try { return await fn(); } finally { stopHeartbeat(); }
+      } finally { releaseLocalAdapter(); }
+    } finally {
+      releaseLocalProject();
+      for (const lease of leases) void this.store.release(lease);
+    }
   }
 }
 
