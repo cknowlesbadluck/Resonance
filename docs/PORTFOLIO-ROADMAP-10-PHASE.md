@@ -1,4 +1,4 @@
-# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 09:10 EDT)
+# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 11:10 EDT)
 
 Product-only roadmap; Resonance stays domain-independent. Current audit: `docs/AUDIT-2026-10-13.md`. Engineering phase map: `docs/ROADMAP.md`.
 Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked on owner** (owner action, key, migration or Netlify) · **not started**.
@@ -8,7 +8,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 1 | Green, reviewed main | main CI green; actions SHA-pinned; the stack on #161 merged with one review | **blocked on owner**: review throughput. main CI green (7ac2ffc); PR CI (web, ios, CI) green on every open PR; `gemini` is cancelled by its concurrency group (not code). 44 open PRs at 07:25 EDT (45 before #158 was closed as stale/superseded); 4 merged/closed-PR branches pruned |
 | 2 | Lean code | dead `lib/ai` (#183) and chambers/policy (#193) pruned; one service-role client helper (#212, CodeRabbit approved); ESLint baseline (#211) | **in review** (#183, #193, #203, #211, #212). #211 conflicts with #183/#190/#193/#194/#202 (package files and pruned files), so merge it after the prunes and deps |
 | 3 | Fail-closed auth | `RESONANCE_AUTH_MODE` fails closed (#174); host-signal prod detection (#185); route auth matrix tested | **in review** |
-| 4 | Bounded + private surface | rate limits (#175); bounded idempotency (#186); sanitized errors + requestId (#172/#177/#181); evidence redaction (#191); `/api/ready` names-only test (#198); resume body bounded (#206); fair share per instance (#213); **fair share across instances via shared leases (#214, opt-in, fail-safe to local)** | **in review**: #213 green incl. ios; #214 stacked on #213 |
+| 4 | Bounded + private surface | rate limits (#175); bounded idempotency (#186); sanitized errors + requestId (#172/#177/#181); evidence redaction (#191); `/api/ready` names-only test (#198); resume body bounded (#206); fair share per instance (#213); **fair share across instances via shared leases (#214, opt-in, fail-safe to local; 11:00 EDT tests: clock-skew safe because expiry uses DB `now()`, busy adapter lease frees the project lease and local slots, hung acquire leaks nothing)** | **in review**: #213 green incl. ios; #214 stacked on #213 |
 | 5 | Data security | RLS lint + read-only verify (#195/#196) run by owner; `search_path` fix (#173), anon/unscoped RLS close (#207), list indexes (#208) and the lease table (#214) applied by owner | **blocked on owner** (owner applies migrations; #214 labelled `owner applies`) |
 | 6 | Honest production | `/api/ready` 200 on Netlify with commitSha (#178); needs `SUPABASE_SERVICE_ROLE_KEY` (owner) | **blocked on owner**: the 06:01 EDT probe returned **503** with `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`. Edge `age` is about 19.9 days, so prod is still the 2026-09-27 deploy. Owner: restore Netlify publishing and set the key |
 | 7 | Single capability model | client-only module retired (#156 ✓); one server schema generates TS + Swift `NexusCapability`; contract test (#184) | **in review** (#184, #182); schema generation **not started** |
@@ -16,7 +16,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 9 | iOS peer parity | Xcode app target builds `ios/App`; iOS composes, executes **and approves/resumes** through `ResonanceCore`; Swift contract tests share web fixtures; device acceptance with real evidence | **not started** beyond the library (no app target, no resume in NexusClient) |
 | 10 | Finished Nexus | web + iOS end-to-end against production; failover (#188); runbook (#197); 7 consecutive days of `/api/ready` 200 | **blocked on owner** (phase 6), **not started** for the iOS half |
 
-## Status board (2026-10-17 09:10 EDT)
+## Status board (2026-10-17 11:10 EDT)
 
 Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI green · **[blocked]** = needs owner action.
 
@@ -28,12 +28,12 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 | 4 Bounded + private surface | [in progress] | every outbound fetch has a timeout: **#216** (smoke script + guard test over `src/`, `lib/`, `scripts/`); #172 stack, #175, #186, #191, #206, #213/#214 merged |
 | 5 Data security | [blocked] | owner applies #173, #207, #208, #214 migrations, then `scripts/verify-rls.sql` (#196) is clean |
 | 6 Honest production | [blocked] | `/api/ready` 200 on Netlify. 08:02 EDT: **503**, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`. Owner reports the Supabase project is **paused**: it has to be restored, then the key set, then Netlify publishing restored. A public probe of the project host from agent networks was inconclusive (TLS refused for both the real and a made-up project ref) |
-| 7 Single capability model | [in progress] | #184 contract + #182 adapter contract merged; **#217** policy dry-run (`GET /api/nexus/capabilities/explain`: allow / approval_required / deny + checks, auth-gated) merged; schema generation not started |
-| 8 Exactly-once execution | [in progress] | **#215** journal contract merged; Supabase journal store + migration (owner applies); #209 replay merged |
+| 7 Single capability model | [in progress] | #184 contract + #182 adapter contract merged; **#217** policy dry-run (`GET /api/nexus/capabilities/explain`: allow / approval_required / deny + checks, auth-gated; 11:00 EDT: approval check follows the policy's own result, full permission list, bounded projectId, 404 leaks nothing) merged; schema generation not started |
+| 8 Exactly-once execution | [in progress] | **#215** journal contract merged (11:00 EDT fix: concurrent approve/resume/requestApproval used to throw `JournalConflictError`; now a bounded retry lands on replay / already_decided / already_resumed, with race tests); Supabase journal store + migration (owner applies); #209 replay merged |
 | 9 iOS peer parity | not started | app target builds; approve/resume via the journal |
 | 10 Finished Nexus | [blocked] | depends on phase 6; 7 days of `/api/ready` 200 |
 
-New since 07:25 EDT: #215 (execution journal), #216 (outbound fetch timeouts), #217 (policy dry-run). Hygiene 09:10 EDT: issues #166/#167/#168 updated with current evidence; no-PR branches pruned except `hygiene/probe-2026-10-09-2300` (unique probe script). Innovations considered and skipped: a separate shared `/ready` schema PR (duplicates #184 here and Conduit #245; vendor one fixture after both land), and a new adapter contract harness (#182 already covers github/linear/mcp/http; add #210's webhook adapter to #182's matrix when #210 rebases).
+Open PRs at 11:10 EDT: 47 (unchanged; nothing met the clearly-superseded bar). New since 07:25 EDT: #215 (execution journal), #216 (outbound fetch timeouts), #217 (policy dry-run). Hygiene 09:10 EDT: issues #166/#167/#168 updated with current evidence; no-PR branches pruned except `hygiene/probe-2026-10-09-2300` (unique probe script). Innovations considered and skipped: a separate shared `/ready` schema PR (duplicates #184 here and Conduit #245; vendor one fixture after both land), and a new adapter contract harness (#182 already covers github/linear/mcp/http; add #210's webhook adapter to #182's matrix when #210 rebases).
 
 ## Merge train (2026-10-17 07:25 EDT)
 
@@ -51,13 +51,13 @@ Agents don't merge Resonance PRs; the owner does. Simulated locally on main 7ac2
 | 8 | #215 execution journal, #216 fetch timeouts, #217 policy explain | main | none (new files; #216 edits only `scripts/production-smoke.mjs`) |
 | then | #210, #203 (rebase on `src/nexus/runtime.ts`), #190 → #194 (deps; #194 lockfile refresh after #190), prunes #183/#193 → #211 (lint last of the package-file group) | | package/pruned-file pairs listed below |
 
-**#202 vs #178 (decided):** keep **#202's field-set contract check** as the deploy-parity script. It works against the stale 2026-09-27 prod today, where commitSha parity can't (prod doesn't serve `commitSha` until #178 is deployed). Before #178 lands, drop `scripts/deploy-parity.mjs`/`.d.mts` from #178 and keep #178's additive `commitSha` on `/api/ready`; a SHA comparison can be added to #202's script as a second verdict later. #179's schedule should call #202's script. Not closed: both carry unique work.
+**#202 vs #178 (decided):** keep **#202's field-set contract check** as the deploy-parity script. It works against the stale 2026-09-27 prod today, where commitSha parity can't (prod doesn't serve `commitSha` until #178 is deployed). Before #178 lands, drop `scripts/deploy-parity.mjs`/`.d.mts` from #178 and keep #178's additive `commitSha` on `/api/ready`; a SHA comparison can be added to #202's script as a second verdict later. #179's schedule should call #202's script. Not closed: both carry unique work. **Done 11:00 EDT:** #178 dropped its script (9ec340d, `commitSha` tests moved to `src/deploy/commit-sha.test.ts`); #179's schedule calls #202's script (fa0d767); #180 merged its parent. Simulated main + #202 + each of #178/#179/#180: no conflicts.
 
 **Not duplicates (kept open):** #157 vs #193 touch different files and don't conflict (#157 adds an unwired dissolve guard; owner decides). #190 vs #194 bump disjoint packages except `@types/node`.
 
 **Open PR conflicts (pairwise, 07:25 EDT):**
 - `app/api/events/route.ts` and execution routes: #209, #212 vs the #172 stack (resolutions above).
-- `scripts/deploy-parity.mjs`: #202 conflicts with #178, #179 and #180.
+- ~~`scripts/deploy-parity.mjs`: #202 conflicts with #178, #179 and #180.~~ Resolved 11:00 EDT.
 - `src/nexus/runtime.ts`: #203 conflicts with #210, #213 and #214.
 - Package files: #190×#194, #190×#211, #194×#211, #202×#211.
 - Pruned files: #211 conflicts with #183 and #193.
