@@ -20,6 +20,8 @@ export type PolicyExplanation = {
 };
 
 export const CAPABILITY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
+/** Project ids are UUIDs in Supabase; accept any short id-shaped token so malformed input is rejected before auth. */
+export const PROJECT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 
 export function explainCapability(policy: NexusPolicy, actorId: string, capability: NexusCapability, approvalThreshold: keyof typeof rank = "execute"): PolicyExplanation {
   const decision = policy.evaluate(actorId, capability);
@@ -31,8 +33,14 @@ export function explainCapability(policy: NexusPolicy, actorId: string, capabili
     { check: "not_blocked", passed: !capability.tags?.includes("blocked") },
     { check: "adapter_bound", passed: capability.executable !== false, ...(capability.executable === false && capability.unexecutableReason ? { detail: capability.unexecutableReason } : {}) },
     { check: "permissions_recognized", passed: unrecognized.length === 0, ...(unrecognized.length ? { detail: unrecognized.slice(0, 5).join(",") } : {}) },
-    // "passed" here means "no approval needed": critical risk or a grant at/above the threshold asks for approval.
-    { check: "approval_threshold", passed: !(capability.risk === "critical" || rank[highest] >= rank[approvalThreshold]), detail: `highest=${highest} threshold=${approvalThreshold}${capability.risk === "critical" ? " risk=critical" : ""}` },
+    // "passed" means "no approval needed". When the policy reached its approval step (allowed), the check is
+    // taken from the policy's own result so it can never disagree with `decision`, whatever threshold the
+    // policy was built with. When the policy denied earlier, it is a local estimate and is labelled as such.
+    {
+      check: "approval_threshold",
+      passed: decision.allowed ? !decision.requiresApproval : !(capability.risk === "critical" || rank[highest] >= rank[approvalThreshold]),
+      detail: `highest=${highest}${decision.allowed ? "" : ` estimated_threshold=${approvalThreshold}`}${capability.risk === "critical" ? " risk=critical" : ""}`,
+    },
   ];
   return {
     capabilityId: capability.id,
@@ -40,7 +48,8 @@ export function explainCapability(policy: NexusPolicy, actorId: string, capabili
     reason: decision.reason ?? null,
     checks,
     risk: capability.risk ?? null,
-    requiredPermissions: (capability.requiredPermissions ?? []).slice(0, 20).map(String),
+    // Every declared permission (policy evaluates the full list, so the explanation must too).
+    requiredPermissions: (capability.requiredPermissions ?? []).map(String),
     dryRun: true,
   };
 }

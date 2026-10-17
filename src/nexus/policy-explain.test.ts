@@ -35,6 +35,24 @@ describe("explainCapability (policy dry-run)", () => {
     expect(weird.checks.find((c) => c.check === "permissions_recognized")).toMatchObject({ passed: false });
   });
 
+  it("approval_threshold check follows the policy's own threshold (never disagrees with decision)", () => {
+    const strict = new DefaultNexusPolicy("modify");
+    const e = explainCapability(strict, "u1", base({ requiredPermissions: ["modify"] }));
+    expect(e.decision).toBe("approval_required");
+    expect(e.checks.find((c) => c.check === "approval_threshold")).toMatchObject({ passed: false });
+    for (const p of [new DefaultNexusPolicy("read"), new DefaultNexusPolicy("modify"), new DefaultNexusPolicy("execute")]) {
+      for (const perms of [["read"], ["write"], ["modify"], ["execute"]]) {
+        const x = explainCapability(p, "u1", base({ requiredPermissions: perms }));
+        if (x.decision !== "deny") expect(x.checks.find((c) => c.check === "approval_threshold")!.passed).toBe(x.decision === "allow");
+      }
+    }
+  });
+
+  it("returns every required permission (no silent truncation)", () => {
+    const perms = Array.from({ length: 30 }, (_, i) => (i % 2 ? "read" : "write"));
+    expect(explainCapability(policy, "u1", base({ requiredPermissions: perms })).requiredPermissions).toHaveLength(30);
+  });
+
   it("the decision always matches policy.evaluate", () => {
     for (const cap of [base(), base({ risk: "critical" }), base({ availability: "unavailable" }), base({ requiredPermissions: ["write"] })]) {
       const d = policy.evaluate("u1", cap);
@@ -54,6 +72,8 @@ describe("GET /api/nexus/capabilities/explain", () => {
     expect((await GET(new Request("http://x/api/nexus/capabilities/explain"))).status).toBe(400);
     expect((await GET(new Request(`http://x/api/nexus/capabilities/explain?capabilityId=${"a".repeat(201)}`))).status).toBe(400);
     expect((await GET(new Request("http://x/api/nexus/capabilities/explain?capabilityId=a%20b"))).status).toBe(400);
+    expect((await GET(new Request(`http://x/api/nexus/capabilities/explain?capabilityId=ok&projectId=${"p".repeat(65)}`))).status).toBe(400);
+    expect((await GET(new Request("http://x/api/nexus/capabilities/explain?capabilityId=ok&projectId=..%2Fother"))).status).toBe(400);
   });
 
   it("401 without credentials when auth is required, and in production when auth is not configured", async () => {
@@ -79,6 +99,10 @@ describe("GET /api/nexus/capabilities/explain", () => {
     expect(body.explanation.capabilityId).toBe(first.id);
     expect(["allow", "approval_required", "deny"]).toContain(body.explanation.decision);
     expect(body.explanation.dryRun).toBe(true);
-    expect((await GET(new Request("http://x/api/nexus/capabilities/explain?capabilityId=does.not.exist.anywhere"))).status).toBe(404);
+    expect(ok.headers.get("cache-control")).toBe("no-store");
+    const missing = await GET(new Request("http://x/api/nexus/capabilities/explain?capabilityId=does.not.exist.anywhere"));
+    expect(missing.status).toBe(404);
+    // The 404 carries only the validated id: no catalog listing, no other project's data.
+    expect(Object.keys(await missing.json()).sort()).toEqual(["capabilityId", "error"]);
   });
 });

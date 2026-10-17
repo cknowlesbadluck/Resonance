@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { authRequired, authenticateNexusRequest } from "../../../../../src/auth/nexus-request";
 import { listAdvertisedCapabilities, resolveCatalogCapabilities } from "../../../../../src/composition/root";
 import { DefaultNexusPolicy } from "../../../../../src/nexus/policy";
-import { CAPABILITY_ID_PATTERN, explainCapability } from "../../../../../src/nexus/policy-explain";
+import { CAPABILITY_ID_PATTERN, PROJECT_ID_PATTERN, explainCapability } from "../../../../../src/nexus/policy-explain";
 
 const policy = new DefaultNexusPolicy();
 
@@ -13,6 +13,8 @@ const policy = new DefaultNexusPolicy();
  * (allow / approval_required / deny) and the checks behind it. Never executes, never writes.
  * Auth: same gate as discovery when auth is configured; with auth not configured it is refused in
  * production (fail closed) and answers for a local dev actor otherwise. Input is bounded.
+ * The capability catalog is global (not per project), so a 404/200 reveals nothing that discovery
+ * (same auth gate) does not already list; the 404 echoes only the validated id.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,6 +22,9 @@ export async function GET(request: Request) {
   const projectId = searchParams.get("projectId") ?? process.env.RESONANCE_PROJECT_ID;
   if (!CAPABILITY_ID_PATTERN.test(capabilityId)) {
     return NextResponse.json({ error: "capabilityId is required (1-200 chars: letters, digits, . _ : -)." }, { status: 400 });
+  }
+  if (projectId !== undefined && !PROJECT_ID_PATTERN.test(projectId)) {
+    return NextResponse.json({ error: "projectId is malformed." }, { status: 400 });
   }
 
   let actorId = "dev-local";
