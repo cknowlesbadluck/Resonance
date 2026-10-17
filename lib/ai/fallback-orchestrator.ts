@@ -35,7 +35,6 @@ export class FallbackOrchestrator {
     request: StreamRequest,
     policy: FallbackPolicy
   ): Promise<FallbackResult> {
-    const chunks: StreamChunk[] = [];
     const attempted: FallbackResult["attempted"] = [];
     const max = policy.maxAttempts ?? policy.order.length;
     const onlyRetryable = policy.onlyRetryable ?? DEFAULT_RETRYABLE;

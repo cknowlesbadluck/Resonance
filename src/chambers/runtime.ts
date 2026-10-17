@@ -7,7 +7,6 @@ import type {
   Agenda,
   Chamber,
   ChamberParticipant,
-  ChamberStatus,
   ContextPlane,
   ContextView,
   ToolkitSnapshot,

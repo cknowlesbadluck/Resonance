@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/production-smoke.mjs"
+    "smoke": "node scripts/production-smoke.mjs",
+    "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
@@ -21,7 +22,10 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.71.2",
     "vitest": "^4.1.11"
   },
   "overrides": {
