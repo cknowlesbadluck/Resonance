@@ -93,7 +93,7 @@ export async function GET(request: Request) {
       const [executions, evidence] = await Promise.all([persistence.listExecutions(projectId), persistence.listEvidence(projectId)]);
       return NextResponse.json({ executions, evidence, source: "durable" });
     } catch (error) {
-      return persistenceErrorResponse("executions.list", error);
+      return persistenceErrorResponse("executions.list", error, request);
     }
   }
   const listed = scopedMemory.list(projectId);
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
         .select("id", { count: "exact", head: true })
         .eq("project_id", intent.projectId)
         .gte("created_at", windowStart);
-      if (rateError) return persistenceErrorResponse("executions.rate_limit", rateError);
+      if (rateError) return persistenceErrorResponse("executions.rate_limit", rateError, request);
       if ((recentCount ?? 0) > RATE_LIMIT_MAX_REQUESTS) {
         // Release our own claim so the key is not burned by a throttled attempt.
         await db
@@ -188,8 +188,8 @@ export async function POST(request: Request) {
         .eq("project_id", intent.projectId)
         .eq("idempotency_key", idempotencyKey)
         .maybeSingle();
-      if (lookupError) return persistenceErrorResponse("executions.idempotency_lookup", lookupError);
-      if (!existing) return persistenceErrorResponse("executions.claim", claim.error);
+      if (lookupError) return persistenceErrorResponse("executions.idempotency_lookup", lookupError, request);
+      if (!existing) return persistenceErrorResponse("executions.claim", claim.error, request);
       if (existing.request_hash !== hash) {
         return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
       }
