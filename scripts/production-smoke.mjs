@@ -3,12 +3,17 @@
  * Host-neutral production smoke for Resonance.
  * Set SMOKE_BASE_URL to the live control plane (currently Netlify).
  * Exits 0 when every case matches its allowed status set.
+ * Each request has a timeout (SMOKE_TIMEOUT_MS, default 20000); a timeout or network error is a FAIL,
+ * never a hung CI job.
  */
 const base = (process.env.SMOKE_BASE_URL ?? "").replace(/\/$/, "");
 if (!base) {
   console.log("production-smoke: skip (SMOKE_BASE_URL unset)");
   process.exit(0);
 }
+
+const parsedTimeout = Number(process.env.SMOKE_TIMEOUT_MS);
+const timeoutMs = Number.isFinite(parsedTimeout) && parsedTimeout >= 1000 ? Math.floor(parsedTimeout) : 20_000;
 
 const cases = [
   { id: "health", method: "GET", path: "/api/health", expect: [200] },
@@ -35,11 +40,21 @@ const cases = [
 
 const results = [];
 for (const item of cases) {
-  const response = await fetch(`${base}${item.path}`, {
-    method: item.method,
-    headers: item.headers,
-    body: item.body,
-  });
+  let response;
+  try {
+    response = await fetch(`${base}${item.path}`, {
+      method: item.method,
+      headers: item.headers,
+      body: item.body,
+      redirect: "manual",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    const reason = error?.name === "TimeoutError" ? `timeout after ${timeoutMs}ms` : "network error";
+    results.push({ id: item.id, status: null, ok: false, snippet: reason });
+    console.log(`FAIL ${item.id} → ${reason} (allowed ${item.expect.join(",")})`);
+    continue;
+  }
   const ok = item.expect.includes(response.status);
   let snippet = "";
   try {
