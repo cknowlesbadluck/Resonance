@@ -9,23 +9,27 @@ export function isUuid(value: unknown): value is string {
 }
 
 /**
- * RESONANCE_AUTH_MODE:
- * - required: always demand Bearer + membership (fail closed if env incomplete)
- * - optional: never demand auth
- * - auto (default): demand auth when Supabase URL + service role are configured
+ * RESONANCE_AUTH_MODE (fail closed):
+ * - required (and the DEFAULT when unset/blank): demand Bearer + project membership.
+ *   With Supabase env missing, every protected request is refused (401).
+ * - optional: LOCAL DEV OPT-OUT ONLY. Honoured only outside production
+ *   (NODE_ENV !== "production" and RESONANCE_DEPLOY_STAGE !== "production").
+ *   In production it is ignored and auth is required.
+ * - auto: legacy; requires auth when Supabase URL + service role are configured,
+ *   and always in production.
+ * - anything else: required.
  */
-export function authRequired(): boolean {
-  const rawMode = process.env.RESONANCE_AUTH_MODE;
-  if (!rawMode) {
-    return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
-  }
-  const mode = rawMode.trim().toLowerCase();
-  if (mode === "required") return true;
-  if (mode === "optional") return false;
+function isProductionEnv(env: NodeJS.Dict<string>): boolean {
+  return env.NODE_ENV === "production" || env.RESONANCE_DEPLOY_STAGE === "production";
+}
+
+export function authRequired(env: NodeJS.Dict<string> = process.env): boolean {
+  const mode = (env.RESONANCE_AUTH_MODE ?? "").trim().toLowerCase();
+  const production = isProductionEnv(env);
+  if (mode === "optional") return production;
   if (mode === "auto") {
-    return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL);
+    return production || Boolean(env.SUPABASE_SERVICE_ROLE_KEY && env.NEXT_PUBLIC_SUPABASE_URL);
   }
-  // Fail closed on any unrecognized mode
   return true;
 }
 
