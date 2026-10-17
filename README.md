@@ -63,7 +63,7 @@ The current codebase already provides useful foundations that are being expanded
 - Agenda and Chamber contracts
 - Chamber participants and toolkit snapshots
 - Context Plane
-- capability levels and policy gate
+- capability levels and Nexus policy (`src/nexus/policy*`). The older `src/policy/gate.ts` and `src/chambers/*` are unreferenced and pruned in #193
 - integration descriptors
 - event ingestion
 - Supabase migrations and RLS
@@ -98,6 +98,10 @@ npm run build
 
 Never commit provider secrets. GitHub is the engineering source of truth; Linear is the durable planning/decision companion.
 
+## Production status (honest)
+
+Production is the Netlify site `resonancenexus`. `GET /api/ready` is the source of truth. On 2026-10-17 it returns **503** `not_ready` with `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`, and it serves a 2026-09-27 build that is behind main's readiness contract. Bringing it up takes owner actions only: restore the Supabase project, set the key in the Netlify Production env, then redeploy main. `node scripts/deploy-parity.mjs --plan` (in #202) prints those steps from the live body. Do not describe prod as live until `/api/ready` returns 200 and the parity check passes. See `docs/DEPLOYMENT.md`.
+
 ## Governance
 
 ### Two-Key Reformation Rule
@@ -112,6 +116,8 @@ Normal implementation, bug fixes, tests, documentation, and additive work do not
 
 - `docs/ARCHITECTURE.md` — detailed architecture
 - `docs/ROADMAP.md` — execution path
+- `docs/PORTFOLIO-ROADMAP-10-PHASE.md` — 10-phase status board and owner merge order (updated in place)
+- `docs/DEPLOYMENT.md` — Netlify deploy, readiness contract, deploy-parity check
 - `docs/NEXUS_PROOF.md` — heterogeneous bridge proof
 - `docs/superpowers/specs/2026-08-15-resonance-nexus-design.md` — validated Nexus design
 - `docs/superpowers/plans/2026-08-15-resonance-nexus-v1-plan.md` — implementation plan
