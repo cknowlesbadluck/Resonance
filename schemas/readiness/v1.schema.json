@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cknowlesbadluck/Resonance/schemas/readiness/v1.schema.json",
+  "title": "Portable readiness contract v1",
+  "description": "Core fields every service readiness endpoint returns so any client can consume it the same way. Services may add their own fields; clients must ignore unknown fields. HTTP 200 iff status is 'ready', otherwise 503. Vendored copy: no runtime or package dependency on any other repository.",
+  "x-contract-version": "v1",
+  "type": "object",
+  "required": ["status", "service", "version", "contractRevision", "stage", "missingRequired"],
+  "properties": {
+    "status": { "type": "string", "enum": ["ready", "not_ready", "degraded", "initializing"] },
+    "service": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$" },
+    "contractRevision": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "commitSha": { "type": "string", "pattern": "^(?:unknown|[0-9a-f]{7,40})$" },
+    "stage": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+    "missingRequired": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 64,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,127}$" }
+    }
+  },
+  "additionalProperties": true
+}

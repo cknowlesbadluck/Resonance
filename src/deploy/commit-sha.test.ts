@@ -8,7 +8,7 @@ describe("deployed commitSha", () => {
   it("reads the first valid 40-hex SHA from host env, ignoring junk", () => {
     expect(deployedCommitSha({ COMMIT_REF: "main", VERCEL_GIT_COMMIT_SHA: A.toUpperCase() })).toBe(A);
     expect(deployedCommitSha({ RESONANCE_COMMIT_SHA: "  " + A + " " })).toBe(A);
-    expect(deployedCommitSha({})).toBeNull();
+    expect(deployedCommitSha({})).toBe("unknown");
   });
   it("readiness carries commitSha additively", () => {
     expect(readiness()).toHaveProperty("commitSha");

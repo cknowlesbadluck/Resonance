@@ -1,5 +1,6 @@
 import { evaluateDeployContract, readinessPosture, type DeployContract, type ReadinessPosture } from "./contract";
 import { EXPECTED_CONTRACT_REVISION } from "./deployLag";
+import { RESONANCE_VERSION } from "./version";
 
 export type Liveness = {
   status: "ok";
@@ -11,6 +12,8 @@ export type Liveness = {
 export type Readiness = {
   status: "ready" | "not_ready";
   service: "resonance-nexus";
+  /** Released service version. Portable readiness contract v1 field. */
+  version: string;
   stage: "deployment";
   production: boolean;
   authMode: string;
@@ -20,8 +23,8 @@ export type Readiness = {
   missingRequired: string[];
   ownerActionRequired: boolean;
   contractRevision: string;
-  /** Deployed commit (40-hex) from the host's build env, or null. Additive; used by scripts/deploy-parity.mjs. */
-  commitSha: string | null;
+  /** Deployed commit (40-hex) from the host's build env, or "unknown". Portable readiness contract v1 field. */
+  commitSha: string;
   ownerKeys: string[];
   agentActionRequired: boolean;
   posture: ReadinessPosture["note"];
@@ -31,12 +34,12 @@ export type Readiness = {
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
 /** Commit SHA injected by common free hosts/CI at build time. Never a secret; validated as 40-hex. */
-export function deployedCommitSha(env: NodeJS.Dict<string> = process.env): string | null {
+export function deployedCommitSha(env: NodeJS.Dict<string> = process.env): string {
   for (const key of ["RESONANCE_COMMIT_SHA", "COMMIT_REF", "VERCEL_GIT_COMMIT_SHA", "GITHUB_SHA"]) {
     const value = env[key]?.trim();
     if (value && SHA_RE.test(value)) return value.toLowerCase();
   }
-  return null;
+  return "unknown";
 }
 
 export function liveness(now = new Date()): Liveness {
@@ -56,6 +59,7 @@ export function readiness(contract: DeployContract = evaluateDeployContract(), n
   return {
     status: contract.ready ? "ready" : "not_ready",
     service: "resonance-nexus",
+    version: RESONANCE_VERSION,
     stage: "deployment",
     production: contract.production,
     authMode: contract.authMode,

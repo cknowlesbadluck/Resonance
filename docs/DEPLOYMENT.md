@@ -23,7 +23,7 @@ Render (`resonance-admin`) was a draft cut-over and is **not** the live producti
 | Path | Auth | Meaning |
 |------|------|---------|
 | `GET /api/health` | none | Process liveness. Always 200 if the Node process is up. |
-| `GET /api/ready` | none | Env contract. 200 when ready; 503 with structured `missingRequired` when not. Never echoes secret values. |
+| `GET /api/ready` | none | Env contract. 200 when ready; 503 with structured `missingRequired` when not. Never echoes secret values. Body follows the portable readiness contract v1 ([READINESS-CONTRACT.md](READINESS-CONTRACT.md), schema `schemas/readiness/v1.schema.json`). |
 
 Production is ready only when:
 
