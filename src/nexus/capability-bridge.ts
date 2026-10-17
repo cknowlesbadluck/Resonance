@@ -69,5 +69,3 @@ export function catalogEntryToNexus(entry: CatalogEntry, bindAdapter: AdapterBin
       : `No adapter is bound to provider "${entry.provider}" in this deployment.`,
   };
 }
-
-/** @deprecated Use `catalogEntryToNexus`. Retained for one release for callers still on the old name. */
