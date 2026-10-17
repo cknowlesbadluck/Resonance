@@ -1,4 +1,4 @@
-# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 13:10 EDT)
+# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 14:10 EDT)
 
 Product-only roadmap; Resonance stays domain-independent. Current audit: `docs/AUDIT-2026-10-13.md`. Engineering phase map: `docs/ROADMAP.md`.
 Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked on owner** (owner action, key, migration or Netlify) · **not started**.
@@ -16,7 +16,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 9 | iOS peer parity | Xcode app target builds `ios/App`; iOS composes, executes **and approves/resumes** through `ResonanceCore`; Swift contract tests share web fixtures; device acceptance with real evidence | **not started** beyond the library (no app target, no resume in NexusClient) |
 | 10 | Finished Nexus | web + iOS end-to-end against production; failover (#188); runbook (#197); 7 consecutive days of `/api/ready` 200 | **blocked on owner** (phase 6), **not started** for the iOS half |
 
-## Status board (2026-10-17 13:10 EDT; main 7ac2ffc, nothing merged)
+## Status board (2026-10-17 14:10 EDT; main 7ac2ffc, nothing merged)
 
 Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI green · **[blocked]** = needs owner action. Nothing has merged to Resonance main since #192 (7ac2ffc). Every PR listed below is **open**.
 
@@ -25,13 +25,15 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 | 1 Green, reviewed main | [blocked] | main CI green (7ac2ffc) ✓; branch protection: `CI` required, strict, 1 review. PR `gemini` "failures" are concurrency cancellations (issue_comment runs share the PR's group); **#198** fixes it, so merge it first. Owner review throughput for 47 open PRs |
 | 2 Lean code | [in progress] | `npx knip` on main: the only unused files are `lib/ai/*` (#183) and `src/chambers/*` + `src/policy/gate.ts` (#193); unused exports in #203. No TODO/FIXME/XXX in code |
 | 3 Fail-closed auth | [in progress] | #174, #185 open; route auth matrix tested on those branches |
-| 4 Bounded + private surface | [in progress] | #216 (outbound fetch timeouts + guard), #172 stack, #175, #186, #191, #206, #213/#214 open |
+| 4 Bounded + private surface | [in progress] | #216 (outbound fetch timeouts + guard), #172 stack, #175, #186, #191, #206, #213/#214, **#218** open. #218 bounds executor retries (attempts ≤5, delay ≤30s) |
 | 5 Data security | [blocked] | owner applies the #173, #207, #208, #214 migrations, then `scripts/verify-rls.sql` (#196) is clean |
 | 6 Honest production | [blocked] | 13:01 EDT (re-checked): `/api/ready` **503**, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]`, prod behind main (no `contractRevision`/`posture`). Owner says the Supabase project is **paused**. **#202** now has `node scripts/deploy-parity.mjs --plan`, which turns the live body into ordered owner steps: restore project → set `SUPABASE_SERVICE_ROLE_KEY` in Netlify Production env → redeploy main → verify (`--strict` + smoke) |
 | 7 Single capability model | [in progress] | #184 contract, #182 adapter contract, #217 policy dry-run open; schema generation not started |
-| 8 Exactly-once execution | [in progress] | #215 journal contract, #209 replay, #206 resume guard, #210 webhook open; Supabase journal store + migration not started (owner applies) |
+| 8 Exactly-once execution | [in progress] | #215 journal contract, #209 replay, #206 resume guard, #210 webhook, **#218 retry classification** open (`src/nexus/retry-policy.ts`: permanent codes never retry; ambiguous `timeout`/`unavailable` never blindly re-run a step whose grants are ≥ `modify`, derived from the single capability model in `grants.ts`; `execution.retry_skipped` event); Supabase journal store + migration not started (owner applies) |
 | 9 iOS peer parity | not started | app target builds; approve/resume via the journal |
 | 10 Finished Nexus | [blocked] | depends on phase 6; 7 days of `/api/ready` 200 |
+
+**14:10 EDT:** 48 open (47 + #218; no merges, no closures, nothing clearly superseded). `npm audit` 0 vulnerabilities; all workflow actions SHA-pinned; #194 already carries next 15.5.28, vitest 4.1.12, @types/node 22.20.5 (patch only). The only failing PR check is `gemini` (`cancelled`, concurrency; #198). No branch without an open PR is free of unique commits, so none deleted. Linear (read-only): CHR-54 `/api/ready` 200 still Todo/Urgent; CHR-33, CHR-24, CHR-25, CHR-39, CHR-45, CHR-46 in progress.
 
 Open PRs at 13:10 EDT: 47, unchanged from 12:15 (no merges, no closures). Owner instruction from 13:00 EDT: agents merge nothing. Re-verified at 13:05 EDT:
 - Every open PR is MERGEABLE against main.
@@ -60,6 +62,7 @@ Agents don't merge Resonance PRs; the owner does. Simulated locally on main 7ac2
 | 6 | #213 fair share | main | none |
 | 7 | #214 shared leases | #213 | none (migration applied by owner only) |
 | 8 | #215 execution journal, #216 fetch timeouts, #217 policy explain | main | none (new files; #216 edits only `scripts/production-smoke.mjs`) |
+| 8b | #218 executor retry classification | main | touches `src/nexus/executor.ts`, `composer.ts`, `types.ts` (additive `ExecutionStep.sideEffect?`); no open PR edits `runStep` |
 | then | #210, #203 (rebase on `src/nexus/runtime.ts`), #190 → #194 (deps; #194 lockfile refresh after #190), prunes #183/#193 → #211 (lint last of the package-file group) | | package/pruned-file pairs listed below |
 
 **#202 vs #178 (decided):** keep **#202's field-set contract check** as the deploy-parity script. It works against the stale 2026-09-27 prod today, where commitSha parity can't (prod doesn't serve `commitSha` until #178 is deployed). Before #178 lands, drop `scripts/deploy-parity.mjs`/`.d.mts` from #178 and keep #178's additive `commitSha` on `/api/ready`; a SHA comparison can be added to #202's script as a second verdict later. #179's schedule should call #202's script. Not closed: both carry unique work. **Done 11:00 EDT:** #178 dropped its script (9ec340d, `commitSha` tests moved to `src/deploy/commit-sha.test.ts`); #179's schedule calls #202's script (fa0d767); #180 merged its parent. Simulated main + #202 + each of #178/#179/#180: no conflicts.
