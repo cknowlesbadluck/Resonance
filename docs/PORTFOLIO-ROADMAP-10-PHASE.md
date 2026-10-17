@@ -22,7 +22,7 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 
 | Phase | Tag | Exit check (how it's verified) |
 |---|---|---|
-| 1 Green, reviewed main | [blocked] | main CI green (7ac2ffc) ✓; branch protection: `CI` required, strict, 1 review. PR `gemini` "failures" are concurrency cancellations (issue_comment runs share the PR's group); **#198** fixes it, so merge it first. Owner review throughput for 46 open PRs |
+| 1 Green, reviewed main | [blocked] | main CI green (7ac2ffc) ✓; branch protection: `CI` required, strict, 1 review. PR `gemini` "failures" are concurrency cancellations (issue_comment runs share the PR's group); **#198** fixes it, so merge it first. Owner review throughput for 47 open PRs |
 | 2 Lean code | [in progress] | `npx knip` on main: the only unused files are `lib/ai/*` (#183) and `src/chambers/*` + `src/policy/gate.ts` (#193); unused exports in #203. No TODO/FIXME/XXX in code |
 | 3 Fail-closed auth | [in progress] | #174, #185 open; route auth matrix tested on those branches |
 | 4 Bounded + private surface | [in progress] | #216 (outbound fetch timeouts + guard), #172 stack, #175, #186, #191, #206, #213/#214 open |
@@ -33,7 +33,7 @@ Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI 
 | 9 iOS peer parity | not started | app target builds; approve/resume via the journal |
 | 10 Finished Nexus | [blocked] | depends on phase 6; 7 days of `/api/ready` 200 |
 
-Open PRs at 12:15 EDT: 46. No PR met the clearly-superseded bar. Checked with Conduit's report-only `merge-train` tool (Conduit #260): the only duplicate new file is `src/nexus/fair-share.ts` in #213/#214, which is a stack (#214 ⊃ #213), not a duplicate. #190/#194 have an identical file set (package files) but bump disjoint packages. Recommended owner order: #198 → #204 → audit stack #172 → #176 → #177 → #181 → #178 → #179/#180 → #212 → #209 → #213 → #214 → #215/#216/#217 → #202 → rest per the train below.
+Open PRs at 12:15 EDT: 47. No PR met the clearly-superseded bar. Checked with Conduit's report-only `merge-train` tool (Conduit #260): the only duplicate new file is `src/nexus/fair-share.ts` in #213/#214, which is a stack (#214 ⊃ #213), not a duplicate. #190/#194 have an identical file set (package files) but bump disjoint packages. Recommended owner order: #198 → #204 → audit stack #172 → #176 → #177 → #181 → #178 → #179/#180 → #212 → #209 → #213 → #214 → #215/#216/#217 → #202 → rest per the train below.
 
 ## Merge train (2026-10-17 07:25 EDT)
 
