@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicFailure } from "../../../../src/nexus/db-error";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
 import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/types";
@@ -65,6 +66,6 @@ export async function POST(request: Request) {
     };
     return NextResponse.json({ intent, plan: await composeNexusIntent(intent) }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 422 });
+    return NextResponse.json(publicFailure(error), { status: 422 });
   }
 }
