@@ -1,57 +1,55 @@
-# Portfolio 10-phase roadmap — 2026-10-13 10:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — 2026-10-17 (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes at 2026-10-13T14:01Z. Resonance /api/ready 503 owner-gated (missing SUPABASE_SERVICE_ROLE_KEY exactly). Conduit /ready 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). Quicksilver gateway host unresolved (000); deviceAcceptance=not_recorded; CHR-55 remains sole gate. Vercel: resonance.vercel.app and quicksilver.vercel.app 200 stranger_occupant; resonancenexus.vercel.app and quicksilverv1.vercel.app 404 alias_absent. No secrets invented. Classifier tests ≠ production proof.
+Live probes at 2026-10-17T14:00Z. Conduit /ready 200 (v0.8.0, postgres). Resonance /api/ready 503 (missing SUPABASE_SERVICE_ROLE_KEY). Quicksilver CHR-55 not_recorded. No secrets invented. No device claims. Classifier/tests ≠ production proof.
 
 Evidence:
-- Resonance: {"status":"not_ready","service":"resonance-nexus","stage":"deployment","production":true,"authMode":"required","authModeOk":true,"persistenceConfigured":false,"githubAdapterConfigured":false,"missingRequired":["SUPABASE_SERVICE_ROLE_KEY"],"timestamp":"2026-10-13T14:01:13.311Z"} HTTP 503.
-- Conduit ready: 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). /health 200. Classifier rejects incomplete_ready.
-- Hygiene prune: single roadmap file policy holds. Superseded docs-refresh PRs (#244 QuicksilverV1, #159 Resonance, #193 Conduit) presented for close (interactive forms rendered). Activity prune removed 0.
-- Open held: QuicksilverV1 #242/#209/#245 (lattice/hardening); Conduit #187/#190/#188/#191/#194/#195/#196; Resonance #154/#157/#158. Dependabot: Resonance postcss (high GHSA-r28c-9q8g-f849 / medium GHSA-fxqj-rqcc-2cmp path traversal) still open — lockfile follow-up next (no deploy).
-- No hourly audits. Legacy Quicksilver archived.
-- Full brutal audit note added: docs/AUDIT-2026-10-13.md (portfolio scores ~5/10, structural weaknesses listed).
+- Conduit ready 200 stamped.
+- Resonance not_ready 503 missingRequired [SUPABASE_SERVICE_ROLE_KEY], health ok, deploy lag.
+- Supabase inactive. Vercel stranger/absent. Quicksilver CI green, device gate open.
+- Open PR volume high (~100+ across three). Non-runtime merges holding ready.
 
-## Phase 1 — Owner gate stays external
-Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
+## Phase 1 — Owner gates stay external and fail-closed
+Do not invent secrets. Exit: Resonance ready body remains owner-blocked on missing key; Conduit ready 200; posture rejects incomplete.
 
 ## Phase 2 — Alias and stranger classification stay strict
-404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready.
+404/unexpected 200 never treated as owner action or ready. Exit: probes and tests enforce.
 
 ## Phase 3 — Device fence immutable
-claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
+claimDeviceAcceptance() rejects. Exit: health keeps deviceAcceptance=not_recorded, acceptanceGate=CHR-55.
 
 ## Phase 4 — CHR-55 remains the only device gate
-Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
+Simulator/CI/workers.dev ≠ acceptance. Exit: Linear CHR-55 open until archive IPA on iPhone 16e validated.
 
 ## Phase 5 — Conversation and Memory budget stay
-Bounded windows and on-device embeddings continue. Exit: AppTests green; no unbounded history leakage.
+Bounded windows, on-device embeddings, retention. Exit: AppTests green; no unbounded leakage.
 
 ## Phase 6 — Gateway contract and free-tier stay
-No paid Workers bindings (KV/R2/D1/Queues). Exit: wrangler.toml clean.
+No paid bindings. Exit: wrangler.toml and routing clean; privacy floor holds.
 
 ## Phase 7 — Hygiene prune executed
-One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Superseded docs-refresh PRs closed. Audit note mirrored.
+One roadmap + one current audit per repo. Close superseded stacked PRs after verification. No hourly artifacts. Archived non-product.
 
 ## Phase 8 — Resonance control plane waits on stamp
-No second client or iOS Resonance surface until live Netlify ready body carries contract stamp and owner key is set.
+No second client or iOS surface until live ready carries contract stamp and owner key set. Deploy lag resolved by owner lock or manual.
 
 ## Phase 9 — Privacy and logging stay strict
-Privacy manifest enforced. Gateway logs metadata only. Exit: no request/response body logging.
+Privacy manifests, redaction, metadata-only logs, no body logging. Exit: tests pin floors.
 
 ## Phase 10 — Cross-plane acceptance proof
-Single probe covers Conduit ready, Resonance ready (stamped), and real device archive evidence. Exit: production verdict accepted. Fixture or classifier test is insufficient.
+Single probe covers Conduit ready, Resonance ready (stamped), real device archive evidence. Exit: production verdict accepted. Fixture insufficient.
 
-Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is closed by simulator or classifier.
+Binding constraints: Resonance owner secret + CHR-55 device archive. Neither closed by simulator or classifier.
 
 ## Innovation Track (advanced — no gates violated)
-1. Pure PortfolioPosture classifier (scripts/portfolio-posture.mjs) — unit-tested, no secrets. Fail-closed. Explicitly rejects incomplete_ready.
-2. portfolio-probe.sh: structured JSON, cold-start handling, --json, fail-closed. Live-verified at 14:01Z.
-3. Hygiene prune: outdated docs-refresh PRs presented for close this session (interactive).
-4. Adversarial review of lattice PRs (#242/#154/#187) — keep open until verified.
-5. Bolt performance opts (#188/#191/#194/#195/#196) reviewed — low risk, tests claimed green; merge candidates after re-verify.
-6. Postcss Dependabot in Resonance: lockfile bump to >=8.5.23 next (no secret, no deploy). High/medium path traversal residual (GHSA-r28c-9q8g-f849 / GHSA-fxqj-rqcc-2cmp).
-7. Cross-repo consistency: this evidence block is canonical; mirrored this session.
-8. Chamber dissonance (#157) held pending no-gate confirmation.
-9. On-device Nexus capability list diagnostic (post Phase 8 only).
-10. Fresh 10:00 EDT probe confirms identical fail-closed posture. No regression.
+1. Durable execution journal contract (in-memory + RFC) for approve/resume survival — Resonance #215.
+2. Policy dry-run / explain endpoint for capabilities (allow/approval/deny + reasons) — Resonance #217.
+3. Shared leases for fair-share across instances (opt-in, fail-safe) — Resonance #214.
+4. Task stale-claim recovery (task_reclaim) + health summary — Conduit #259.
+5. Signed HMAC-chained grant receipts for mcp_bridge_call (opt-in, offline verifier) — Conduit #257.
+6. Bridge destination rule (allowlist/registered, report default, enforce opt-in) — Conduit #256.
+7. Total wall-clock deadlines + outbound timeout guards across planes — Resonance #216, Conduit #258.
+8. On-device note summaries and VoiceOver state announcements (Quicksilver PRs).
+9. Calibrated personal classifier + history prune for cloud fallback (privacy-preserving).
+10. Fresh 14:00Z probe confirms identical fail-closed posture. No regression.
 
-Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed 10:00 EDT. Fresh probes confirm fail-closed posture. Innovation: roadmap refreshed with live evidence; classifier and probe tools hold; superseded PRs presented for close; durable AUDIT-2026-10-13.md added. No secret invention. No device claim. Stabilization holds. Highest-value next: address postcss lockfile (high severity path traversal), re-verify Bolt opts for merge, CHR-55 device archive remains sole hard gate.
+Audit notes: Full audit, hardening, stabilization, hygiene, and prune pass completed. Fresh probes confirm postures. Innovations proposed and partially implemented in open PRs. Highest-value next: owner sets Resonance key + restores DB; validate Quicksilver device archive (CHR-55); land non-conflicting hardening PRs. Stabilization holds.
