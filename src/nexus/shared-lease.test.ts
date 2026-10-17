@@ -20,11 +20,12 @@ function fakeLeaseDb(opts: { now?: () => number } = {}) {
     rpc: async (fn, args) => {
       calls.push({ fn, args });
       if (fn === "nexus_lease_acquire") {
-        const { p_scope, p_key, p_limit, p_ttl_seconds } = args as { p_scope: string; p_key: string; p_limit: number; p_ttl_seconds: number };
+        const { p_scope, p_key, p_limit, p_ttl_seconds, p_lease_id } = args as { p_scope: string; p_key: string; p_limit: number; p_ttl_seconds: number; p_lease_id: string };
         for (const [id, l] of leases) if (l.scope === p_scope && l.key === p_key && l.expiresAt <= now()) leases.delete(id);
         const held = [...leases.values()].filter((l) => l.scope === p_scope && l.key === p_key).length;
         if (held >= p_limit) return { data: null, error: null };
-        const id = `lease-${++seq}`;
+        seq += 1;
+        const id = p_lease_id;
         leases.set(id, { scope: p_scope, key: p_key, expiresAt: now() + p_ttl_seconds * 1000 });
         return { data: id, error: null };
       }
@@ -57,7 +58,9 @@ describe("SharedLeaseStore", () => {
     expect((await store.acquire("adapter", "p1", 2)).status).toBe("acquired");
     if (a.status === "acquired") await store.release(a.leaseId);
     expect((await store.acquire("project", "p1", 2)).status).toBe("acquired");
-    expect(db.calls[0]).toEqual({ fn: "nexus_lease_acquire", args: { p_scope: "project", p_key: "p1", p_limit: 2, p_holder: "h1", p_ttl_seconds: 120 } });
+    expect(db.calls[0]).toMatchObject({ fn: "nexus_lease_acquire", args: { p_scope: "project", p_key: "p1", p_limit: 2, p_holder: "h1", p_ttl_seconds: 120 } });
+    expect(db.calls[0].args.p_lease_id).toMatch(/^[0-9a-f-]{36}$/);
+    if (a.status === "acquired") expect(a.leaseId).toBe(db.calls[0].args.p_lease_id);
     expect(store.status()).toMatchObject({ state: "available", acquired: 4, full: 1, errors: 0 });
   });
 
@@ -94,6 +97,23 @@ describe("SharedLeaseStore", () => {
     const store3 = new SharedLeaseStore({ rpc: () => new Promise(() => { /* hangs forever */ }) }, { rpcTimeoutMs: 20 });
     expect(await store3.acquire("project", "p", 1)).toEqual({ status: "unavailable", reason: "timeout" });
     expect(store3.status().lastErrorCode).toBe("timeout");
+  });
+
+  it("a timed-out acquire that commits late is released once the original call settles (no leaked slot)", async () => {
+    const db = fakeLeaseDb();
+    let settle!: () => void;
+    const slow: LeaseRpcClient = {
+      rpc: (fn, args) => fn === "nexus_lease_acquire"
+        ? new Promise((resolve) => { settle = () => resolve(db.client.rpc(fn, args) as Promise<{ data: unknown; error: LeaseRpcError }>); })
+        : db.client.rpc(fn, args),
+    };
+    const store = new SharedLeaseStore(slow, { rpcTimeoutMs: 10 });
+    expect(await store.acquire("adapter", "a", 1)).toEqual({ status: "unavailable", reason: "timeout" });
+    expect(db.leases.size).toBe(0);
+    settle(); // the server commits the insert after the client gave up
+    await tick(); await tick(); await tick();
+    expect(db.leases.size).toBe(0);
+    expect(db.calls.map((c) => c.fn)).toEqual(["nexus_lease_acquire", "nexus_lease_release"]);
   });
 
   it("release never throws (errors and hangs are counted; TTL covers them)", async () => {

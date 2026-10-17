@@ -98,12 +98,18 @@ export class SharedLeaseStore {
       this.counters.fallbacks += 1;
       return { status: "unavailable", reason: this.state === "missing" ? "missing" : "cooldown" };
     }
+    // Client-generated id: if the RPC times out but later commits, we can still release that exact lease.
+    const leaseId = globalThis.crypto.randomUUID();
     let response: { data: unknown; error: LeaseRpcError };
+    let pending: Promise<{ data: unknown; error: LeaseRpcError }> | undefined;
     try {
-      response = await withTimeout(this.client.rpc("nexus_lease_acquire", {
-        p_scope: scope, p_key: key.slice(0, 200), p_limit: limit, p_holder: this.holder, p_ttl_seconds: ttlSeconds,
-      }), this.rpcTimeoutMs);
+      pending = Promise.resolve(this.client.rpc("nexus_lease_acquire", {
+        p_scope: scope, p_key: key.slice(0, 200), p_limit: limit, p_holder: this.holder, p_ttl_seconds: ttlSeconds, p_lease_id: leaseId,
+      }));
+      response = await withTimeout(pending, this.rpcTimeoutMs);
     } catch (error) {
+      // Release only after the original call settles, so the release can't run before a late insert.
+      if (pending) void pending.then((late) => { if (!late.error && late.data) void this.release(leaseId); }, () => {});
       return this.markUnavailable(error instanceof RpcTimeout ? "timeout" : "error", error instanceof RpcTimeout ? "timeout" : "exception");
     }
     if (response.error) {
@@ -113,7 +119,7 @@ export class SharedLeaseStore {
     this.state = "available";
     if (typeof response.data === "string" && response.data) {
       this.counters.acquired += 1;
-      return { status: "acquired", leaseId: response.data };
+      return { status: "acquired", leaseId };
     }
     this.counters.full += 1;
     return { status: "full" };
