@@ -1,4 +1,4 @@
-# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 09:40 EDT)
+# Resonance — 10-phase roadmap to a finished Nexus with an iOS peer (updated in place 2026-10-17 09:10 EDT)
 
 Product-only roadmap; Resonance stays domain-independent. Current audit: `docs/AUDIT-2026-10-13.md`. Engineering phase map: `docs/ROADMAP.md`.
 Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked on owner** (owner action, key, migration or Netlify) · **not started**.
@@ -16,7 +16,7 @@ Status vocabulary: **done** · **in review** (PRs open, CI green) · **blocked o
 | 9 | iOS peer parity | Xcode app target builds `ios/App`; iOS composes, executes **and approves/resumes** through `ResonanceCore`; Swift contract tests share web fixtures; device acceptance with real evidence | **not started** beyond the library (no app target, no resume in NexusClient) |
 | 10 | Finished Nexus | web + iOS end-to-end against production; failover (#188); runbook (#197); 7 consecutive days of `/api/ready` 200 | **blocked on owner** (phase 6), **not started** for the iOS half |
 
-## Status board (2026-10-17 09:40 EDT)
+## Status board (2026-10-17 09:10 EDT)
 
 Tags: **[passed]** = exit check met on main · **[in progress]** = PRs open, CI green · **[blocked]** = needs owner action.
 
