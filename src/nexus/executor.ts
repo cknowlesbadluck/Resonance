@@ -1,3 +1,4 @@
+import { redactSecrets, redactString } from "./redact";
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusEvent, NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy, ExecutionStep, StepOutcome } from "./types";
 
@@ -84,14 +85,14 @@ export class NexusExecutor {
       }
     }
     return {
-      outcome: { stepId: step.id, capabilityId: step.capabilityId, ok, error: ok ? undefined : error },
+      outcome: { stepId: step.id, capabilityId: step.capabilityId, ok, error: ok ? undefined : redactString(error) },
       output,
       evidence: {
         id: crypto.randomUUID(),
         executionId: execution.id,
         type: ok ? "event" : "audit",
         summary: ok ? `Capability ${step.capabilityId} completed.` : `Capability ${step.capabilityId} failed.`,
-        payload: ok ? output : error,
+        payload: redactSecrets(ok ? output : error),
         createdAt: new Date().toISOString(),
       },
     };
@@ -176,7 +177,7 @@ export class NexusExecutor {
           );
           stepOutcomes.push(run.outcome);
           if (run.outcome.ok) {
-            outputsMap.set(run.outcome.stepId, run.output);
+            outputsMap.set(run.outcome.stepId, redactSecrets(run.output));
             completedSteps.add(run.outcome.stepId);
           }
         }
