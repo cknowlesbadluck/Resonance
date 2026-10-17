@@ -15,6 +15,7 @@
  *   node scripts/deploy-parity.mjs [url] [--json] [--strict]
  *   node scripts/deploy-parity.mjs --body-file <path> [--json]   (offline)
  *   node scripts/deploy-parity.mjs --expected --json             (main's contract only)
+ *   node scripts/deploy-parity.mjs [url|--body-file f] --plan    (ordered owner unblock plan)
  * Default url: $PARITY_URL or https://resonancenexus.netlify.app/api/ready
  * Exit code: 0 (report-only) unless --strict and the verdict is not in_parity.
  */
@@ -40,12 +41,52 @@ export function parseExpectedRevision(deployLagSource) {
   return m[1];
 }
 
+/** Names in `const OWNER_SECRET_KEYS = new Set([...])` (src/deploy/contract.ts): keys only the owner may set. */
+export function parseOwnerKeys(contractSource) {
+  const block = /const OWNER_SECRET_KEYS = new Set\(\[([\s\S]*?)\]\)/.exec(contractSource);
+  if (!block) throw new Error("OWNER_SECRET_KEYS not found in src/deploy/contract.ts");
+  return [...block[1].matchAll(/"([A-Z0-9_]+)"/g)].map((m) => m[1]);
+}
+
 export async function loadExpected(root = ROOT) {
-  const [health, lag] = await Promise.all([
+  const [health, lag, contract] = await Promise.all([
     readFile(path.join(root, "src/deploy/health.ts"), "utf8"),
     readFile(path.join(root, "src/deploy/deployLag.ts"), "utf8"),
+    readFile(path.join(root, "src/deploy/contract.ts"), "utf8"),
   ]);
-  return { fields: parseReadinessFields(health), contractRevision: parseExpectedRevision(lag) };
+  return { fields: parseReadinessFields(health), contractRevision: parseExpectedRevision(lag), ownerKeys: parseOwnerKeys(contract) };
+}
+
+const ENV_NAME = /^[A-Z][A-Z0-9_]{0,63}$/;
+
+/**
+ * Ordered, honest path from "prod is down/stale" to "prod serves main", using only public
+ * /api/ready signals. Key names come from main's OWNER_SECRET_KEYS allowlist (or are
+ * reported as agent-fixable config); values are never read or printed. Pure.
+ */
+export function unblockPlan(live, parity, expected, site = "resonancenexus") {
+  const steps = [];
+  const missing = live && typeof live === "object" && Array.isArray(live.missingRequired)
+    ? live.missingRequired.filter((k) => typeof k === "string" && ENV_NAME.test(k)) : [];
+  const ownerKeys = missing.filter((k) => expected.ownerKeys.includes(k));
+  const agentKeys = missing.filter((k) => !expected.ownerKeys.includes(k));
+  if (parity.verdict === "not_a_ready_body") {
+    steps.push({ who: "owner", action: `Check the Netlify site '${site}' is serving this repo at all (no resonance-nexus /api/ready body).` });
+  }
+  if (ownerKeys.length) {
+    steps.push({ who: "owner", action: `Set ${ownerKeys.join(", ")} in Netlify site '${site}' environment (Production context). Values never go in the repo or chat.` });
+  }
+  if (agentKeys.length) {
+    steps.push({ who: "agent", action: `Non-secret config missing in production: ${agentKeys.join(", ")}; add to netlify.toml / site env via a reviewed PR.` });
+  }
+  if (live && live.authModeOk === false) steps.push({ who: "owner", action: "Fix RESONANCE_AUTH_MODE in production (must be 'required')." });
+  if (parity.behindMain) {
+    steps.push({ who: "owner", action: `Redeploy main to '${site}' (prod is behind main's /api/ready contract ${expected.contractRevision}).` });
+  }
+  if (steps.length) {
+    steps.push({ who: "agent", action: "Verify: node scripts/deploy-parity.mjs --strict, then npm run smoke against production; both must pass before calling prod live." });
+  }
+  return { productionReady: steps.length === 0 && live?.status === "ready", steps };
 }
 
 const REVISION = /^[A-Za-z0-9._-]{1,64}$/;
@@ -108,17 +149,28 @@ if (isMain) {
   const bodyFileIdx = args.indexOf("--body-file");
   let result;
   let source;
+  let liveBody;
   if (bodyFileIdx !== -1) {
     source = args[bodyFileIdx + 1];
-    result = compareParity(JSON.parse(await readFile(source, "utf8")), expected);
+    liveBody = JSON.parse(await readFile(source, "utf8"));
+    result = compareParity(liveBody, expected);
   } else {
-    source = args.find((a) => !a.startsWith("--")) ?? process.env.PARITY_URL ?? DEFAULT_URL;
+    source = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--body-file") ?? process.env.PARITY_URL ?? DEFAULT_URL;
     const obs = await fetchReady(source);
+    liveBody = obs.body;
     result = obs.error
       ? { verdict: "not_a_ready_body", behindMain: null, missingFields: [], extraFields: [], liveContractRevision: null, expectedContractRevision: expected.contractRevision, reason: obs.error }
       : { ...compareParity(obs.body, expected), httpStatus: obs.status };
   }
   const out = { at: new Date().toISOString(), source, ...result, summary: summarize(result) };
+  if (args.includes("--plan")) {
+    out.plan = unblockPlan(liveBody, result, expected);
+    if (!json) {
+      console.log(`deploy-parity: ${out.summary}`);
+      console.log(out.plan.steps.length ? out.plan.steps.map((s, i) => `${i + 1}. [${s.who}] ${s.action}`).join("\n") : "No unblock steps: production is ready and in parity.");
+      process.exit(0);
+    }
+  }
   console.log(json ? JSON.stringify(out, null, 2) : `deploy-parity: ${out.summary}`);
   if (args.includes("--strict") && result.verdict !== "in_parity") process.exitCode = 1;
 }

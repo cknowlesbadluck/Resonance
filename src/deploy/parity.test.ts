@@ -47,4 +47,30 @@ describe("deploy-parity script", () => {
     // Never echoes values from the live body (only names + the public revision stamp).
     expect(JSON.stringify(out)).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
   });
+
+  it("--plan turns the stale 503 into an ordered owner unblock plan, names from main's allowlist only", () => {
+    const out = run(["--body-file", path.join(ROOT, "src/deploy/__fixtures__/ready-live-2026-10-16.json"), "--plan"]) as {
+      plan: { productionReady: boolean; steps: { who: string; action: string }[] };
+    };
+    expect(out.plan.productionReady).toBe(false);
+    const who = out.plan.steps.map((s) => s.who);
+    expect(who[who.length - 1]).toBe("agent"); // always ends with a verify step
+    expect(out.plan.steps.some((s) => s.who === "owner" && /Redeploy main/.test(s.action))).toBe(true);
+  });
+
+  it("--plan is empty for main's own ready body and ignores non-env-name junk", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "parity-plan-"));
+    try {
+      const ready = { ...readiness(evaluateDeployContract({ NODE_ENV: "production" })), status: "ready", authModeOk: true, missingRequired: [] };
+      const readyFile = path.join(dir, "ready.json");
+      writeFileSync(readyFile, JSON.stringify(ready));
+      expect(run(["--body-file", readyFile, "--plan"]).plan).toEqual({ productionReady: true, steps: [] });
+      const junkFile = path.join(dir, "junk.json");
+      writeFileSync(junkFile, JSON.stringify({ service: "resonance-nexus", missingRequired: ["<script>", "lower_case", "X".repeat(80)] }));
+      const plan = run(["--body-file", junkFile, "--plan"]).plan;
+      expect(JSON.stringify(plan)).not.toMatch(/<script>|lower_case|XXXX/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
