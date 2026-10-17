@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
-import { nexusAdapters } from "../../../../src/nexus/runtime";
+import { nexusAdapters, nexusFairShare } from "../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../src/nexus/persistence/supabase";
 import { hashExecutionRequest } from "../../../../src/nexus/idempotency";
@@ -248,7 +248,7 @@ export async function POST(request: Request) {
       recordEvidence: async (item: NexusEvidence) => sink.recordEvidence(item, intent.projectId),
       recordExecution: async (execution: NexusExecution) => sink.recordExecution(execution, intent.projectId),
       recordEvent: sink.recordEvent,
-    }).execute(plan);
+    }, { fairShare: nexusFairShare }).execute(plan);
     const response = { intent, plan, ...result };
     const httpStatus = result.execution.status === "completed" ? 201 : result.execution.status === "partial" ? 207 : 422;
     if (db) {
