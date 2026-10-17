@@ -14,7 +14,7 @@
  *   RESONANCE_MAX_CONCURRENT_PER_ADAPTER  default 8, max 128
  *
  * Scope: per server instance (in-memory), like the existing rate-limit and idempotency stores.
- * A cross-instance cap needs a shared store; see the roadmap.
+ * Cross-instance caps: opt into shared leases (shared-lease.ts, RESONANCE_SHARED_LEASES=supabase).
  */
 
 export const FAIR_SHARE_DEFAULTS = { perProject: 4, perAdapter: 8, maxQueue: 256 } as const;
@@ -74,7 +74,15 @@ export class KeyedSemaphore {
   }
 }
 
-export class FairShareGuard {
+/**
+ * The fair-share interface the executor depends on. `FairShareGuard` (in-memory, per instance) and
+ * `SharedFairShareGuard` (shared leases across instances, see shared-lease.ts) both implement it.
+ */
+export interface FairShareRunner {
+  run<T>(projectId: string, adapterId: string, fn: () => Promise<T>): Promise<T>;
+}
+
+export class FairShareGuard implements FairShareRunner {
   readonly projects: KeyedSemaphore;
   readonly adapters: KeyedSemaphore;
 
