@@ -71,4 +71,3 @@ export function catalogEntryToNexus(entry: CatalogEntry, bindAdapter: AdapterBin
 }
 
 /** @deprecated Use `catalogEntryToNexus`. Retained for one release for callers still on the old name. */
-export const catalogToNexus = catalogEntryToNexus;
