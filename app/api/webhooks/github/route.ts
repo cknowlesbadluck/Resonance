@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "../../../../src/db/service-client";
 import { decideGitHubWebhook, isUniqueViolation } from "../../../../src/nexus/github-webhook";
 
 function getDbClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+  return createServiceRoleClient();
 }
 
 export async function POST(request: Request) {
