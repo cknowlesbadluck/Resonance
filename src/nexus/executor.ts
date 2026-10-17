@@ -1,4 +1,5 @@
 import type { NexusAdapter } from "./adapters/types";
+import type { FairShareRunner } from "./fair-share";
 import type { NexusEvent, NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy, ExecutionStep, StepOutcome } from "./types";
 
 export interface ExecutionSink {
@@ -24,7 +25,12 @@ interface StepRun {
 export class NexusExecutor {
   private readonly adapterMap = new Map<string, NexusAdapter>();
 
-  constructor(adapters: NexusAdapter[], private readonly sink: ExecutionSink) {
+  /**
+   * `options.fairShare` (optional): when provided, every adapter invocation holds a per-project and a
+   * per-adapter slot (see fair-share.ts), so one project or provider cannot starve the others. Omitted:
+   * unchanged behaviour (used by unit tests and callers that do not share a guard).
+   */
+  constructor(adapters: NexusAdapter[], private readonly sink: ExecutionSink, private readonly options: { fairShare?: FairShareRunner } = {}) {
     for (const adapter of adapters) {
       if (!this.adapterMap.has(adapter.id)) {
         this.adapterMap.set(adapter.id, adapter);
@@ -67,7 +73,11 @@ export class NexusExecutor {
     let error = "Adapter invocation failed";
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        const result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
+        const request = { capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id };
+        const fairShare = this.options.fairShare;
+        const result = fairShare
+          ? await fairShare.run(plan.projectId || "unscoped", adapter.id, () => adapter.invoke(request))
+          : await adapter.invoke(request);
         if (result.ok) {
           ok = true;
           output = result.output;

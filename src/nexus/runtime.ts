@@ -5,6 +5,9 @@ import { McpAdapter } from "./adapters/mcp";
 import { GitHubAdapter, githubRepositoryReadCapability } from "./adapters/github";
 import { LinearAdapter, linearIssueReadCapability } from "./adapters/linear";
 import { composeIntent } from "./composer";
+import { createClient } from "@supabase/supabase-js";
+import { fairShareFromEnv, type FairShareRunner } from "./fair-share";
+import { fairShareRunnerFromEnv } from "./shared-lease";
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusCapability, NexusIntent } from "./types";
 
@@ -39,6 +42,15 @@ demoCapabilities.forEach((capability) => nexusRegistry.register(capability));
 if (githubAdapter) nexusRegistry.register(githubRepositoryReadCapability);
 if (linearAdapter) nexusRegistry.register(linearIssueReadCapability);
 export const nexusPolicy = new DefaultNexusPolicy();
+/**
+ * One process-wide fair-share guard shared by every executor (per-project and per-adapter slots).
+ * With RESONANCE_SHARED_LEASES=supabase (and the lease migration applied) the same caps hold across
+ * instances via shared leases; otherwise, or whenever Supabase errors, the in-memory guard applies.
+ */
+export const nexusFairShare: FairShareRunner = fairShareRunnerFromEnv(
+  fairShareFromEnv(),
+  (url, key) => createClient(url, key, { auth: { persistSession: false } }),
+);
 
 export function composeNexusIntent(intent: NexusIntent) { return composeIntent(intent, nexusRegistry, nexusPolicy, nexusAdapters); }
 /** @deprecated Compatibility alias; runtime is no longer demo-only. */

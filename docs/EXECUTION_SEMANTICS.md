@@ -8,6 +8,21 @@
 
 Steps in the same wave have no unmet `dependsOn` edge. The wave uses `Promise.all`, so one step cannot cancel a sibling that has already started. Adapter side effects that already succeeded are not rolled back.
 
+## Fair share (no party dominates)
+
+Each adapter invocation holds two slots, in a fixed order: a **per-project** slot (`RESONANCE_MAX_INFLIGHT_PER_PROJECT`, default 4, max 64), then a **per-adapter** slot (`RESONANCE_MAX_CONCURRENT_PER_ADAPTER`, default 8, max 128). A wide wave from one project therefore runs at most 4 steps at once, and other projects' steps interleave on the same adapter. They queue FIFO instead of being starved. Each wait queue is bounded at 256 per key. Past that, the step fails fast with `fair_share_queue_full` and the execution reports `partial` or `failed` under the usual rules. Bad values (blank, non-numeric, zero, negative) fall back to the default, so the guard can't be disabled by a typo. The guard is per server instance (in memory), like rate limits and idempotency. See `src/nexus/fair-share.ts`.
+
+### Shared leases (cross-instance, opt-in)
+
+Set `RESONANCE_SHARED_LEASES=supabase`, apply `supabase/migrations/20261017090000_nexus_shared_leases.sql` (**owner applies**), and keep `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` configured. The same per-project and per-adapter caps then hold **across instances**. Each step takes its slots in this order: local project slot, shared project lease, local adapter slot, shared adapter lease. A project waiting on its cluster-wide cap therefore never holds this instance's adapter slots. Leases are rows in `nexus_fair_share_leases`, admitted by `nexus_lease_acquire()` under a per-slot advisory lock. Every lease carries a TTL (`RESONANCE_SHARED_LEASE_TTL_SECONDS`, default 120), so a crashed instance's slots expire on their own. While an invocation runs, its leases are renewed every TTL/3 (`nexus_lease_renew`), so a long call never outlives its lease. Fail-safe behaviour:
+
+- If Supabase errors or does not answer within 1.5 s, steps fall back to the local limits for a 30 s cooldown.
+- If the migration is not applied yet (missing function), steps use local limits and the store re-checks every 10 minutes.
+- If a slot is full cluster-wide, the step retries with backoff for at most `RESONANCE_SHARED_LEASE_MAX_WAIT_MS` (default 5000). It then fails fast with `fair_share_shared_busy` (retryable). It never waits indefinitely.
+- Release is best-effort; the TTL covers a failed release.
+
+`SharedLeaseStore.tryConsume()` gives the same table a shared rate-limit primitive (`scope = 'rate'`, never released, TTL = window), ready for the API rate limiter (#175). See `src/nexus/shared-lease.ts`.
+
 ## Partial failure
 
 If any step in the execution has succeeded and another step then fails, the execution status is `partial`, not `failed`.
