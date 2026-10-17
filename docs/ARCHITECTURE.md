@@ -124,7 +124,7 @@ Invariant 1 ("integration without domination") made operational:
 - **Adapters are off by default.** An adapter exists only when its credential or config is present and valid (GitHub, Linear, and the signed webhook in #210). Absent means not registered, never present-and-broken.
 - **Destination from config only.** Outbound targets come from server config (for example `RESONANCE_WEBHOOK_URL`), never from intent input. They're SSRF-guarded (HTTPS, no private, loopback or link-local addresses, redirects refused).
 - **Approval-gated outbound.** Outbound side-effect capabilities normalise to `execute` (for example `webhook.deliver`), so the default policy requires explicit approval.
-- **Idempotent delivery.** Execution creation requires `Idempotency-Key`. Events replay duplicates instead of erroring (#209). Webhook deliveries carry a deterministic `X-Resonance-Delivery` id and `Idempotency-Key`, so receivers can dedupe executor retries. Rate-limit and idempotency stores are per instance until a shared store lands.
+- **Idempotent delivery.** Execution creation requires `Idempotency-Key`. After #209 lands, duplicate events (same `Idempotency-Key` or `external_id`) replay the stored event instead of erroring; until then `/api/events` can return a sanitized 500 for a duplicate non-null `external_id`. Webhook deliveries carry a deterministic `X-Resonance-Delivery` id and `Idempotency-Key`, so receivers can dedupe executor retries. Rate-limit and idempotency stores are per instance until a shared store lands.
 - **One service-role construction site.** Server code builds Supabase service-role clients only through `createServiceRoleClient` (#212). The browser anon client stays separate.
 - **No secrets in flight records.** Errors are sanitised (#172/#177), evidence is redacted (#191), and `/api/ready` echoes names only.
 
@@ -138,7 +138,7 @@ Status: **proposed**. Interface + in-memory implementation prepared (`src/nexus/
 
 ```sql
 create table public.nexus_execution_journal (
-  execution_id    uuid        not null references public.nexus_executions(id) on delete cascade,
+  execution_id    uuid        not null references public.nexus_executions(id) on delete restrict,
   project_id      uuid        not null,
   seq             integer     not null check (seq >= 1),
   kind            text        not null check (kind in ('planned','step_started','step_completed','step_failed',
@@ -154,6 +154,8 @@ create table public.nexus_execution_journal (
 );
 -- RLS on; service role only; project-scoped reads through the API. Append-only: no UPDATE/DELETE grants.
 ```
+
+**Retention.** The journal is audit history, so it must not vanish with its parent: the foreign key is `on delete restrict`, which blocks deleting an execution that still has journal rows. Retention is explicit: a later owner-run archival job copies journal rows older than the retention window (proposed 180 days, owner decides) to cold storage and deletes them before the parent row. Nothing is deleted implicitly.
 
 **Semantics.**
 - *Append-only, state by fold.* `foldJournal(entries)` derives `phase` (`running`, `waiting_approval`, `approved`, `rejected`, `completed`, `failed`, `cancelled`), `pendingApprovalId` and `resumableApprovalId`. Nothing else stores state, so a restart rebuilds exactly the same view.
