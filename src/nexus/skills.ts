@@ -7,7 +7,7 @@ import type {
   SkillRequirementResolution,
   SkillResolution,
 } from "./types";
-import type { NexusPolicy, NexusPolicyDecision } from "./policy";
+import type { NexusPolicy } from "./policy";
 
 export interface SkillRegistry {
   register(skill: NexusSkill): void;
