@@ -192,6 +192,55 @@ describe("SharedFairShareGuard", () => {
     expect(db.leases.size).toBe(0);
   });
 
+  it("clock skew: instance clocks never reach the lease table (expiry is DB now()), so skewed instances share one cap", async () => {
+    let dbNow = 1_000_000;
+    const db = fakeLeaseDb({ now: () => dbNow });
+    const fast = new SharedLeaseStore(db.client, { holder: "fast", now: () => dbNow + 3_600_000 });
+    const slow = new SharedLeaseStore(db.client, { holder: "slow", now: () => dbNow - 3_600_000 });
+    expect((await fast.acquire("project", "p", 1, 60)).status).toBe("acquired");
+    expect((await slow.acquire("project", "p", 1, 60)).status).toBe("full");
+    // No RPC carries an instance timestamp: only a TTL in seconds.
+    for (const call of db.calls) for (const v of Object.values(call.args)) expect(typeof v === "number" && v > 1e9).toBe(false);
+    dbNow += 59_000;
+    expect((await slow.acquire("project", "p", 1, 60)).status).toBe("full");
+    const lease = [...db.leases.keys()][0];
+    expect(await fast.renew(lease, 60)).toBe(true); // renewal is relative to DB now, not the skewed instance clock
+    dbNow += 59_000;
+    expect((await slow.acquire("project", "p", 1, 60)).status).toBe("full");
+    dbNow += 61_000;
+    expect((await slow.acquire("project", "p", 1, 60)).status).toBe("acquired");
+  });
+
+  it("busy on the adapter lease releases the project lease and both local slots (no leak on a thrown acquire)", async () => {
+    const db = fakeLeaseDb();
+    await new SharedLeaseStore(db.client, { holder: "other" }).acquire("adapter", "github", 1);
+    let t = 0;
+    const local = new FairShareGuard({ perProject: 1, perAdapter: 1 });
+    const guard = new SharedFairShareGuard(local, new SharedLeaseStore(db.client), { maxWaitMs: 50, now: () => t, sleep: async (ms) => { t += ms; } });
+    await expect(guard.run("p", "github", async () => "never")).rejects.toBeInstanceOf(FairShareSharedBusyError);
+    await tick();
+    expect([...db.leases.values()].filter((l) => l.scope === "project")).toHaveLength(0);
+    // Both local slots are free again: the same project and adapter can run once the other holder is gone.
+    db.leases.clear();
+    await expect(guard.run("p", "github", async () => "ok")).resolves.toBe("ok");
+  });
+
+  it("a hung acquire times out, the step runs on local limits, and the late-committing lease is released (no leak)", async () => {
+    const db = fakeLeaseDb();
+    let commitLate!: () => void;
+    const hanging: LeaseRpcClient = {
+      rpc: (fn, args) => fn === "nexus_lease_acquire"
+        ? new Promise((resolve) => { commitLate = () => { void db.client.rpc(fn, args).then(resolve); }; })
+        : db.client.rpc(fn, args),
+    };
+    const guard = new SharedFairShareGuard(new FairShareGuard(), new SharedLeaseStore(hanging, { rpcTimeoutMs: 10 }));
+    await expect(guard.run("p", "a", async () => "ran")).resolves.toBe("ran");
+    expect(guard.store.status().state).toBe("cooldown");
+    commitLate();
+    for (let i = 0; i < 5; i++) await tick();
+    expect(db.leases.size).toBe(0);
+  });
+
   it("plugs into NexusExecutor through the existing fairShare option", async () => {
     const db = fakeLeaseDb();
     const guard = new SharedFairShareGuard(new FairShareGuard(), new SharedLeaseStore(db.client));
