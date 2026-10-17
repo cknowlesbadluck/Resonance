@@ -94,6 +94,17 @@ export function foldJournal(executionId: string, entries: readonly JournalEntry[
 }
 
 /** In-memory journal for tests and the memory runtime. Single-process; the Supabase store keeps the same contract. */
+const CONFLICT_RETRIES = 5;
+
+/** Re-run a read-decide-append step when another writer won the expectedSeq race. Bounded. */
+export async function retryOnConflict<T>(step: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try { return await step(); } catch (error) {
+      if (!(error instanceof JournalConflictError) || attempt >= CONFLICT_RETRIES) throw error;
+    }
+  }
+}
+
 export class MemoryExecutionJournal implements ExecutionJournal {
   private readonly rows = new Map<string, JournalEntry[]>();
   constructor(private readonly now: () => Date = () => new Date()) {}
@@ -131,7 +142,15 @@ export class MemoryExecutionJournal implements ExecutionJournal {
     return null;
   }
 
+  /**
+   * Concurrency-safe: two callers that read the same state race on `expectedSeq`; the loser gets a
+   * JournalConflictError, re-reads, and lands on the replay / already-decided path instead of throwing.
+   */
   async requestApproval(input: { executionId: string; projectId: string; approvalId: string; actorId?: string; detail?: Record<string, unknown> }): Promise<DecisionResult> {
+    return retryOnConflict(() => this.requestApprovalOnce(input));
+  }
+
+  private async requestApprovalOnce(input: { executionId: string; projectId: string; approvalId: string; actorId?: string; detail?: Record<string, unknown> }): Promise<DecisionResult> {
     const state = await this.state(input.executionId);
     const denied = this.scoped(state, input.projectId);
     if (denied) return denied;
@@ -144,7 +163,15 @@ export class MemoryExecutionJournal implements ExecutionJournal {
     return { ok: true, replayed: false, entry };
   }
 
+  /**
+   * Concurrency-safe: two callers that read the same state race on `expectedSeq`; the loser gets a
+   * JournalConflictError, re-reads, and lands on the replay / already-decided path instead of throwing.
+   */
   async decide(input: { executionId: string; projectId: string; approvalId: string; approve: boolean; actorId: string; idempotencyKey: string }): Promise<DecisionResult> {
+    return retryOnConflict(() => this.decideOnce(input));
+  }
+
+  private async decideOnce(input: { executionId: string; projectId: string; approvalId: string; approve: boolean; actorId: string; idempotencyKey: string }): Promise<DecisionResult> {
     if (!input.idempotencyKey) return { ok: false, error: "idempotency_key_required" };
     const state = await this.state(input.executionId);
     const denied = this.scoped(state, input.projectId);
@@ -160,7 +187,15 @@ export class MemoryExecutionJournal implements ExecutionJournal {
     return { ok: true, replayed: false, entry };
   }
 
+  /**
+   * Concurrency-safe: two callers that read the same state race on `expectedSeq`; the loser gets a
+   * JournalConflictError, re-reads, and lands on the replay / already-decided path instead of throwing.
+   */
   async resume(input: { executionId: string; projectId: string; actorId: string; idempotencyKey: string }): Promise<DecisionResult> {
+    return retryOnConflict(() => this.resumeOnce(input));
+  }
+
+  private async resumeOnce(input: { executionId: string; projectId: string; actorId: string; idempotencyKey: string }): Promise<DecisionResult> {
     if (!input.idempotencyKey) return { ok: false, error: "idempotency_key_required" };
     const state = await this.state(input.executionId);
     const denied = this.scoped(state, input.projectId);

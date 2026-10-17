@@ -65,4 +65,44 @@ describe("execution journal", () => {
     await journal.append({ executionId: "e1", projectId: P, kind: "completed" });
     expect(await journal.requestApproval({ executionId: "e1", projectId: P, approvalId: "a3" })).toEqual({ ok: false, error: "terminal" });
   });
+
+  describe("concurrent approve/resume (expectedSeq races never throw and never double-write)", () => {
+    const decide = (j: MemoryExecutionJournal, key: string, approve = true) => j.decide({ executionId: "e1", projectId: P, approvalId: "a1", approve, actorId: "o", idempotencyKey: key });
+    const resume = (j: MemoryExecutionJournal, key: string) => j.resume({ executionId: "e1", projectId: P, actorId: "o", idempotencyKey: key });
+    const kinds = async (j: MemoryExecutionJournal, kind: string) => (await j.entries("e1")).filter((e) => e.kind === kind).length;
+
+    it("same idempotency key, 10 concurrent approvals: all succeed, one write, the rest replay", async () => {
+      const j = await waiting();
+      const results = await Promise.all(Array.from({ length: 10 }, () => decide(j, "k-same")));
+      expect(results.every((r) => r.ok)).toBe(true);
+      expect(results.filter((r) => r.ok && !r.replayed)).toHaveLength(1);
+      expect(await kinds(j, "approved")).toBe(1);
+    });
+
+    it("different keys racing approve vs reject: exactly one decision lands, the others get already_decided", async () => {
+      const j = await waiting();
+      const results = await Promise.all([decide(j, "k1", true), decide(j, "k2", false), decide(j, "k3", true)]);
+      expect(results.filter((r) => r.ok)).toHaveLength(1);
+      expect(results.filter((r) => !r.ok).map((r) => !r.ok && r.error)).toEqual(["already_decided", "already_decided"]);
+      expect((await kinds(j, "approved")) + (await kinds(j, "rejected"))).toBe(1);
+    });
+
+    it("10 concurrent resumes: one resumed entry; same key replays, other keys get already_resumed", async () => {
+      const j = await waiting();
+      await decide(j, "k-approve");
+      const results = await Promise.all([...Array.from({ length: 5 }, () => resume(j, "r-same")), ...Array.from({ length: 5 }, (_, i) => resume(j, `r-${i}`))]);
+      expect(await kinds(j, "resumed")).toBe(1);
+      expect(results.filter((r) => r.ok && !r.replayed)).toHaveLength(1);
+      for (const r of results) if (!r.ok) expect(r.error).toBe("already_resumed");
+      expect((await j.state("e1")).phase).toBe("running");
+    });
+
+    it("concurrent duplicate approval requests write once", async () => {
+      const j = new MemoryExecutionJournal(at);
+      await j.append({ executionId: "e1", projectId: P, kind: "planned" });
+      const results = await Promise.all(Array.from({ length: 5 }, () => j.requestApproval({ executionId: "e1", projectId: P, approvalId: "a1" })));
+      expect(results.every((r) => r.ok)).toBe(true);
+      expect(await kinds(j, "approval_requested")).toBe(1);
+    });
+  });
 });
