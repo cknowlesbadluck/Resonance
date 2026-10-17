@@ -32,3 +32,26 @@ describe("memory idempotency store", () => {
     expect(store.finish("project", "key", reclaimed.claimToken, { fresh: true }, 201, "completed", 300_002)).toBe(true);
   });
 });
+
+describe("MemoryIdempotencyStore bounds", () => {
+  it("never grows past maxRecords", () => {
+    const store = new MemoryIdempotencyStore(3);
+    for (let i = 0; i < 50; i++) store.begin("p", `k${i}`, "h");
+    expect(store.size()).toBe(3);
+  });
+
+  it("evicts finished records before in-flight claims", () => {
+    const store = new MemoryIdempotencyStore(2);
+    const a = store.begin("p", "inflight", "h");
+    const b = store.begin("p", "done", "h");
+    if (b.kind !== "start" || a.kind !== "start") throw new Error("expected start");
+    store.finish("p", "done", b.claimToken, { ok: true }, 200, "completed");
+    store.begin("p", "new", "h");
+    expect(store.begin("p", "inflight", "h").kind).toBe("in_progress");
+    expect(store.begin("p", "done", "h").kind).toBe("start");
+  });
+
+  it("rejects a non-positive bound", () => {
+    expect(() => new MemoryIdempotencyStore(0)).toThrow();
+  });
+});
