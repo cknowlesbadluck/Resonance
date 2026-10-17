@@ -8,6 +8,10 @@
 
 Steps in the same wave have no unmet `dependsOn` edge. The wave uses `Promise.all`, so one step cannot cancel a sibling that has already started. Adapter side effects that already succeeded are not rolled back.
 
+## Fair share (no party dominates)
+
+Each adapter invocation holds two slots, in a fixed order: a **per-project** slot (`RESONANCE_MAX_INFLIGHT_PER_PROJECT`, default 4, max 64), then a **per-adapter** slot (`RESONANCE_MAX_CONCURRENT_PER_ADAPTER`, default 8, max 128). A wide wave from one project therefore runs at most 4 steps at once, and other projects' steps interleave on the same adapter. They queue FIFO instead of being starved. Each wait queue is bounded at 256 per key. Past that, the step fails fast with `fair_share_queue_full` and the execution reports `partial` or `failed` under the usual rules. Bad values (blank, non-numeric, zero, negative) fall back to the default, so the guard can't be disabled by a typo. The guard is per server instance (in memory), like rate limits and idempotency. See `src/nexus/fair-share.ts`.
+
 ## Partial failure
 
 If any step in the execution has succeeded and another step then fails, the execution status is `partial`, not `failed`.
