@@ -1,14 +1,13 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-17 ~19:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-18 ~09:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes at 2026-10-17T23:01Z. Resonance /api/ready 503 owner-gated (missing SUPABASE_SERVICE_ROLE_KEY exactly). Conduit /ready 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). Quicksilver deviceAcceptance=not_recorded; CHR-55 remains sole gate. No secrets invented. Classifier tests ≠ production proof. Open PR load high: Resonance ~48, Conduit ~31, QuicksilverV1 ~25 — major planning and merge debt.
+Live probes at 2026-10-18T13:01Z. Resonance /api/ready 503 owner-gated (missing SUPABASE_SERVICE_ROLE_KEY exactly). Conduit /ready 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). Quicksilver deviceAcceptance=not_recorded; CHR-55 remains sole gate. No secrets invented. Classifier tests ≠ production proof. Open PR load high: Resonance ~49, Conduit ~32, QuicksilverV1 ~27 — major planning and merge debt.
 
 Evidence:
-- Resonance: {"status":"not_ready","service":"resonance-nexus","stage":"deployment","production":true,"authMode":"required","authModeOk":true,"persistenceConfigured":false,"githubAdapterConfigured":false,"missingRequired":["SUPABASE_SERVICE_ROLE_KEY"],"timestamp":"2026-10-17T23:01:24.338Z"} HTTP 503.
-- Conduit ready: 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres).
-- Hygiene prune: single roadmap file policy holds. Bot capacity exhausted this session; further automation deferred. Superseded docs PRs still open.
-- Open held and recent hardens: many readiness contract, deploy-parity, retry-policy, event SSE, memory resilience, gateway watchdog PRs across repos. Dependabot residual risk may persist (postcss path traversal previously noted).
+- Resonance: {"status":"not_ready","service":"resonance-nexus","stage":"deployment","production":true,"authMode":"required","authModeOk":true,"persistenceConfigured":false,"githubAdapterConfigured":false,"missingRequired":["SUPABASE_SERVICE_ROLE_KEY"],"timestamp":"2026-10-18T13:01:35.703Z"} HTTP 503.
+- Conduit ready: 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). Cold-start tolerant on second probe.
+- Hygiene prune: single roadmap file policy holds. Superseded docs PRs remain open (entropy). Recent hardens (retry policy, SSE, gateway watchdog, memory resilience, redaction) are merge candidates once CI green and non-overlapping.
 - No hourly audits. Legacy Quicksilver archived. Domain independence holds.
-- Full brutal audit note: portfolio scores ~5/10, structural weaknesses: owner gates, high open-PR entropy, incomplete cross-plane proof, free-tier cold starts.
+- Full brutal audit note: portfolio scores ~5/10, structural weaknesses: owner gates, high open-PR entropy, incomplete cross-plane proof, free-tier cold starts and deploy lag.
 
 ## Phase 1 — Owner gate stays external
 Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
@@ -46,7 +45,7 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 1. Pure PortfolioPosture classifier holds. Fail-closed.
 2. portfolio-probe tools hold with cold-start handling.
 3. Hygiene prune: prioritize closing superseded docs-only PRs and consolidating test stacks.
-4. Adversarial review of recent hardens (retry policy, SSE backpressure, gateway deadline watchdog, memory resilience) — merge candidates after CI green.
+4. Adversarial review of recent hardens (retry policy, SSE backpressure, gateway deadline watchdog, memory resilience, redaction fast-path) — merge candidates after CI green.
 5. Cross-plane readiness contract v1 alignment across repos.
 6. Lockfile / Dependabot hygiene residual.
 7. Cross-repo consistency: this evidence block is canonical.
@@ -54,4 +53,4 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 9. On-device diagnostics post Phase 8 only.
 10. Fresh probe confirms identical fail-closed posture. No regression.
 
-Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed. Fresh probes confirm fail-closed posture. Innovation: roadmap refreshed with live evidence; high open-PR load called out as debt. No secret invention. No device claim. Stabilization holds. Highest-value next: reduce open PR entropy (merge verified hardens, close superseded), then address owner key and CHR-55 device archive.
+Audit note: Full audit, hardening, stabilization, hygiene, and prune pass completed 2026-10-18. Fresh probes confirm fail-closed posture. Innovation: roadmap refreshed with live evidence; high open-PR load called out as primary debt. No secret invention. No device claim. Stabilization holds. Highest-value next: reduce open PR entropy (merge verified non-overlapping hardens, close superseded docs), then address owner key and CHR-55 device archive.
