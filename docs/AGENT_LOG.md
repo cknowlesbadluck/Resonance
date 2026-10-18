@@ -406,3 +406,20 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+
+## 2026-10-18 — Jules (Retire legacy client capability shapes)
+
+**Checked:**
+- Discovered remaining redundant, client-only capability models scattered in `lib/capabilities.ts`.
+- Evaluated impact on `lib/nexus-catalog.ts` and overall phase 2 "Capability plane convergence" roadmap directive ("Retire any remaining client-only capability shape").
+- Checked Vitest coverage mapping `lib/capabilities.ts` behaviors to `lib/nexus-catalog.ts`.
+
+**Decided / Done:**
+- Deleted `lib/capabilities.ts` and `lib/capabilities.test.ts`.
+- Migrated static catalog capability arrays and the DAG validation/resolution topological sort code directly into `lib/nexus-catalog.ts` using `CatalogEntry` from `capability-bridge`.
+- Removed intermediate `Capability` model export entirely to converge uniformly around `NexusCapability`.
+- Appended session logic context via `initiate_memory_recording`.
+
+**Verified:**
+- `npm run typecheck` passes cleanly with no missing imports.
+- `npm run test` executing all 185 capability-related and core architectural tests passes successfully.

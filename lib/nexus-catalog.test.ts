@@ -59,4 +59,17 @@ describe("catalog → NexusCapability", () => {
     expect(mapped.risk).toBe("low");
     expect(mapped.providerId).toBe("Acme");
   });
+
+  it("registers skills, tools and integrations", () => {
+    const kinds = new Set(listNexusCapabilitiesFromCatalog().map(c => c.kind));
+    expect(kinds.has("skill")).toBe(true);
+    expect(kinds.has("tool")).toBe(true);
+    expect(kinds.has("integration")).toBe(true);
+  });
+
+  it("reports missing dependencies instead of fabricating them", () => {
+    const result = resolveNexusCapabilities(["missing.capability"]);
+    expect(result.resolved).toEqual([]);
+    expect(result.missing).toEqual(["missing.capability"]);
+  });
 });
