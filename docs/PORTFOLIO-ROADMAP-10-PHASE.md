@@ -1,6 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-18 ~15:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-19 ~03:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes attempted 2026-10-18T19:01Z. Both Resonance /api/ready and Conduit /ready returned 503 (likely free-tier cold start or deploy lag; previous morning probe had Conduit 200 stamped). Resonance remains owner-gated on SUPABASE_SERVICE_ROLE_KEY. Quicksilver deviceAcceptance=not_recorded; CHR-55 sole gate. No secrets invented. Classifier tests ≠ production proof. Open PR load remains high: Resonance ~49, Conduit ~32, QuicksilverV1 ~27 — primary operational debt and merge entropy.
+Live probes 2026-10-19T07:01Z:
+- Conduit /ready 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres). Cold-start recovered.
+- Resonance /api/ready 503 missingRequired=["SUPABASE_SERVICE_ROLE_KEY"]. Owner gate holds.
+- Quicksilver deviceAcceptance=not_recorded; CHR-55 sole gate.
+- Open PR load: Resonance 52, Conduit 32, QuicksilverV1 26 — primary operational and planning debt.
+
+Evidence updated from prior afternoon 503s. Free-tier cold starts are transient; Conduit now green. Resonance remains owner-blocked. No secrets invented. Classifier tests ≠ production proof.
+
+ 2026-10-18T19:01Z. Both Resonance /api/ready and Conduit /ready returned 503 (likely free-tier cold start or deploy lag; previous morning probe had Conduit 200 stamped). Resonance remains owner-gated on SUPABASE_SERVICE_ROLE_KEY. Quicksilver deviceAcceptance=not_recorded; CHR-55 sole gate. No secrets invented. Classifier tests ≠ production proof. Open PR load remains high: Resonance ~49, Conduit ~32, QuicksilverV1 ~27 — primary operational debt and merge entropy.
 
 Evidence:
 - Resonance ready: 503 (owner key missing; matches prior structured body).
