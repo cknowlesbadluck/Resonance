@@ -1,14 +1,15 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-19 12:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-19 19:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-19T12:01Z:
-- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
-- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+Live probes 2026-10-19T19:02Z (portfolio-probe.mjs):
+- Conduit /ready: **timeout** (free-tier cold-start; #268 retry PR addresses this).
+- Resonance /api/ready (Netlify): **503 not_ready**, missing exactly `SUPABASE_SERVICE_ROLE_KEY` (known owner gate, drift=false, missingClean=true). behindMain=true (missing several contract fields vs main pin).
+- Resonance Vercel aliases: stranger_occupant (no service stamp) and alias_absent (404).
+- Quicksilver Vercel: stranger_occupant / alias_absent.
 - Supabase projects remain INACTIVE (owner gate).
-- Vercel aliases unchanged: stranger_occupant / alias_absent classifications hold.
-- Open PR entropy remains high but hygiene prune initiated on pure docs-audit notes (user-gated close forms presented).
-- No secrets invented. No device claim. Classifier ≠ production proof.
+- Open PR entropy: QS 22, Resonance ~29 (after closing #199), Conduit ~29 (after closing #242). Hygiene prune continues.
+- No secrets invented. No device claim. Classifier ≠ production proof. Fail-closed holds.
 
-Brutal maturity: portfolio ~6.1/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed again.
+Brutal maturity: portfolio ~5.8/10 (timeout + owner gate dominate). Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed again.
 
 ## Phase 1 — Owner gate stays external
 Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
