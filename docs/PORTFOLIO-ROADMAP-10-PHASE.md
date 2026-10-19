@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-19 09:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-19 12:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-19T09:01Z:
+Live probes 2026-10-19T12:01Z:
 - Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
 - Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
-- Supabase (Resonance, Quicksilver, WhereamI?): all INACTIVE.
-- Vercel: resonance.vercel.app / quicksilver.vercel.app = stranger_occupant; resonancenexus / quicksilverv1 = alias_absent.
-- Open PR entropy still primary operational debt (~48 / ~31 / ~25).
+- Supabase projects remain INACTIVE (owner gate).
+- Vercel aliases unchanged: stranger_occupant / alias_absent classifications hold.
+- Open PR entropy remains high but hygiene prune initiated on pure docs-audit notes (user-gated close forms presented).
 - No secrets invented. No device claim. Classifier ≠ production proof.
 
-Brutal maturity: portfolio ~6.1/10 (up from prior ~5 because Conduit live stamp confirmed). Dominant risks remain external owner gates + open-PR entropy.
+Brutal maturity: portfolio ~6.1/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed again.
 
 ## Phase 1 — Owner gate stays external
 Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
@@ -29,7 +29,7 @@ Bounded windows and on-device embeddings continue. Exit: AppTests green; no unbo
 No paid Workers bindings (KV/R2/D1/Queues). Exit: wrangler.toml / equivalent clean.
 
 ## Phase 7 — Hygiene prune executed
-One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Superseded docs-refresh PRs closed. Open PR count driven below 10 per repo via prioritized merge of green non-overlapping hardens and close of superseded/docs-only. Audit note mirrored across repos (see docs/AUDIT-2026-10-19.md).
+One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Superseded docs-refresh PRs targeted for close. Open PR count target below 10 per repo via prioritized merge of green non-overlapping hardens and close of superseded/docs-only. Audit note mirrored across repos.
 
 ## Phase 8 — Resonance control plane waits on stamp
 No second client or iOS Resonance surface until live Netlify ready body carries contract stamp and owner key is set.
@@ -44,7 +44,7 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 
 ## Innovation Track (advanced — no gates violated)
 1. Pure PortfolioPosture classifier holds. Fail-closed.
-2. portfolio-probe tools with cold-start backoff (retry on 503).
+2. portfolio-probe tools with cold-start backoff (retry on 503) — see Conduit #268.
 3. Hygiene prune priority: close superseded docs-only PRs; use merge-train where available; merge only CI-green non-overlapping hardens.
 4. Adversarial review of recent hardens continues.
 5. Cross-plane readiness contract v1 alignment across repos.
@@ -54,4 +54,4 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 9. On-device diagnostics post Phase 8 only.
 10. Fresh probe confirms identical fail-closed posture. No regression.
 
-Highest-value next: aggressively reduce open PR entropy, then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds.
+Highest-value next: aggressively reduce open PR entropy (docs notes first), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints.
