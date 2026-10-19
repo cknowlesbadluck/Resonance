@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-19 12:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-19 21:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-19T12:01Z:
-- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
-- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+Live probes 2026-10-19T21:00Z (approx):
+- Conduit /ready: **HTTP 200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **HTTP 503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false. (Confirmed via probe; fail-closed holds.)
 - Supabase projects remain INACTIVE (owner gate).
 - Vercel aliases unchanged: stranger_occupant / alias_absent classifications hold.
-- Open PR entropy remains high but hygiene prune initiated on pure docs-audit notes (user-gated close forms presented).
+- Open PR entropy remains high (~23 QS, ~50 Resonance, ~33 Conduit). Hygiene prune of pure docs-audit notes continues; stacked feature PRs and Jules-generated hardens need prioritized review/merge.
 - No secrets invented. No device claim. Classifier ≠ production proof.
 
-Brutal maturity: portfolio ~6.1/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed again.
+Brutal maturity: portfolio ~6.1/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed again. Architecture of QS (SENSE→THINK→EXPRESS) solid; Conduit MCP bridge clean; Resonance Nexus foundation good but gated.
 
 ## Phase 1 — Owner gate stays external
 Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
@@ -44,14 +44,14 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 
 ## Innovation Track (advanced — no gates violated)
 1. Pure PortfolioPosture classifier holds. Fail-closed.
-2. portfolio-probe tools with cold-start backoff (retry on 503) — see Conduit #268.
-3. Hygiene prune priority: close superseded docs-only PRs; use merge-train where available; merge only CI-green non-overlapping hardens.
-4. Adversarial review of recent hardens continues.
+2. portfolio-probe tools with cold-start backoff (retry on 503) — see Conduit #268. Merge candidate.
+3. Hygiene prune priority: close superseded docs-only PRs; use merge-train where available; merge only CI-green non-overlapping hardens. Target stacked QS features (note summaries, forget note, tests) after base merges.
+4. Adversarial review of recent hardens continues (Jules-generated PRs like Conduit #267 Set iteration, Resonance #219 catalog consolidation).
 5. Cross-plane readiness contract v1 alignment across repos.
 6. Lockfile / Dependabot residual hygiene.
 7. Cross-repo consistency: this evidence block is canonical; mirror key notes.
-8. Chamber and capability plane advances held pending no-gate confirmation.
-9. On-device diagnostics post Phase 8 only.
-10. Fresh probe confirms identical fail-closed posture. No regression.
+8. Chamber and capability plane advances held pending no-gate confirmation. Innovate: add provider-neutral adapter registry polish once stamp lands.
+9. On-device diagnostics post Phase 8 only. Innovate: expand Nexus sensing pipeline for QS with privacy-safe signal aggregation.
+10. Fresh probe confirms identical fail-closed posture. No regression. Innovate: automated PR entropy dashboard via Conduit probe.
 
-Highest-value next: aggressively reduce open PR entropy (docs notes first), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints.
+Highest-value next: aggressively reduce open PR entropy (docs notes first, then green hardens), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints. Implement safe docs and probe improvements immediately.
