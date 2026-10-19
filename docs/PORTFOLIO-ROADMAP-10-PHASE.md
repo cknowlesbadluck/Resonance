@@ -1,10 +1,10 @@
 # Portfolio 10-phase roadmap — refreshed 2026-10-18 ~15:00 EDT (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes attempted 2026-10-18T19:01Z. Both Resonance /api/ready and Conduit /ready returned 503 (likely free-tier cold start or deploy lag; previous morning probe had Conduit 200 stamped). Resonance remains owner-gated on SUPABASE_SERVICE_ROLE_KEY. Quicksilver deviceAcceptance=not_recorded; CHR-55 sole gate. No secrets invented. Classifier tests ≠ production proof. Open PR load remains high: Resonance ~49, Conduit ~32, QuicksilverV1 ~27 — primary operational debt and merge entropy.
+Live probes attempted 2026-10-18T19:01Z. Conduit /ready returned 200 stamped; Resonance /api/ready returned 503 (likely free-tier cold start or deploy lag; previous morning probe had Conduit 200 stamped). Resonance remains owner-gated on SUPABASE_SERVICE_ROLE_KEY. Quicksilver deviceAcceptance=not_recorded; CHR-55 sole gate. No secrets invented. Classifier tests ≠ production proof. Open PR load remains high: Resonance ~30, Conduit ~30, QuicksilverV1 23 — primary operational debt and merge entropy.
 
 Evidence:
 - Resonance ready: 503 (owner key missing; matches prior structured body).
-- Conduit ready: 503 this probe (cold-start; prior 200 with version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres).
+- Conduit ready: 200 stamped (version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres); Resonance ready: 503 missing SUPABASE_SERVICE_ROLE_KEY.
 - Hygiene: single roadmap file policy holds. Many superseded docs-only and stacked test PRs remain open. Recent hardens (retry-policy #218, SSE #262, gateway watchdog #351, memory resilience #350, redaction #263) are strong merge candidates once CI green and non-overlapping.
 - No hourly audits. Legacy Quicksilver archived. Domain independence holds.
 - Brutal audit: portfolio maturity ~5/10. Structural weaknesses: external owner gates, extreme open-PR entropy (planning debt), incomplete cross-plane live proof, free-tier cold starts and lag, stacked PRs without full CI on non-main bases.
