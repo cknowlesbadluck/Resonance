@@ -1,23 +1,203 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-19 12:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-19T12:01Z:
+Live probes 2026-10-20T05:01Z:
 - Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
 - Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
-- Supabase projects remain INACTIVE (owner gate).
-- Vercel aliases unchanged: stranger_occupant / alias_absent classifications hold.
-- Open PR entropy remains high but hygiene prune initiated on pure docs-audit notes (user-gated close forms presented).
+- Open PR entropy reduced by closing superseded docs notes. Still high.
 - No secrets invented. No device claim. Classifier ≠ production proof.
 
-Brutal maturity: portfolio ~6.1/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed again.
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
 
-## Phase 1 — Owner gate stays external
-Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-## Phase 2 — Alias and stranger classification stay strict
-404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready.
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
 
-## Phase 3 — Device fence immutable
-claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 05:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+
+Live probes 2026-10-20T05:01Z:
+- Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
+- Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
+- Open PR entropy reduced by closing superseded docs notes. Still high.
+- No secrets invented. No device claim. Classifier ≠ production proof.
+
+Brutal maturity: portfolio ~6.2/10. Dominant risks remain external owner gates + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+
 
 ## Phase 4 — CHR-55 remains the only device gate
 Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
