@@ -1,6 +1,6 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-19 12:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-20 13:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-19T12:01Z:
+Live probes 2026-10-20T13:02Z:
 - Conduit /ready: **200** stamped `{version:"0.8.0", contractRevision:"2026-10-03-ready-surface", persistence:"postgres"}`.
 - Resonance /api/ready: **503** missing exactly `SUPABASE_SERVICE_ROLE_KEY`; production=true; persistenceConfigured=false; githubAdapterConfigured=false.
 - Supabase projects remain INACTIVE (owner gate).
