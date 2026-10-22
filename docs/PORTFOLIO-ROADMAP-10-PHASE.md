@@ -56,3 +56,7 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 10. Fresh probe confirms identical fail-closed posture. No regression. Drift detections elevated priority for alias cleanup.
 
 Highest-value next: aggressively reduce open PR entropy (docs notes first), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints. Probe maturity score now live for quantitative tracking.
+
+
+## 2026-10-22 Probe Note
+Conduit /ready confirmed 200. Resonance live status pending owner key for full ready. CI green on main for both TS projects. Quicksilver CI green. High open PR count remains hygiene priority.
