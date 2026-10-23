@@ -10,7 +10,7 @@
 
 export const EXPECTED_CONTRACT_REVISION = "2026-10-03-owner-gate";
 
-export const contractReadinessFields = [
+const contractReadinessFields = [
   "status",
   "ownerActionRequired",
   "ownerKeys",

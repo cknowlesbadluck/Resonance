@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export const MAX_GITHUB_WEBHOOK_BYTES = 1_048_576;
 const MAX_EVENT_NAME_LENGTH = 100;
 
-export function verifyGitHubWebhookSignature(raw: string, signature: string | null, secret: string | undefined): boolean {
+function verifyGitHubWebhookSignature(raw: string, signature: string | null, secret: string | undefined): boolean {
   if (!secret || !signature?.startsWith("sha256=")) return false;
   const expected = Buffer.from(`sha256=${createHmac("sha256", secret).update(raw).digest("hex")}`);
   const actual = Buffer.from(signature);
