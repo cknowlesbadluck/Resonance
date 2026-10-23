@@ -1,59 +1,46 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-22 20:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-23 08:10 UTC (hygiene prune + innovate)
 
-Live probes 2026-10-22T20:02Z:
-- Conduit /ready: **ready OK** (200 stamped, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres).
-- Resonance /api/ready: **not_ready FAIL** (HTTP 503, missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]). Owner gate preserved. No secret invented.
-- Vercel aliases: resonance.vercel.app 200 (stranger_occupant FAIL DRIFT), quicksilver.vercel.app 200 (stranger_occupant), resonancenexus.vercel.app 404 (alias_absent), quicksilverv1.vercel.app 404 (alias_absent).
-- Portfolio maturity score: ~3.3/10 on strict probe (drift + fail-closed). Overall portfolio ~5.5-6.0/10. Stabilization holds.
-- Supabase projects INACTIVE (owner gate).
-- Open PR entropy: QuicksilverV1 ~22, Resonance ~30, Conduit ~28. Hygiene prune in progress (closed superseded docs PRs #232 Resonance, #277 Conduit).
-- No device claim (CHR-55 open). Classifier ≠ production proof. No secrets exposed.
+Status tags: **[passed]** · **[in progress]** · **[blocked]** (owner action). Agents never apply migrations, change prod config, store secrets, or spend money.
 
-Brutal maturity: Dominant risks remain external owner gates (SUPABASE key + CHR-55 device IPA on real iPhone 16e) + open-PR entropy. Fail-closed posture confirmed. High entropy is operational drag.
+Live evidence 2026-10-23T08:02Z (public HTTP / gh):
+- Conduit `https://conduit-feco.onrender.com/ready`: **200**. main `cf3c86c`, CI success https://github.com/cknowlesbadluck/Conduit/actions/runs/39547238369.
+- Resonance `https://resonancenexus.netlify.app/api/ready`: **503** `not_ready`, `missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]`, authMode required. main `9422def`, CI success https://github.com/cknowlesbadluck/Resonance/actions/runs/39547210514.
+- Vercel aliases (`npm run alias-drift`, #236): resonance.vercel.app 200 `stranger_occupant`; resonancenexus/resonanceplane.vercel.app 404 `alias_absent`. Drift = owner Vercel dashboard action.
+- Open PRs after this pass: Conduit 34 (closed #255 dup of merged #263, #281 superseded by #282), Resonance 47 + #236 new (closed #234 superseded by #235). Earlier "~30/~28" figures were undercounts.
+- Merged since 2026-10-17: Conduit #248–#254, #262, #263, #268, #269, #274; Resonance #218, #231.
+- QuicksilverV1 not probed in this pass (out of scope).
 
-## Phase 1 — Owner gate stays external
-Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
+## Phase 1 — Owner gate stays external [blocked]
+Exit: owner sets SUPABASE_SERVICE_ROLE_KEY in Netlify; `/api/ready` returns 200. Until then the body must stay owner-blocked and no agent invents a key.
 
-## Phase 2 — Alias and stranger classification stay strict
-404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready. Drift on Vercel aliases noted — cleanup recommended but not blocking.
+## Phase 2 — Alias and stranger classification stay strict [in progress]
+Exit: alias-drift report (#236) shows no `stranger_occupant`/`alias_absent` for Resonance-owned aliases (or they are intentionally retired and documented); tests keep 404/stranger 200 from counting as ready.
 
-## Phase 3 — Device fence immutable
-claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
+## Phase 3 — Device fence immutable [passed]
+Exit (held): `deviceAcceptance=not_recorded`, `acceptanceGate=CHR-55`; claimDeviceAcceptance() rejects.
 
-## Phase 4 — CHR-55 remains the only device gate
-Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
+## Phase 4 — CHR-55 remains the only device gate [blocked]
+Exit: archive IPA installed and validated on a real iPhone 16e; simulator/CI is never acceptance.
 
-## Phase 5 — Conversation and Memory budget stay
-Bounded windows and on-device embeddings continue. Exit: AppTests green; no unbounded history leakage.
+## Phase 5 — Conversation and memory budget [passed]
+Exit (held): bounded windows; tests green; no unbounded history.
 
-## Phase 6 — Gateway contract and free-tier stay
-No paid Workers bindings (KV/R2/D1/Queues). Exit: wrangler.toml / equivalent clean.
+## Phase 6 — Gateway contract and free tier [passed]
+Exit (held): no paid bindings; 'Workers Builds: conduit' failure is known noise, not a gate.
 
-## Phase 7 — Hygiene prune executed
-One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Superseded docs-refresh PRs closed. Open PR count target below 10 per repo via prioritized merge of green non-overlapping hardens and close of superseded/docs-only. Audit note mirrored across repos.
+## Phase 7 — Hygiene prune [in progress]
+Exit: < 10 open PRs per repo; one roadmap file; no dated audit files on main without PR. Next: merge-train (#260) ordering of green non-overlapping hardens; owner review of migration PRs (#207, #208, #214, #173).
 
-## Phase 8 — Resonance control plane waits on stamp
-No second client or iOS Resonance surface until live Netlify ready body carries contract stamp and owner key is set.
+## Phase 8 — Resonance control plane waits on stamp [blocked]
+Exit: live `/api/ready` carries `commitSha` + `contractRevision` (#178/#202) and Phase 1 is passed.
 
-## Phase 9 — Privacy and logging stay strict
-Privacy manifest enforced. Gateway logs metadata only. Exit: no request/response body logging.
+## Phase 9 — Privacy and logging strict [passed]
+Exit (held): metadata-only logs; redaction fast paths merged (Conduit #263).
 
-## Phase 10 — Cross-plane acceptance proof
-Single probe covers Conduit ready (already true), Resonance ready (stamped), and real device archive evidence. Exit: production verdict accepted. Fixture or classifier test is insufficient.
+## Phase 10 — Cross-plane acceptance proof [blocked]
+Exit: one probe shows Conduit ready, Resonance ready + stamped at main, alias drift clear, device archive evidence. Fixtures are insufficient.
 
-Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is closed by simulator or classifier. High open-PR entropy remains the current operational risk and must be pruned first.
+## Innovation track
+1. Resonance #236 — report-only Vercel alias drift (public HTTP, +tests). 2. Conduit #282 — open-PR entropy in portfolio-probe (now injectable/timeout + test). 3. Conduit #260 — merge-train health (complementary, keep). 4. Resonance #202/#179 — deploy parity + schedule; fold alias-drift into the schedule after merge. 5. Conduit #278 — stale branch detector.
 
-## Innovation Track (advanced — no gates violated)
-1. Pure PortfolioPosture classifier holds. Fail-closed. Maturity score added to probe.
-2. portfolio-probe tools with cold-start backoff — continue.
-3. Hygiene prune priority: close superseded docs-only PRs aggressively; merge only CI-green non-overlapping hardens.
-4. Adversarial review of recent hardens continues.
-5. Cross-plane readiness contract v1 alignment across repos.
-6. Lockfile / Dependabot residual hygiene.
-7. Cross-repo consistency: this evidence block is canonical; mirror key notes.
-8. Chamber and capability plane advances held pending no-gate confirmation.
-9. On-device diagnostics post Phase 8 only.
-10. Fresh probe confirms identical fail-closed posture. No regression. Drift detections elevated for alias cleanup.
-11. Stale branch detector (Conduit #278) for automated hygiene.
-
-Highest-value next: aggressively reduce open PR entropy (docs notes first, then non-overlapping green hardens), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints. Probe maturity score now live for quantitative tracking.
+Highest-value next: owner sets the Supabase key + cleans Vercel aliases; then merge-train the green hardens to get under 10 open PRs per repo.
