@@ -1,5 +1,6 @@
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusEvent, NexusExecution, NexusExecutionPlan, NexusEvidence, ExecutionRetryPolicy, ExecutionStep, StepOutcome } from "./types";
+import { classifyRetry, effectiveMaxAttempts, failureCodeOf, retryAfterMsOf, retryDelayMs } from "./retry-policy";
 
 export interface ExecutionSink {
   recordEvidence(evidence: NexusEvidence): Promise<void>;
@@ -61,11 +62,13 @@ export class NexusExecutor {
         evidence: null,
       };
     }
-    const maxAttempts = Math.max(1, retry.maxAttempts);
+    const maxAttempts = effectiveMaxAttempts(retry);
     let ok = false;
     let output: unknown;
     let error = "Adapter invocation failed";
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      let code: string | undefined;
+      let retryAfterMs: number | undefined;
       try {
         const result = await adapter.invoke({ capabilityId: step.capabilityId, input: step.input, actorId: plan.actorId, correlationId: execution.id });
         if (result.ok) {
@@ -75,13 +78,22 @@ export class NexusExecutor {
           break;
         }
         error = result.error ?? "Adapter invocation failed";
+        code = failureCodeOf(result.evidence);
+        retryAfterMs = retryAfterMsOf(result.evidence);
       } catch (caught) {
         error = caught instanceof Error ? caught.message : String(caught);
+        code = failureCodeOf(caught);
       }
-      if (attempt < maxAttempts) {
-        await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1 });
-        await sleep(retry.backoffMs * attempt);
+      const decision = classifyRetry(code, step, attempt, maxAttempts);
+      if (!decision.retry) {
+        if (decision.reason !== "attempts_exhausted") {
+          await this.emitEvent(plan, execution, "execution.retry_skipped", "failed", { stepId: step.id, attempt, code, reason: decision.reason });
+        }
+        break;
       }
+      const delayMs = retryDelayMs(retry, attempt, retryAfterMs);
+      await this.emitEvent(plan, execution, "execution.retrying", "retrying", { stepId: step.id, attempt, nextAttempt: attempt + 1, code, reason: decision.reason, delayMs });
+      await sleep(delayMs);
     }
     return {
       outcome: { stepId: step.id, capabilityId: step.capabilityId, ok, error: ok ? undefined : error },
