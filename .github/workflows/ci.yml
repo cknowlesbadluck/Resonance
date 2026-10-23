@@ -88,3 +88,8 @@ jobs:
       - run: node scripts/production-smoke.mjs
         env:
           SMOKE_BASE_URL: ${{ github.event.inputs.smoke_url }}
+      # Report-only: compares live /api/ready fields to main's contract (no secrets).
+      - name: Deploy parity (report-only)
+        run: node scripts/deploy-parity.mjs "${SMOKE_BASE_URL%/}/api/ready"
+        env:
+          SMOKE_BASE_URL: ${{ github.event.inputs.smoke_url }}

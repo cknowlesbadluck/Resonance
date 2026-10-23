@@ -63,6 +63,17 @@ Cases:
 
 GitHub Actions: workflow_dispatch `CI` with input `smoke_url`. Required PR checks remain `web`, `ios`, and the aggregate job named `CI`.
 
+### Deploy parity (is prod behind main?)
+
+```bash
+npm run parity              # report-only; prints "prod is behind main (...)" when fields are missing
+npm run parity -- --json --strict   # exit 1 unless in parity
+```
+
+`scripts/deploy-parity.mjs` reads the `Readiness` type in `src/deploy/health.ts` and `EXPECTED_CONTRACT_REVISION` in `src/deploy/deployLag.ts`, makes one unauthenticated GET to `/api/ready`, and lists missing field names and the contractRevision mismatch. It needs no secrets and prints no values. `src/deploy/parity.test.ts` fails if the parser ever drifts from what `readiness()` really serializes. The dispatch-only `production-smoke` job runs it after the smoke.
+
+`node scripts/deploy-parity.mjs --plan` adds an ordered **unblock plan** built only from public `/api/ready` signals. It lists owner steps (set keys from main's `OWNER_SECRET_KEYS` allowlist in the Netlify Production env, fix the auth mode, redeploy main), then any agent-fixable config, and ends with a verify step (`--strict` parity plus smoke). Key names come from the repo's allowlist and values are never read. Anything in `missingRequired` that isn't an env-var name is dropped. Against today's prod (503, stale) the plan is: set `SUPABASE_SERVICE_ROLE_KEY` → redeploy main → verify.
+
 ## Native iOS (I4, not this PR)
 
 SideStore / IPA evidence is issue #11. The Nexus contract (Idempotency-Key + Bearer) is already on main. Do not treat an IPA as a substitute for `/api/ready`.
