@@ -101,3 +101,10 @@ Exit: no request/response body logging; privacy manifest enforced.
 - Dependabot: the critical/high `next` alerts are fixed by #233, which is waiting on human review (REVIEW_REQUIRED).
 - CHR-55 is still the only device gate, and this pass makes no device claim.
 - Innovation: #288 now has a read-only `--stale-branches` mode (no open PR, no commit in 14+ days; never deletes). Live result at 22:02Z: none stale in any repo, since every branch is less than 14 days old. The `adds_env_vars` heuristic now flags only `.env.example` additions and new `process.env` reads in non-test `src/` files, so Resonance drops from 11 flagged PRs to 1 (#210).
+
+## Evidence 2026-10-23 19:00 EDT (23:00Z)
+- Probes unchanged: Conduit `/ready` 200; Resonance Netlify `/api/ready` 503 (SUPABASE_SERVICE_ROLE_KEY owner gate). `resonanceplane.vercel.app` returns 404 DEPLOYMENT_NOT_FOUND (alias drift, already flagged by the probe).
+- Main CI green on all three. Open PRs: QuicksilverV1 18 (new #378, read-only for us), Conduit 27, Resonance 44. No merges or closes.
+- Conduit #288: CodeRabbit's 2 new findings on 84e7f9a (short env names; branches heading cross-repo PRs) fixed in 50c0783 with tests; CI green. Re-review is rate-limited again, so CHANGES_REQUESTED stands and #278 stays open.
+- Live stale-branch run: one stale branch, Resonance `hygiene/probe-2026-10-09-2300` (14d). Report-only, nothing deleted.
+- CHR-55 is still the only device gate.
