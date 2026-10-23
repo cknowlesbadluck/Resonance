@@ -91,3 +91,13 @@ Exit: no request/response body logging; privacy manifest enforced.
   - Conduit: 22/26 blocked. Bot-only approval: #238, #267. Changes requested: 13. Adds env vars: 13. Auth/grants/migrations: #120, #155, #206, #211, #238, #243, #251, #276. Behind main: #119, #120, #275, #276, #283.
   - Resonance: 37/44 blocked. Bot-only approval: #157, #169, #193, #200, #212. Changes requested: 10. Adds env vars: 11. Auth/RLS/migrations: 11. Behind main: 33.
   - QuicksilverV1: 0 flagged (GitHub reported merge state UNKNOWN; read-only here, owned by Quicksilver Dev).
+
+## Evidence 2026-10-23 18:02 EDT (22:02Z)
+- Probes: Conduit `/ready` 200 (0.8.0, `contractRevision` 2026-10-03-ready-surface, postgres). Resonance `/api/ready` 503, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]` (owner gate, unchanged; no secret echoed).
+- Main CI green on all three repos. Conduit `Workers Builds` is a known always-failing check and is ignored.
+- Open PRs: QuicksilverV1 18, Conduit 27, Resonance 44. No merges or closes this pass:
+  - Conduit #288 still carries CodeRabbit CHANGES_REQUESTED (re-review was rate-limited). Every finding has a fix commit (f47cacf, 84e7f9a), so it waits for the bot to re-review.
+  - Every approved Resonance PR (#157, #169, #193, #200, #212) is approved only by a bot, so none were merged.
+- Dependabot: the critical/high `next` alerts are fixed by #233, which is waiting on human review (REVIEW_REQUIRED).
+- CHR-55 is still the only device gate, and this pass makes no device claim.
+- Innovation: #288 now has a read-only `--stale-branches` mode (no open PR, no commit in 14+ days; never deletes). Live result at 22:02Z: none stale in any repo, since every branch is less than 14 days old. The `adds_env_vars` heuristic now flags only `.env.example` additions and new `process.env` reads in non-test `src/` files, so Resonance drops from 11 flagged PRs to 1 (#210).
