@@ -59,8 +59,8 @@ Exit: no request/response body logging; privacy manifest enforced.
 ## Innovation track (free, no gates violated)
 1. Probe jittered single cold-start retry, retries capped at 1 (Conduit #286).
 2. Alias-drift report (landed, #236).
-3. Next: cross-repo readiness-contract check — blocked until a schema is vendored in both repos (neither main has `schemas/readiness/v1.schema.json` today; Conduit #247 adds it to Conduit only).
-4. Next: deploy-lag detector — compare live `/api/ready` keys with `main`'s `Readiness` type.
+3. Cross-plane consistency check exists as open #170; deploy-parity as #202/#179. Land those (after approval) instead of new duplicates. A schema-file diff is blocked: neither main has `schemas/readiness/v1.schema.json` (Conduit #247 adds it to Conduit only).
+4. Deploy-parity (#202) would have caught today's live-vs-main `contractRevision` lag; prioritize its approval.
 5. Stale-branch report (read-only).
 
 ## Owner gates
