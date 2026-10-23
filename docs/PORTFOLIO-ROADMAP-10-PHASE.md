@@ -1,14 +1,16 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-23 15:30 UTC (single snapshot; no addenda)
+# Portfolio 10-phase roadmap — refreshed 2026-10-23 16:20 UTC (single snapshot; no addenda)
 
 Supersedes the 2026-10-21 refresh. Addresses the CodeRabbit changes-requested review on closed #235
 (defined merge-train PR class, single header timestamp, Phase 8 contract field, Phase 10 readiness vs device split).
 
-## Evidence (2026-10-23, 15:01–15:30 UTC)
-- Conduit `/ready`: **200** `status=ready`, version 0.8.0, `contractRevision=2026-10-03-ready-surface`, persistence postgres. Main CI green.
-- Resonance `/api/ready`: **503** `not_ready`, `missingRequired=["SUPABASE_SERVICE_ROLE_KEY"]` (owner gate). Live body has **no `contractRevision`**, although `main` (`src/deploy/health.ts`) serializes `contractRevision` — production Netlify deploy lags main.
-- Vercel aliases (portfolio-probe): resonance + quicksilver `stranger_occupant`, resonancenexus + quicksilverv1 `alias_absent` (DRIFT). Probe maturity score 3.3/10.
-- Open PRs (start of pass → end): Conduit 28 → see PR body; Resonance 46 → see PR body; QuicksilverV1 17 (not touched; owned by Quicksilver Dev).
-- Merged this pass: Conduit #258 (bridge total deadline), #213 (honest Workers 503); Resonance #236 (alias-drift check).
+## Evidence (2026-10-23, 16:02–16:20 UTC, noon ET pass)
+- Conduit `/ready`: **200** `status=ready`, version 0.8.0, `contractRevision=2026-10-03-ready-surface`, persistence postgres. Main `7d72554` CI, Live Smoke, Lockfile Sync green.
+- Resonance `/api/ready` (resonancenexus.netlify.app): **503** `not_ready` (SUPABASE_SERVICE_ROLE_KEY missing; owner gate). resonanceplane.vercel.app/api/ready: **404 DEPLOYMENT_NOT_FOUND**. Prod deploy still behind main.
+- QuicksilverV1 main `c2bfec7` CI green (read-only; owned by Quicksilver Dev). #370–#375 await owner merge OK.
+- Open PRs (11:00 ET → 12:20 ET): Conduit 26 → 27 (+#287 innovation); Resonance 46 → 44; QuicksilverV1 17 → 17. No new Jules/bot PRs since 11:00 ET; nothing pruned.
+- Merged this pass (normal merge on existing approval, green, current): Resonance #198 (gemini concurrency + ready privacy test), #203 (knip unused-export prune). Earlier today: Conduit #258, #213; Resonance #236.
+- Brought current with main: Resonance #212, #200, #169, #157 (approved; merge once green). #193 held: valid P2 Codex finding (stale plan doc).
+- New: Conduit #287 read-only journal-noise check (flags PRs touching only `.jules/*.md`), with tests.
 - No secrets invented. No device claim (CHR-55 open).
 
 ## Blunt scores (1-10)
