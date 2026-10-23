@@ -49,6 +49,8 @@ const GRANT_OVERRIDES = new Map<string, CapabilityLevel>(Object.entries({
   "agent.execute": "execute",
   "model.invoke": "execute",
   "realtime.subscribe": "read",
+  // Outbound side effect to an external receiver: execute level, so the default policy gates it behind approval.
+  "webhook.deliver": "execute",
 } as const));
 
 /** action verb → policy level, applied to the segment after the final `.` */

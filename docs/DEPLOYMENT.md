@@ -46,6 +46,8 @@ RESONANCE_PROJECT_ID=
 GITHUB_TOKEN=                 # adapter; required for the GitHub vertical slice
 GITHUB_WEBHOOK_SECRET=        # adapter
 LINEAR_API_KEY=               # ops
+RESONANCE_WEBHOOK_URL=        # optional signed webhook adapter (https, public host)
+RESONANCE_WEBHOOK_SECRET=     # optional; >= 32 chars; adapter stays disabled unless both set
 ```
 
 ## Smoke
