@@ -54,7 +54,7 @@ const OWNER_SECRET_KEYS = new Set([
   "LINEAR_API_KEY",
 ]);
 
-export function envPresent(env: NodeJS.Dict<string>, key: string): boolean {
+function envPresent(env: NodeJS.Dict<string>, key: string): boolean {
   return Boolean(env[key]?.trim());
 }
 
