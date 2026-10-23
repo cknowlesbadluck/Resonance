@@ -5,6 +5,7 @@ import { McpAdapter } from "./adapters/mcp";
 import { GitHubAdapter, githubRepositoryReadCapability } from "./adapters/github";
 import { LinearAdapter, linearIssueReadCapability } from "./adapters/linear";
 import { composeIntent } from "./composer";
+import { fairShareFromEnv } from "./fair-share";
 import type { NexusAdapter } from "./adapters/types";
 import type { NexusCapability, NexusIntent } from "./types";
 
@@ -39,6 +40,8 @@ demoCapabilities.forEach((capability) => nexusRegistry.register(capability));
 if (githubAdapter) nexusRegistry.register(githubRepositoryReadCapability);
 if (linearAdapter) nexusRegistry.register(linearIssueReadCapability);
 export const nexusPolicy = new DefaultNexusPolicy();
+/** One process-wide fair-share guard shared by every executor (per-project and per-adapter slots). */
+export const nexusFairShare = fairShareFromEnv();
 
 export function composeNexusIntent(intent: NexusIntent) { return composeIntent(intent, nexusRegistry, nexusPolicy, nexusAdapters); }
 /** @deprecated Compatibility alias; runtime is no longer demo-only. */
