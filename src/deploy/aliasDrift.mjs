@@ -8,7 +8,9 @@ export function classifyAlias({ status, contentType = "", body = "" }, mainSha =
     return status >= 200 && status < 500 ? { outcome: "stranger_occupant", drift: true } : { outcome: "unreachable", drift: true };
   }
   const sha = typeof json.commitSha === "string" ? json.commitSha : null;
-  if (!sha || sha === "unknown" || !mainSha) return { outcome: "resonance_unstamped", drift: false };
+  // drift: null = unverifiable. Never report an uncompared alias as clean (drift: false).
+  if (!sha || sha === "unknown") return { outcome: "resonance_unstamped", drift: null };
+  if (!mainSha) return { outcome: "comparison_unavailable", drift: null };
   return mainSha.startsWith(sha) || sha.startsWith(mainSha)
     ? { outcome: "resonance_at_main", drift: false }
     : { outcome: "resonance_stale", drift: true };

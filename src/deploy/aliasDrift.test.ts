@@ -21,6 +21,10 @@ describe("classifyAlias", () => {
   it("compares commitSha to main", () => {
     expect(classifyAlias({ status: 503, contentType: "application/json", body: ready({ commitSha: "9422def" }) }, "9422def2b106").outcome).toBe("resonance_at_main");
     expect(classifyAlias({ status: 503, contentType: "application/json", body: ready({ commitSha: "abc1234" }) }, "9422def2b106")).toEqual({ outcome: "resonance_stale", drift: true });
-    expect(classifyAlias({ status: 503, contentType: "application/json", body: ready({}) }, "9422def").outcome).toBe("resonance_unstamped");
+    expect(classifyAlias({ status: 503, contentType: "application/json", body: ready({}) }, "9422def")).toEqual({ outcome: "resonance_unstamped", drift: null });
+    expect(classifyAlias({ status: 503, contentType: "application/json", body: ready({ commitSha: "unknown" }) }, "9422def").drift).toBeNull();
+  });
+  it("reports a missing main SHA as comparison_unavailable, never as clean", () => {
+    expect(classifyAlias({ status: 503, contentType: "application/json", body: ready({ commitSha: "9422def" }) }, null)).toEqual({ outcome: "comparison_unavailable", drift: null });
   });
 });
