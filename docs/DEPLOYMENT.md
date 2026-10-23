@@ -70,3 +70,11 @@ SideStore / IPA evidence is issue #11. The Nexus contract (Idempotency-Key + Bea
 ## Two-Key
 
 Host/runtime configuration is not a critical reformation. Changing core identity, domain semantics, or locking the Nexus to one vendor remains Two-Key.
+
+## Vercel alias drift (report-only)
+
+`npm run alias-drift` (add `--json` for machine output) fetches `/api/ready` on the public Vercel aliases
+(`ALIAS_HOSTS`, default `resonance,resonancenexus,resonanceplane.vercel.app`) and compares against `main` via the public
+GitHub API. Outcomes: `alias_absent` (Vercel DEPLOYMENT_NOT_FOUND), `stranger_occupant` (serves a non-Resonance app),
+`unreachable`, `resonance_unstamped` (no `commitSha`), `resonance_stale`, `resonance_at_main`. Public HTTP only, no
+secrets, always exits 0. Fixing drift is an owner action in the Vercel dashboard; this script never changes config.
