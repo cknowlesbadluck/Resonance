@@ -76,3 +76,18 @@ Exit: no request/response body logging; privacy manifest enforced.
 - Conduit `/ready` 200 (`contractRevision` 2026-10-03-ready-surface, persistence postgres); Resonance `/api/ready` 503, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]` (owner gate). Open PRs: Resonance 44, Conduit 26; no merges this pass.
 - CHR-55 still open: no device acceptance recorded.
 - Bot-approval finding: every APPROVED Resonance PR (#157, #169, #193, #200, #212) is approved only by `coderabbitai`. Bot-only approvals do not count; each needs a human review before merge.
+
+## Evidence 2026-10-23 17:05 EDT (21:05Z)
+- Probes: Conduit `/ready` 200 (0.8.0, `contractRevision` 2026-10-03-ready-surface, postgres). Resonance `/api/ready` 503, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]` (owner gate, unchanged). Probe score 3.3/10 (Vercel aliases still stranger/absent).
+- Main CI green on all three repos (QuicksilverV1 CI 19:01Z, Conduit CI 16:19Z, Resonance CI 16:10Z). Conduit `Workers Builds` is a known always-failing check and is ignored.
+- Open PRs: QuicksilverV1 18, Conduit 26 → 27 (adds #288), Resonance 44. No merges or closes this pass:
+  - Conduit #283 (Bolt fast path) is green but CONFLICTING and 13 commits behind main, so it was not merged. #204/#267 stay open.
+  - Every approved Resonance PR is approved only by a bot, so none were merged.
+  - No docs-only PR was verifiably superseded.
+- Scores unchanged from the table above (Conduit 6/7/7/4/6, Resonance 6/3/6/2/3, QuicksilverV1 5/5/6/4/4).
+- Exit criteria: fail-closed holds (Resonance 503 names only the missing key; no secret echoed). No owner gate was bypassed. CHR-55 is still the only device gate, and this pass makes no device claim.
+- Innovation: Conduit #288 adds `portfolio-probe --decisions`, a read-only owner decision queue (6 tests, no new dependencies).
+- Decision queue (live 21:04Z; categories overlap):
+  - Conduit: 22/26 blocked. Bot-only approval: #238, #267. Changes requested: 13. Adds env vars: 13. Auth/grants/migrations: #120, #155, #206, #211, #238, #243, #251, #276. Behind main: #119, #120, #275, #276, #283.
+  - Resonance: 37/44 blocked. Bot-only approval: #157, #169, #193, #200, #212. Changes requested: 10. Adds env vars: 11. Auth/RLS/migrations: 11. Behind main: 33.
+  - QuicksilverV1: 0 flagged (GitHub reported merge state UNKNOWN; read-only here, owned by Quicksilver Dev).
