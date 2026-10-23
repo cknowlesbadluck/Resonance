@@ -38,9 +38,7 @@ export const nexusRegistry = new InMemoryCapabilityRegistry();
 demoCapabilities.forEach((capability) => nexusRegistry.register(capability));
 if (githubAdapter) nexusRegistry.register(githubRepositoryReadCapability);
 if (linearAdapter) nexusRegistry.register(linearIssueReadCapability);
-export const nexusPolicy = new DefaultNexusPolicy();
+const nexusPolicy = new DefaultNexusPolicy();
 
 export function composeNexusIntent(intent: NexusIntent) { return composeIntent(intent, nexusRegistry, nexusPolicy, nexusAdapters); }
-/** @deprecated Compatibility alias; runtime is no longer demo-only. */
-export const composeDemoIntent = composeNexusIntent;
 export function listRuntimeCapabilities() { return nexusRegistry.list(); }
