@@ -53,9 +53,7 @@ describe("NexusExecutor DAG Execution", () => {
       ],
     };
 
-    const startTime = Date.now();
-    const { execution, evidence } = await executor.execute(plan);
-    const duration = Date.now() - startTime;
+    const { execution } = await executor.execute(plan);
 
     expect(execution.status).toBe("completed");
 
