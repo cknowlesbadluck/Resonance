@@ -17,7 +17,7 @@ export function createNexusPersistenceFromEnv(): NexusPersistence | null {
   return new SupabaseNexusPersistence(createClient(url, key, { auth: { persistSession: false } }));
 }
 
-export class SupabaseNexusPersistence implements NexusPersistence {
+class SupabaseNexusPersistence implements NexusPersistence {
   constructor(private readonly db: SupabaseClient) {}
 
   async saveCapability(capability: NexusCapability, projectId?: string) {
