@@ -1,4 +1,4 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-23 10:45 UTC (merge pass + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-23 10:30 UTC (merge pass + innovate)
 
 Status tags: **[passed]** · **[in progress]** · **[blocked]** (owner action). Agents never apply migrations, change prod config, store secrets, or spend money.
 
@@ -16,13 +16,13 @@ Hygiene pass 2026-10-23T09:15Z (diff-verified against main and each other):
 - Kept (not contained): #178/#179 (route tests + db-error not in #202; #179 adds the parity workflow); #170 vs #184 (script vs contract test, disjoint files); #183/#193/#203 (disjoint prune sets, files still on main). Conduit Bolt #204/#267/#283 are competing rewrites of `sameRecord`: owner picks one; #272/#275/#276 unique. Conduit #119 (SSE graceful-shutdown notify not on main) and #120 (migration modules) need an owner call.
 - Merge blocker: Resonance `main` requires 1 approving review; #235 and #236 are green but need the owner's approval click (no admin override used).
 
-Merge pass 2026-10-23 10:02–10:45Z (owner-authorized merge of green, non-overlapping hardening/tests PRs):
+Merge pass 2026-10-23 10:02–10:30Z (owner-authorized merge of green, non-overlapping hardening/tests PRs):
 - Fresh probes 10:02Z: Conduit `/ready` **200** (main `acdbd5e`, CI green); Resonance `/api/ready` **503** `missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]` (main `9422def`). Open PRs before: Conduit 33, Resonance 48.
 - Conduit merges in `npm run merge-train` order, squash, no admin; main CI green + `/ready` 200 after each: #245 → `fc2e762`, #261 → `31ee79f`, #207 → `461c49d`, #231 → `8bc019e` (CI https://github.com/cknowlesbadluck/Conduit/actions/runs/39937339129).
 - Skipped: #278/#247 (bot findings still valid on head), #208 (2 unresolved findings: NaN TTL, no in-flight sharing), #190 (owner gate), #162/#259 (new env vars), #204/#267/#283 trio, #155, #119/#120, all owner-review-flagged PRs.
 - No pure-noise audit-refresh PRs remained open to close (earlier passes already pruned them).
 - #236 review findings fixed (`ba18427`): unstamped/uncomparable aliases now report `drift: null` / `verified: false`, never clean; docs show `npm run --silent alias-drift -- --json`. Still needs owner approval.
-- New Conduit #284: `portfolio-probe --entropy` (PR age buckets + stacked depth).
+- New Conduit #284 merged → `6bc331a` (CI https://github.com/cknowlesbadluck/Conduit/actions/runs/39938650341, /ready 200): `portfolio-probe --entropy` (PR age buckets + stacked depth). Open PRs after: Conduit 29, Resonance 48.
 
 Blunt scores (0–10) this pass:
 | repo | security | reliability | tests | hygiene | ops |
