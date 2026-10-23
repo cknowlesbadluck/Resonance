@@ -10,6 +10,12 @@ Live evidence 2026-10-23T08:02Z (public HTTP / gh):
 - Merged since 2026-10-17: Conduit #248–#254, #262, #263, #268, #269, #274; Resonance #218, #231.
 - QuicksilverV1 not probed in this pass (out of scope).
 
+Hygiene pass 2026-10-23T09:15Z (diff-verified against main and each other):
+- Re-probed: Conduit `/ready` 200 (main `cf3c86c`); Resonance `/api/ready` 503 `missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]` (main `9422def`). Open PRs before: Conduit 35 (new Bolt #283), Resonance 48.
+- Closed Resonance #194: all 3 bumps contained at identical versions in Dependabot #233.
+- Kept (not contained): #178/#179 (route tests + db-error not in #202; #179 adds the parity workflow); #170 vs #184 (script vs contract test, disjoint files); #183/#193/#203 (disjoint prune sets, files still on main). Conduit Bolt #204/#267/#283 are competing rewrites of `sameRecord`: owner picks one; #272/#275/#276 unique. Conduit #119 (SSE graceful-shutdown notify not on main) and #120 (migration modules) need an owner call.
+- Merge blocker: Resonance `main` requires 1 approving review; #235 and #236 are green but need the owner's approval click (no admin override used).
+
 ## Phase 1 — Owner gate stays external [blocked]
 Exit: owner sets SUPABASE_SERVICE_ROLE_KEY in Netlify; `/api/ready` returns 200. Until then the body must stay owner-blocked and no agent invents a key.
 
