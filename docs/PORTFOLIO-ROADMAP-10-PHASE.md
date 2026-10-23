@@ -1,4 +1,4 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-23 10:30 UTC (merge pass + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-23 11:20 UTC (7 AM ET pass)
 
 Status tags: **[passed]** · **[in progress]** · **[blocked]** (owner action). Agents never apply migrations, change prod config, store secrets, or spend money.
 
@@ -24,13 +24,22 @@ Merge pass 2026-10-23 10:02–10:30Z (owner-authorized merge of green, non-overl
 - #236 review findings fixed (`ba18427`): unstamped/uncomparable aliases now report `drift: null` / `verified: false`, never clean; docs show `npm run --silent alias-drift -- --json`. Still needs owner approval.
 - New Conduit #284 merged → `6bc331a` (CI https://github.com/cknowlesbadluck/Conduit/actions/runs/39938650341, /ready 200): `portfolio-probe --entropy` (PR age buckets + stacked depth). Open PRs after: Conduit 29, Resonance 48.
 
-Blunt scores (0–10) this pass:
+7 AM ET pass 2026-10-23 11:01–11:20Z:
+- Probes: Conduit `/ready` **200** (main `6bc331a`, CI/Live Smoke/Lockfile Sync green); Resonance `/api/ready` **503** `not_ready`, `missingRequired: ["SUPABASE_SERVICE_ROLE_KEY"]`, `persistenceConfigured:false` (main `9422def`, CI green).
+- `portfolio-probe --entropy` (#284 live): score **3.3/10**; conduit OK; resonance-netlify not_ready; resonance-vercel + quicksilver-vercel `stranger_occupant` DRIFT; resonancenexus-vercel + quicksilverv1-vercel `alias_absent` DRIFT. Conduit 29 open (1 <1d, 14 1–7d, 14 7–30d, oldest 27d, 3 stacked, depth 2); Resonance 47 (3/21/23, oldest 13d, 6 stacked, depth 4).
+- Closed Resonance #219 (superseded by #237: same 5 files, #237 is a superset) and #197 (pure docs, RUNBOOK). Open PRs: Conduit 29 → 30 (new #285), Resonance 48 → 47 (a new PR landed during the pass).
+- Merged: none. Every Bolt candidate failed a gate: #272 overlaps #258 (`src/mcp-bridge.ts`), #275 has a valid unresolved finding (exact-string fast path bypasses pattern rejection in grant matching), #276 touches grants + 2 unresolved, #278 10 unresolved; all are 7–8 commits behind main and share `.jules/bolt.md`. Resonance merges need the owner's approving review.
+- New Conduit #285: `--entropy` reports `drafts` (+test). Free, no env vars, no secrets.
+- QuicksilverV1 (owned by another bot, not touched): main `7419224` green; 21 open PRs; new PR #367 (log-privacy guard); CHR-55 `not_recorded`; ROADMAP stub decision pending; merges need the owner's OK in Quicksilver Dev's chat.
+
+Blunt scores (1–10) this pass:
 | repo | security | reliability | tests | hygiene | ops |
 |---|---|---|---|---|---|
-| Conduit | 6 (DB TLS #155 still unmerged; no branch protection) | 7 (/ready 200, CI green after 4 merges) | 7 | 4 (~29 open PRs, 8 touching store.ts) | 6 (Workers Builds noise check still red everywhere) |
-| Resonance | 6 (auth required, RLS PRs pending review) | 2 (prod 503 for days) | 6 | 3 (48 open PRs, review-gated) | 3 (missing prod key; Vercel aliases absent/stranger) |
+| Conduit | 6 (DB TLS #155 unmerged; no branch protection) | 7 (/ready 200, main green) | 7 | 4 (30 open; Bolt PRs collide on `.jules/bolt.md` and need rebasing) | 6 (Workers Builds noise check still red) |
+| QuicksilverV1 | 6 (log-privacy guard #367 pending) | 7 (main green) | 6 | 4 (21 open) | 4 (CHR-55 not_recorded; owner-gated merges) |
+| Resonance | 6 (auth required; RLS PRs pending review) | 2 (prod 503 for days) | 6 | 3 (47 open, review-gated) | 3 (missing prod key; Vercel aliases absent/stranger) |
 
-Exit criteria for the next pass: Resonance `/api/ready` 200 after the owner sets the key; Resonance open PRs < 30 via owner approvals of #235/#236 and batch review; Conduit picks one of #204/#267/#283 and closes the other two; Conduit open PRs < 25; Conduit enables branch protection (require CI).
+Exit criteria for the next pass: Resonance `/api/ready` 200 after the owner sets the key; Resonance open PRs < 30 via owner approvals of #235/#236 and batch review; Conduit picks one of #204/#267/#283 and closes the other two; Conduit open PRs < 25; Bolt PRs rebased onto main with one shared `.jules/bolt.md` entry so they stop colliding; Conduit enables branch protection (require CI); QuicksilverV1 settles the ROADMAP stub and records CHR-55.
 
 ## Phase 1 — Owner gate stays external [blocked]
 Exit: owner sets SUPABASE_SERVICE_ROLE_KEY in Netlify; `/api/ready` returns 200. Until then the body must stay owner-blocked and no agent invents a key.
@@ -63,6 +72,6 @@ Exit (held): metadata-only logs; redaction fast paths merged (Conduit #263).
 Exit: one probe shows Conduit ready, Resonance ready + stamped at main, alias drift clear, device archive evidence. Fixtures are insufficient.
 
 ## Innovation track
-1. Resonance #236 — report-only Vercel alias drift (public HTTP, +tests). 2. Conduit #282 — open-PR entropy in portfolio-probe (now injectable/timeout + test). 3. Conduit #260 — merge-train health (complementary, keep). 4. Resonance #202/#179 — deploy parity + schedule; fold alias-drift into the schedule after merge. 5. Conduit #278 — stale branch detector.
+1. Resonance #236 — report-only Vercel alias drift (public HTTP, +tests). 2. Conduit #282 — open-PR entropy in portfolio-probe (now injectable/timeout + test). 3. Conduit #260 — merge-train health (complementary, keep). 4. Resonance #202/#179 — deploy parity + schedule; fold alias-drift into the schedule after merge. 5. Conduit #278 — stale branch detector (10 unresolved findings). 6. Conduit #285 — draft count in `--entropy`, so parked DRAFT KEEP RED work is separated from merge-path PRs.
 
 Highest-value next: owner sets the Supabase key + cleans Vercel aliases; then merge-train the green hardens to get under 10 open PRs per repo.
