@@ -71,3 +71,8 @@ Exit: no request/response body logging; privacy manifest enforced.
 3. Approve the Resonance PRs brought current on 2026-10-23 (one review each).
 4. Pick one of Conduit #204 / #267 / #283 (overlapping Bolt perf).
 5. Decide Conduit auth/grants (#275, #276, #234, #238, #206, #212), DB TLS #155 (needs Render env), migrations #120.
+
+## Evidence 2026-10-23 13:03 EDT (17:03Z)
+- Conduit `/ready` 200 (`contractRevision` 2026-10-03-ready-surface, persistence postgres); Resonance `/api/ready` 503, `missingRequired: [SUPABASE_SERVICE_ROLE_KEY]` (owner gate). Open PRs: Resonance 44, Conduit 26; no merges this pass.
+- CHR-55 still open: no device acceptance recorded.
+- Bot-approval finding: every APPROVED Resonance PR (#157, #169, #193, #200, #212) is approved only by `coderabbitai`. Bot-only approvals do not count; each needs a human review before merge.
