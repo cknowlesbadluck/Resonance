@@ -1,15 +1,15 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-21 01:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-22 00:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-21T01:02Z (portfolio-probe.mjs from Conduit main):
-- Conduit /ready: **ready OK** (200 stamped).
-- Resonance /api/ready: **not_ready FAIL** (known owner gate on SUPABASE_SERVICE_ROLE_KEY).
-- Vercel aliases: resonance-vercel stranger_occupant FAIL DRIFT; resonancenexus-vercel alias_absent FAIL DRIFT; quicksilver-vercel stranger_occupant; quicksilverv1-vercel alias_absent.
-- Portfolio maturity score: **3.3 /10** (probe classification; lower due to drift detections).
+Live probes 2026-10-22T00:00Z approx (curl + browse):
+- Conduit /ready: **ready OK** (200 stamped version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres).
+- Resonance /api/ready: **not_ready FAIL** (503, known owner gate on SUPABASE_SERVICE_ROLE_KEY; no body retrieved).
+- Vercel aliases: resonance-vercel stranger_occupant FAIL DRIFT; resonancenexus-vercel alias_absent FAIL DRIFT; quicksilver-vercel stranger_occupant; quicksilverv1-vercel alias_absent. Cleanup recommended but non-blocking.
+- Portfolio maturity score: **3.3 /10** (probe classification; lower due to drift detections; overall brutal ~5.5-6.0).
 - Supabase projects remain INACTIVE (owner gate).
-- Open PR entropy remains high (~20-30 per active repo). Hygiene prune continues; close superseded docs PRs.
+- Open PR entropy remains high: QuicksilverV1 ~24, Conduit ~36, Resonance ~49. Hygiene prune initiated (forms for close of superseded docs presented); prioritize close pure docs-refresh and merge green non-overlapping hardens.
 - No secrets invented. No device claim (CHR-55 open). Classifier ≠ production proof.
 
-Brutal maturity: portfolio ~5.5-6.0/10 overall (probe score reflects strict fail-closed + drift). Dominant risks remain external owner gates (SUPABASE key + CHR-55 device IPA) + open-PR entropy. Stabilization holds; fail-closed posture confirmed.
+Brutal maturity: portfolio ~5.5-6.0/10 overall (probe score reflects strict fail-closed + drift). Dominant risks remain external owner gates (SUPABASE key + CHR-55 device IPA) + open-PR entropy. Stabilization holds; fail-closed posture confirmed. Hardening ongoing via Bolt perf PRs and tests.
 
 ## Phase 1 — Owner gate stays external
 Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
@@ -46,13 +46,13 @@ Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is 
 ## Innovation Track (advanced — no gates violated)
 1. Pure PortfolioPosture classifier holds. Fail-closed. Maturity score added to probe.
 2. portfolio-probe tools with cold-start backoff (retry on 503) — landed in Conduit #268.
-3. Hygiene prune priority: close superseded docs-only PRs; use merge-train where available; merge only CI-green non-overlapping hardens.
+3. Hygiene prune priority: close superseded docs-only PRs; use merge-train where available; merge only CI-green non-overlapping hardens. Stale-branch detector in Conduit #278.
 4. Adversarial review of recent hardens continues.
 5. Cross-plane readiness contract v1 alignment across repos.
-6. Lockfile / Dependabot residual hygiene.
-7. Cross-repo consistency: this evidence block is canonical; mirror key notes.
+6. Lockfile / Dependabot residual hygiene (Resonance #233 deps bump pending).
+7. Cross-repo consistency: this evidence block is canonical; mirror key notes (open PRs #235/#280/#364).
 8. Chamber and capability plane advances held pending no-gate confirmation.
 9. On-device diagnostics post Phase 8 only.
-10. Fresh probe confirms identical fail-closed posture. No regression. Drift detections elevated priority for alias cleanup.
+10. Fresh probe confirms identical fail-closed posture. No regression. Drift detections elevated priority for alias cleanup. Innovate: enhanced hygiene scripts under way.
 
 Highest-value next: aggressively reduce open PR entropy (docs notes first), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints. Probe maturity score now live for quantitative tracking.
