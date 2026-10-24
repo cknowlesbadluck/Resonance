@@ -118,3 +118,13 @@ Exit: no request/response body logging; privacy manifest enforced.
 - `--decisions` (Resonance): bot-only approvals #157, #169, #193, #200, #212 (not mergeable without a human review); 33 PRs behind main.
 - `--stale-branches`: Resonance `hygiene/probe-2026-10-09-2300` (14d) only. Nothing deleted.
 - CHR-55 is still the only device gate.
+
+## Evidence 2026-10-23 21:00 EDT (2026-10-24 01:00Z)
+- Conduit `/ready` 200 x3 (20s spacing; 0.43/0.26/0.21s), `0.8.0`, `contractRevision 2026-10-03-ready-surface` — earlier 503 was cold start, not persistent.
+- Resonance `/api/ready` 503, `missingRequired ["SUPABASE_SERVICE_ROLE_KEY"]` (owner gate, unchanged). `resonanceplane.vercel.app` 404 (root and /api/ready).
+- main CI green: Conduit (00:07Z), Resonance (16:10Z), QuicksilverV1 (19:01Z).
+- Resonance Dependabot open: 4 (`next` critical, `next` high, `@vitest/mocker` medium x2).
+- Open PRs: QuicksilverV1 18, Conduit 25 (+2 this pass), Resonance 44 (+1 this pass). Entropy (`--entropy --markdown`, Conduit #289): Resonance 27 PRs aged 7-30d, stack depth 4; Conduit 17 aged 7-30d, depth 2.
+- No merges: no Conduit PR met every gate; no Resonance PR has a human approval.
+- Status tags unchanged: [passed] 2, 3, 6; [in progress] 5, 7, 9; [blocked] 1, 4, 8, 10. Device: CHR-55 open, deviceAcceptance=not_recorded.
+- Innovation track: Conduit #289 (markdown entropy table) opened.
