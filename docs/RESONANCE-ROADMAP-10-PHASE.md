@@ -24,7 +24,7 @@ Every merge needs 1 human approving review. Bot approval is not enough, and admi
 
 ## Risks
 - Migration-vs-live RLS drift is unverified. The anon graph access fix (#207) is not applied.
-- 45 open PRs → constant rebase cost; stacked PRs (#213→#214) are DIRTY.
+- 45 open PRs (11:00Z) → constant rebase cost; stacked PRs (#213→#214) are DIRTY.
 - Next.js advisories stay open until #233 has human review.
 
 ## Innovation ideas
