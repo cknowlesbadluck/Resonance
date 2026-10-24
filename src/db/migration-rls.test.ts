@@ -10,7 +10,11 @@ import { describe, expect, it } from "vitest";
 
 const dir = join(process.cwd(), "supabase", "migrations");
 const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
-/** Remove -- and /* *\/ comments while leaving '...', "..." and $tag$...$tag$ literals intact. */
+/**
+ * Lex SQL into "code only": drop -- and nested /* *\/ comments, blank out the contents of
+ * '...' and $tag$...$tag$ literals (data, never statements), and keep "quoted" identifiers
+ * with their inner whitespace replaced by \u0001 so no statement pattern can start inside one.
+ */
 export function strip(sql: string): string {
   let out = "";
   let i = 0;
@@ -18,19 +22,37 @@ export function strip(sql: string): string {
     const c = sql[i];
     const two = sql.slice(i, i + 2);
     if (two === "--") { const n = sql.indexOf("\n", i); i = n === -1 ? sql.length : n; continue; }
-    if (two === "/*") { const n = sql.indexOf("*/", i + 2); i = n === -1 ? sql.length : n + 2; out += " "; continue; }
+    if (two === "/*") {
+      let depth = 1; let j = i + 2;
+      while (j < sql.length && depth > 0) {
+        const t = sql.slice(j, j + 2);
+        if (t === "/*") { depth++; j += 2; } else if (t === "*/") { depth--; j += 2; } else j++;
+      }
+      i = j; out += " "; continue;
+    }
     if (c === "'" || c === '"') {
       let j = i + 1;
       while (j < sql.length) { if (sql[j] === c) { if (sql[j + 1] === c) { j += 2; continue; } break; } j++; }
-      out += sql.slice(i, j + 1); i = j + 1; continue;
+      const body = sql.slice(i + 1, Math.min(j, sql.length));
+      out += c + (c === "'" ? " ".repeat(body.length) : body.replace(/\s/g, "\u0001")) + (j < sql.length ? c : "");
+      i = j + 1; continue;
     }
-    const tag = c === "$" ? /^\$[A-Za-z_]*\$/.exec(sql.slice(i)) : null;
-    if (tag) { const n = sql.indexOf(tag[0], i + tag[0].length); const end = n === -1 ? sql.length : n + tag[0].length; out += sql.slice(i, end); i = end; continue; }
+    if (/[\w$]/.test(c)) {
+      // An identifier or keyword (may contain $): consume it whole so foo$tag$ is never a delimiter.
+      if (c !== "$") { const m = /^[\w$]+/.exec(sql.slice(i))!; out += m[0]; i += m[0].length; continue; }
+      const tag = /^\$(?:[A-Za-z_\u0080-\uffff][\w\u0080-\uffff]*)?\$/.exec(sql.slice(i));
+      if (tag) {
+        const n = sql.indexOf(tag[0], i + tag[0].length);
+        const end = n === -1 ? sql.length : n + tag[0].length;
+        out += tag[0] + " ".repeat(Math.max(0, end - i - 2 * tag[0].length)) + (n === -1 ? "" : tag[0]);
+        i = end; continue;
+      }
+    }
     out += c; i++;
   }
   return out;
 }
-/** Blank out single-quoted string literal contents so SQL quoted as data (e.g. COMMENT ... IS '...') is never matched as a statement. */
+/** Kept for callers: strip() already blanks single-quoted contents; this is idempotent. */
 export function maskStrings(sql: string): string {
   return sql.replace(/'(?:[^']|'')*'/g, (m) => "'" + " ".repeat(m.length - 2) + "'");
 }
@@ -38,7 +60,7 @@ const sql = files.map((f) => maskStrings(strip(readFileSync(join(dir, f), "utf8"
 /** Postgres identifier rules: unquoted parts fold to lower case, quoted parts keep case. */
 export function norm(name: string): string {
   const parts = name.match(/"(?:[^"]|"")*"|[^.]+/g) ?? [];
-  const folded = parts.map((p) => (p.startsWith('"') ? p.slice(1, -1).replace(/""/g, '"') : p.toLowerCase()));
+  const folded = parts.map((p) => (p.startsWith('"') ? p.slice(1, -1).replace(/""/g, '"').replace(/\u0001/g, " ") : p.toLowerCase()));
   if (folded.length === 2 && folded[0] === "public") folded.shift();
   return folded.join(".");
 }
@@ -85,7 +107,15 @@ describe("supabase migrations: RLS + grants (static)", () => {
     expect(riskyGrants("grant execute on function private.f(uuid) to authenticated;")).toEqual([]);
     expect(riskyGrants(strip("grant all on schema public to authenticated;"))).toHaveLength(1);
     expect(riskyGrants(strip("select '/*'; grant select on table public.x to anon; select '*/';"))).toHaveLength(1);
-    expect(strip("select $f$ -- not a comment $f$; -- real")).toContain("not a comment");
+    expect(strip("select $f$ -- not a comment $f$; -- real")).not.toContain("real");
+    // nested comments, dollar tags with digits, $ inside identifiers, dollar bodies and quoted identifiers
+    const hide = (x: string) => rlsTables(strip(x)).has("leaky") || !createdTables(strip(x)).includes("leaky");
+    expect(createdTables(strip("/* outer /* inner */ ' */ CREATE TABLE public.leaky (id int);"))).toEqual(["leaky"]);
+    expect(hide("SELECT $v1$-- text$v1$; CREATE TABLE public.leaky (id int);")).toBe(false);
+    expect(createdTables(strip("select foo$tag$ ; CREATE TABLE public.leaky (id int); select '$tag$';"))).toEqual(["leaky"]);
+    expect(hide("CREATE TABLE public.leaky (id int); SELECT $$alter table public.leaky enable row level security$$;")).toBe(false);
+    expect(hide('CREATE TABLE public.leaky ("alter table public.leaky enable row level security" integer);')).toBe(false);
+    expect(createdTables(strip('create table public."My Table" (id int);'))).toEqual(["My Table"]);
     expect(createdTables('create unlogged table public.u (id int); create table public."Accounts" (id int);')).toEqual(["u", "Accounts"]);
     expect(rlsTables("alter table public.accounts enable row level security;").has("Accounts")).toBe(false);
     expect(norm('PUBLIC.Foo')).toBe("foo");
