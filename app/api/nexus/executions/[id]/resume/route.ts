@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "../../../../../../src/db/service-client";
 import { authRequired, authenticateNexusRequest } from "../../../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../../../src/composition/root";
 import { nexusAdapters } from "../../../../../../src/nexus/runtime";
@@ -16,9 +16,7 @@ interface StoredPlan {
 }
 
 function dbClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+  return createServiceRoleClient();
 }
 
 async function loadRequest(db: NonNullable<ReturnType<typeof dbClient>>, projectId: string, id: string) {

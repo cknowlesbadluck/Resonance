@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "../../../src/db/service-client";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../src/auth/nexus-request";
 import { productionUserDataBlock } from "../../../src/nexus/production-boundary";
 
@@ -11,9 +11,7 @@ const MAX_STATUS_LENGTH = 100;
 const MAX_EXTERNAL_ID_LENGTH = 256;
 
 function client() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+  return createServiceRoleClient();
 }
 
 async function body(request: Request) {
