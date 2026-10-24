@@ -38,3 +38,22 @@ See [AUDIT-2026-10-24-LATE.md](AUDIT-2026-10-24-LATE.md).
 - Both planes are ready. Resonance reports production=true. The unauthenticated executions request returns 401.
 - Open PRs: QuicksilverV1 12, Resonance 17 (down from 41), Conduit 14 (down from 25). CI on main is green in all three repos.
 - Innovation slices: (a) entropy-trend baseline gate (Conduit #309); (b) stricter stale-branch safe-delete with restore commands; (c) consistency assertion for the contractRevision format and production=true on both planes.
+
+## 19:00 ET refresh (2026-10-24 23:00Z)
+Trackers (read-only references, Linear not edited): **Resonance Integration Platform** (Resonance and Conduit phases 1-9) and **Mercury: Quicksilver** (QS work; device phases gated on CHR-55).
+
+| # | Phase | Goal | Exit criteria | Status 23:00Z |
+|---|-------|------|---------------|---------------|
+| 1 | Ready / contract consistency | Both planes self-describe | Both /ready 200, Resonance authMode required, executions 401, both report `production=true` | [in progress] probes pass; Conduit `production` field is Conduit #311 |
+| 2 | Dependabot zero | No open alerts | 0 alerts in all 3 repos | [in progress] Conduit alert #1 still open, but `npm ls body-parser` on main shows only 2.4.0 (patched). Stale alert, no fix PR needed; it closes on the rescan |
+| 3 | Main protection | PR-only main | Rulesets with required checks | [blocked] owner |
+| 4 | PR entropy | Fewer open PRs | Under 10 per repo; entropy-trend steady for 7 days | [in progress] Conduit 18, Resonance 17, QS 13. Non-blocking entropy-trend CI job pushed to #309 |
+| 5 | Branch prune with proof | Safe deletes | Squash-aware with SHAs logged; stricter variant (no fork PR, older than 3 days, restore cmds) | [passed] base; stricter variant not started |
+| 6 | Guards and timeouts | Bounded inputs and deadlines | Every probe and outbound call has a deadline, with no leaked timers | [in progress] Conduit #312 clears the /ready probe timer |
+| 7 | Durable journal | Persisted execution journal | Crash/replay test | [in progress] re-scope (#215 closed) |
+| 8 | Fair-share scheduling | Cross-instance caps | Starvation test | [in progress] #214 (migration owner-gated) |
+| 9 | Receipt enforcement | Signed, chained MCP receipts | Verifier in CI, allowlist set to enforce | [in progress] parked (#256 and #257 branches kept) |
+| 10 | 1.0 acceptance | Portfolio stable | Probe maturity at least 8/10 for 7 days, alias drift resolved, CHR-55 recorded | [blocked] CHR-55 not_recorded; resonance.vercel.app still third-party |
+
+Innovations this pass: (a) entropy-trend as a continue-on-error CI job (#309); (b) additive Conduit `/ready.production` (#311); (c) stricter stale-branch safe-delete: proposed, not built.
+QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] on CHR-55 evidence.
