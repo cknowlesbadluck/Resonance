@@ -30,7 +30,11 @@ export function strip(sql: string): string {
   }
   return out;
 }
-const sql = files.map((f) => strip(readFileSync(join(dir, f), "utf8"))).join("\n");
+/** Blank out single-quoted string literal contents so SQL quoted as data (e.g. COMMENT ... IS '...') is never matched as a statement. */
+export function maskStrings(sql: string): string {
+  return sql.replace(/'(?:[^']|'')*'/g, (m) => "'" + " ".repeat(m.length - 2) + "'");
+}
+const sql = files.map((f) => maskStrings(strip(readFileSync(join(dir, f), "utf8")))).join(";\n");
 /** Postgres identifier rules: unquoted parts fold to lower case, quoted parts keep case. */
 export function norm(name: string): string {
   const parts = name.match(/"(?:[^"]|"")*"|[^.]+/g) ?? [];
@@ -49,7 +53,7 @@ export function rlsTables(text: string): Set<string> {
   return new Set([...text.matchAll(re)].map((m) => norm(m[1])));
 }
 export function riskyGrants(text: string): string[] {
-  const re = /grant\s+([^;]+?)\s+on\s+([^;]+?)\s+to\s+([^;]+);/gi;
+  const re = /grant\s+([^;]+?)\s+on\s+([^;]+?)\s+to\s+([^;]+?)\s*(?:;|$)/gi;
   return [...text.matchAll(re)]
     .filter(([, priv, obj, to]) => {
       const all = /\ball\b/i.test(priv);
@@ -85,5 +89,11 @@ describe("supabase migrations: RLS + grants (static)", () => {
     expect(createdTables('create unlogged table public.u (id int); create table public."Accounts" (id int);')).toEqual(["u", "Accounts"]);
     expect(rlsTables("alter table public.accounts enable row level security;").has("Accounts")).toBe(false);
     expect(norm('PUBLIC.Foo')).toBe("foo");
+    // string literals are data, not statements
+    const leaky = maskStrings(strip("create table public.leaky (id int); comment on table public.leaky is 'alter table public.leaky enable row level security;';"));
+    expect(rlsTables(leaky).has("leaky")).toBe(false);
+    // a final statement without a trailing semicolon is still checked
+    expect(riskyGrants("grant select on table public.projects to anon")).toHaveLength(1);
+    expect(riskyGrants("grant all on table public.projects to authenticated")).toHaveLength(1);
   });
 });
