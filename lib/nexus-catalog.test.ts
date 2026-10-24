@@ -59,4 +59,17 @@ describe("catalog → NexusCapability", () => {
     expect(mapped.risk).toBe("low");
     expect(mapped.providerId).toBe("Acme");
   });
+
+  it("handles missing dependencies gracefully", () => {
+    const result = resolveNexusCapabilities(["skill.not-found"]);
+    expect(result.missing).toEqual(["skill.not-found"]);
+    expect(result.resolved).toEqual([]);
+  });
+
+  it("identifies unavailable capabilities", () => {
+    // "integration.strengthcode" is 'planned' in the static catalog, so it's handled as 'unavailable'
+    const result = resolveNexusCapabilities(["integration.strengthcode"]);
+    expect(result.unavailable).toEqual(["integration.strengthcode"]);
+    expect(result.resolved).toEqual([]);
+  });
 });

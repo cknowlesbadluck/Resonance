@@ -5,8 +5,8 @@ import { join, relative } from "node:path";
 /**
  * Executable architecture rules.
  *
- * `src/nexus/capability-bridge.ts` previously imported `lib/capabilities`, which inverted
- * the dependency arrow and coupled the Nexus contract to a hard-coded fixture list.
+ * `src/nexus/capability-bridge.ts` previously imported `lib/capabilities` (now in `lib/nexus-catalog.ts`),
+ * which inverted the dependency arrow and coupled the Nexus contract to a hard-coded fixture list.
  * Nothing in the build caught it, because an inverted import is still a valid import.
  * These tests make the layering a property the suite enforces rather than a convention
  * the docs assert.

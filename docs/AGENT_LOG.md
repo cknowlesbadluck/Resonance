@@ -406,3 +406,16 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+
+## 2026-10-23 — Capability Plane Convergence
+
+**Context:** The goal is to fully transition to `NexusCapability` and remove the legacy `Capability` interfaces from `lib/capabilities.ts`.
+
+**Changes:**
+- Moved the array of capability items from `lib/capabilities.ts` into `lib/nexus-catalog.ts`.
+- Removed `lib/capabilities.ts` and `lib/capabilities.test.ts`.
+- Rewrote `resolveNexusCapabilities` logic in `lib/nexus-catalog.ts` using `CatalogEntry` and mapping it dynamically to `NexusCapability`.
+- Updated `src/composition/architecture.test.ts` to assert that `src/nexus/capability-bridge.ts` previously imported from `lib/capabilities` which inverted the dependency arrow.
+
+**Verification:**
+- Ran `npm run typecheck` and `npm test`, all tests passed.
