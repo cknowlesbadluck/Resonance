@@ -1,56 +1,49 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-24 03:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-24 05:00 UTC
 
-Live probes 2026-10-24T03:00Z:
-- Conduit /ready: **ready OK** (200 stamped, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres). Warm.
-- Resonance /api/ready: **not_ready FAIL** (exactly missing SUPABASE_SERVICE_ROLE_KEY; production true, authMode required ok, persistenceConfigured false). Timestamp 2026-10-24T03:00:41Z.
-- Vercel aliases: resonance.vercel.app and quicksilver.vercel.app return 200 (stranger_occupant). Alias drift persists.
-- Open PR entropy (current): QuicksilverV1 18, Conduit 27, Resonance 45. High entropy remains primary operational debt; hygiene prune ongoing.
-- No secrets invented. No device claim (CHR-55 open). Classifier ≠ production proof.
+Live probes 2026-10-24T05:01–05:02Z (01:01 ET):
+- Conduit /ready: 200 ready, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres.
+- Resonance /api/ready: **200 ready**, missingRequired [], authMode required (authModeOk true), persistenceConfigured true, posture contract_passed, contractRevision 2026-10-03-owner-gate, timestamp 2026-10-24T05:01:59Z. Unauthenticated GET /api/nexus/executions → 401.
+- Vercel aliases: resonanceplane.vercel.app and resonance-nexus.vercel.app /api/ready 404; resonance.vercel.app and quicksilver.vercel.app stranger_occupant; resonancenexus/quicksilverv1.vercel.app alias_absent. Netlify remains the canonical Resonance plane.
+- Open PRs: QuicksilverV1 16, Conduit 26→29 (3 new probe/innovation PRs), Resonance 43→44 (this docs PR).
+- Resonance Dependabot open alerts: next 1 critical + 1 high (fix tracked by #233), @vitest/mocker 2 moderate.
+- No secrets invented. No device claim (CHR-55 open).
 
-Brutal maturity: portfolio ~6.2/10 overall. Dominant risks remain external owner gates (SUPABASE key + CHR-55 device IPA) + open-PR entropy. Stabilization holds; fail-closed posture confirmed. Scores: QS ~7.4, Conduit ~7.2, Resonance ~5.6.
+Scores (1–10): Conduit ~7.4, Resonance ~6.4 (up from 5.6: owner gate cleared), QuicksilverV1 ~7.4. Portfolio ~6.8.
 
-## Phase 1 — Owner gate stays external
-Do not invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body remains owner-blocked; posture parser rejects any other classification.
+## Phase 1 — Owner gate stays external [passed]
+Exit: live ready body reports missingRequired [] with authMode required, set by the owner (not by an agent). Evidence: 05:01:59Z probe. Keep fail-closed: Conduit probe pin moves to `{ missingRequired: [], authMode: "required" }` (Conduit #292); any regression to not_ready or authMode ≠ required is drift.
 
-## Phase 2 — Alias and stranger classification stay strict
-404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready. Drift on Vercel aliases noted.
+## Phase 2 — Alias and stranger classification stay strict [in progress]
+Exit: 404 and stranger 200 aliases are never treated as ready; tests cover each. Alias drift on Vercel persists (owner decision: reclaim or retire aliases).
 
-## Phase 3 — Device fence immutable
-claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
+## Phase 3 — Device fence immutable [passed]
+Exit: health body keeps deviceAcceptance=not_recorded, acceptanceGate=CHR-55; claimDeviceAcceptance() rejects.
 
-## Phase 4 — CHR-55 remains the only device gate
-Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
+## Phase 4 — CHR-55 remains the only device gate [blocked]
+Exit: archive IPA installed and validated on iPhone 16e / iOS 27 by the owner. Simulator/CI/workers.dev 200 is not acceptance. Blocked on owner device action.
 
-## Phase 5 — Conversation and Memory budget stay
-Bounded windows and on-device embeddings continue. Exit: AppTests green; no unbounded history leakage.
+## Phase 5 — Conversation and memory budget [passed]
+Exit: bounded windows, on-device embeddings, AppTests green (QS main CI green 04:30Z).
 
-## Phase 6 — Gateway contract and free-tier stay
-No paid Workers bindings (KV/R2/D1/Queues). Exit: wrangler.toml / equivalent clean.
+## Phase 6 — Gateway contract and free tier [passed]
+Exit: no paid Workers bindings; free-tier only.
 
-## Phase 7 — Hygiene prune executed
-One roadmap file. No hourly audit artifacts. Held PRs not merged without verification. Archived Quicksilver remains non-product. Superseded docs-refresh PRs targeted for close. Open PR count target below 10 per repo via prioritized merge of green non-overlapping hardens and close of superseded/docs-only. Audit note mirrored across repos. Current counts: 18/27/45.
+## Phase 7 — Hygiene prune [in progress]
+Exit: <10 open PRs per repo; no superseded docs-only PRs open. Current 16/29/44. Resonance merges blocked: no open PR has a human approving review (only coderabbitai). Actions SHA-pinned: Conduit 11/11, Resonance 9/9, QS 27/31 (release.yml 4 unpinned).
 
-## Phase 8 — Resonance control plane waits on stamp
-No second client or iOS Resonance surface until live Netlify ready body carries contract stamp and owner key is set.
+## Phase 8 — Resonance control plane on stamped ready [in progress]
+Previously blocked on the owner key; now unblocked by the ready probe. Exit: capability plane convergence (#237) merged after a human review; executions list protected (401 unauth confirmed).
 
-## Phase 9 — Privacy and logging stay strict
-Privacy manifest enforced. Gateway logs metadata only. Exit: no request/response body logging.
+## Phase 9 — Privacy and logging strict [passed]
+Exit: privacy manifest enforced; metadata-only logs; QS privacy guard test (#370 open).
 
-## Phase 10 — Cross-plane acceptance proof
-Single probe covers Conduit ready (already true), Resonance ready (stamped), and real device archive evidence. Exit: production verdict accepted. Fixture or classifier test is insufficient.
+## Phase 10 — Cross-plane acceptance proof [blocked]
+Exit: one probe shows Conduit ready, Resonance ready (both now true) and device archive evidence (CHR-55). Blocked on Phase 4.
 
-Binding constraints: Resonance owner secret + CHR-55 device archive. Neither is closed by simulator or classifier. High open-PR entropy remains the current operational risk and must be pruned first.
+## Innovation track
+1. Conduit #291 `--consistency` cross-plane revision probe (CodeRabbit finding fixed).
+2. Conduit #292 key-present Resonance pin (fail closed on authMode drift).
+3. Conduit #293 stale-branch report flags branches whose PR is merged/closed (report only, never deletes).
+4. Next: Dependabot hygiene (`next` via #233, vitest for @vitest/mocker), QS release.yml SHA pins.
 
-## Innovation Track (advanced — no gates violated)
-1. Pure PortfolioPosture classifier holds. Fail-closed. Maturity score added to probe.
-2. portfolio-probe tools with cold-start backoff (retry on 503) — landed.
-3. Hygiene prune priority: close superseded docs-only PRs; use merge-train where available; merge only CI-green non-overlapping hardens.
-4. Adversarial review of recent hardens continues.
-5. Cross-plane readiness contract v1 alignment across repos.
-6. Lockfile / Dependabot residual hygiene.
-7. Cross-repo consistency: this evidence block is canonical; mirror key notes.
-8. Chamber and capability plane advances held pending no-gate confirmation.
-9. On-device diagnostics post Phase 8 only.
-10. Fresh probe confirms identical fail-closed posture. No regression. Drift detections elevated priority for alias cleanup.
-
-Highest-value next: aggressively reduce open PR entropy (docs notes first — close #239 Resonance, #290 Conduit if superseded; merge green non-overlapping like Conduit #283, QS #376), then owner gates (SUPABASE key + CHR-55 IPA). Stabilization holds. Innovate continues under constraints.
+Highest-value next: a human review on Resonance #233 (clears critical/high `next` alerts) and #237; then prune. Owner gate remaining: CHR-55.
