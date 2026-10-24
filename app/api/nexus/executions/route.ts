@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { persistenceErrorResponse } from "../../../../src/nexus/db-error";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
@@ -92,7 +93,7 @@ export async function GET(request: Request) {
       const [executions, evidence] = await Promise.all([persistence.listExecutions(projectId), persistence.listEvidence(projectId)]);
       return NextResponse.json({ executions, evidence, source: "durable" });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+      return persistenceErrorResponse("executions.list", error);
     }
   }
   const listed = scopedMemory.list(projectId);
@@ -167,7 +168,7 @@ export async function POST(request: Request) {
         .select("id", { count: "exact", head: true })
         .eq("project_id", intent.projectId)
         .gte("created_at", windowStart);
-      if (rateError) return NextResponse.json({ error: rateError.message }, { status: 500 });
+      if (rateError) return persistenceErrorResponse("executions.rate_limit", rateError);
       if ((recentCount ?? 0) > RATE_LIMIT_MAX_REQUESTS) {
         // Release our own claim so the key is not burned by a throttled attempt.
         await db
@@ -187,8 +188,8 @@ export async function POST(request: Request) {
         .eq("project_id", intent.projectId)
         .eq("idempotency_key", idempotencyKey)
         .maybeSingle();
-      if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 500 });
-      if (!existing) return NextResponse.json({ error: claim.error.message }, { status: 500 });
+      if (lookupError) return persistenceErrorResponse("executions.idempotency_lookup", lookupError);
+      if (!existing) return persistenceErrorResponse("executions.claim", claim.error);
       if (existing.request_hash !== hash) {
         return NextResponse.json({ error: "Idempotency-Key was already used for a different execution request." }, { status: 409 });
       }
