@@ -31,8 +31,10 @@ export function strip(sql: string): string {
       i = j; out += " "; continue;
     }
     if (c === "'" || c === '"') {
+      // E'...' escape strings: a backslash escapes the next char (incl. a quote).
+      const esc = c === "'" && /[eE]/.test(sql[i - 1] ?? "") && !/[\w$]/.test(sql[i - 2] ?? "");
       let j = i + 1;
-      while (j < sql.length) { if (sql[j] === c) { if (sql[j + 1] === c) { j += 2; continue; } break; } j++; }
+      while (j < sql.length) { if (esc && sql[j] === "\\") { j += 2; continue; } if (sql[j] === c) { if (sql[j + 1] === c) { j += 2; continue; } break; } j++; }
       const body = sql.slice(i + 1, Math.min(j, sql.length));
       out += c + (c === "'" ? " ".repeat(body.length) : body.replace(/\s/g, "\u0001")) + (j < sql.length ? c : "");
       i = j + 1; continue;
@@ -52,9 +54,9 @@ export function strip(sql: string): string {
   }
   return out;
 }
-/** Kept for callers: strip() already blanks single-quoted contents; this is idempotent. */
+/** Kept for callers: idempotent after strip(); skips "quoted" identifiers so "O'Neil" never pairs an apostrophe. */
 export function maskStrings(sql: string): string {
-  return sql.replace(/'(?:[^']|'')*'/g, (m) => "'" + " ".repeat(m.length - 2) + "'");
+  return sql.replace(/"(?:[^"]|"")*"|'(?:[^']|'')*'/g, (m) => (m[0] === '"' ? m : "'" + " ".repeat(m.length - 2) + "'"));
 }
 const sql = files.map((f) => maskStrings(strip(readFileSync(join(dir, f), "utf8")))).join(";\n");
 /** Postgres identifier rules: unquoted parts fold to lower case, quoted parts keep case. */
@@ -62,7 +64,8 @@ export function norm(name: string): string {
   const parts = name.match(/"(?:[^"]|"")*"|[^.]+/g) ?? [];
   const folded = parts.map((p) => (p.startsWith('"') ? p.slice(1, -1).replace(/""/g, '"').replace(/\u0001/g, " ") : p.toLowerCase()));
   if (folded.length === 2 && folded[0] === "public") folded.shift();
-  return folded.join(".");
+  // Multi-part keys keep component boundaries (public."a.b" stays distinct from schema a, table b).
+  return folded.length === 1 ? folded[0] : JSON.stringify(folded);
 }
 const IDENT = String.raw`((?:"(?:[^"]|"")*"|[\w$]+)(?:\.(?:"(?:[^"]|"")*"|[\w$]+))?)`;
 
@@ -125,5 +128,9 @@ describe("supabase migrations: RLS + grants (static)", () => {
     // a final statement without a trailing semicolon is still checked
     expect(riskyGrants("grant select on table public.projects to anon")).toHaveLength(1);
     expect(riskyGrants("grant all on table public.projects to authenticated")).toHaveLength(1);
+    // E'' escapes, apostrophes inside quoted identifiers, dotted quoted identifiers
+    expect(hide("CREATE TABLE public.leaky (id int); SELECT E'\\' ; ALTER TABLE public.leaky ENABLE ROW LEVEL SECURITY;';")).toBe(false);
+    expect(createdTables(maskStrings(strip('alter table a add column "O\'Neil" int; CREATE TABLE public.leaky (id int); alter table b add column "O\'Brian" int;')))).toEqual(["leaky"]);
+    expect(norm('public."secret.table"')).not.toBe(norm("secret.table"));
   });
 });
