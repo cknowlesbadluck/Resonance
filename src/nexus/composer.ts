@@ -47,6 +47,7 @@ export type CompositionErrorCode =
 
 export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry, policy: NexusPolicy, adapters: NexusAdapter[]): NexusExecutionPlan {
   const all = registry.list();
+  const fallbacks: string[] = [];
 
   const steps = intent.requirements.map((requirement, index) => {
     const sameKey = all.filter((capability) => capability.key === requirement.key);
@@ -68,27 +69,28 @@ export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry,
       );
     }
 
-    const selected = candidates[0];
-
-    // Policy is evaluated before adapter binding so that governance reasons — including
-    // "no adapter is bound to provider X" — surface ahead of a generic lookup miss.
-    const decision = policy.evaluate(intent.requestedBy, selected);
-    if (!decision.allowed) {
-      throw new CompositionError(
-        decision.reason ?? `Capability ${selected.id} denied by policy.`,
-        requirement.key,
-        "capability_denied",
-      );
+    // Provider-neutral failover: walk ranked candidates and take the first one that policy
+    // allows AND that has an adapter bound in this deployment. A better-ranked capability
+    // whose provider is not deployed (or is denied) no longer blocks a usable alternative.
+    const skipped: Array<{ id: string; code: "capability_denied" | "adapter_unbound"; reason: string }> = [];
+    let chosen: { selected: NexusCapability; decision: ReturnType<NexusPolicy["evaluate"]>; adapter: NexusAdapter } | undefined;
+    for (const selected of candidates) {
+      // Policy is evaluated before adapter binding so governance reasons surface first.
+      const decision = policy.evaluate(intent.requestedBy, selected);
+      if (!decision.allowed) { skipped.push({ id: selected.id, code: "capability_denied", reason: decision.reason ?? `Capability ${selected.id} denied by policy.` }); continue; }
+      const adapter = adapters.find((item) => item.id === selected.adapterId || item.id === selected.providerId);
+      if (!adapter) { skipped.push({ id: selected.id, code: "adapter_unbound", reason: `Capability ${selected.id} is registered but adapter "${selected.adapterId ?? selected.providerId ?? "unknown"}" is not available in this deployment.` }); continue; }
+      chosen = { selected, decision, adapter };
+      break;
     }
-
-    const adapter = adapters.find((item) => item.id === selected.adapterId || item.id === selected.providerId);
-    if (!adapter) {
-      throw new CompositionError(
-        `Capability ${selected.id} is registered but adapter "${selected.adapterId ?? selected.providerId ?? "unknown"}" is not available in this deployment.`,
-        requirement.key,
-        "adapter_unbound",
-      );
+    if (!chosen) {
+      // Fail closed. Preserve the single-candidate messages; a denial outranks an unbound adapter.
+      const code = skipped.some((s) => s.code === "capability_denied") ? "capability_denied" : "adapter_unbound";
+      const message = skipped.length === 1 ? skipped[0].reason : `No usable candidate for "${requirement.key}": ${skipped.map((s) => s.reason).join(" ")}`;
+      throw new CompositionError(message, requirement.key, code);
     }
+    if (skipped.length) fallbacks.push(`${requirement.key}: used ${chosen.selected.id} after skipping ${skipped.map((s) => `${s.id} (${s.code})`).join(", ")}.`);
+    const { selected, decision, adapter } = chosen;
 
     return {
       id: `${intent.id}-step-${index}`,
@@ -117,6 +119,7 @@ export function composeIntent(intent: NexusIntent, registry: CapabilityRegistry,
     rationale: [
       `Matched ${steps.length} provider-neutral capability requirement(s).`,
       `Highest authority requested: ${grantSummary.highest}.`,
+      ...fallbacks,
     ],
     retry: { maxAttempts: 2, backoffMs: 250 },
   };
