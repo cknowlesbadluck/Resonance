@@ -27,34 +27,34 @@ QuicksilverV1: CI green; device acceptance unproven (CHR-55).
 ## Definitions
 - **Merge-train PR class**: a green, non-overlapping hardening PR = CI-green on the required checks, current with `main`, touching no files shared with another queued PR, no unresolved valid review findings, adding no env vars, migrations, or auth/grant semantics.
 
-## Phase 1 — Owner gate stays external
+## Phase 1 — Owner gate stays external [blocked]
 Never invent or store SUPABASE_SERVICE_ROLE_KEY. Exit: live ready body is owner-blocked until the owner sets the key; posture parser rejects other classifications.
 
-## Phase 2 — Alias and stranger classification stay strict
+## Phase 2 — Alias and stranger classification stay strict [passed]
 404 and unexpected 200 occupants are never the gate. Exit: tests reject treating them as owner action, device recorded, or production ready. Alias drift is reported (#236), never auto-fixed.
 
-## Phase 3 — Device fence immutable
+## Phase 3 — Device fence immutable [passed]
 claimDeviceAcceptance() rejects. Exit: health body keeps deviceAcceptance=not_recorded and acceptanceGate=CHR-55.
 
-## Phase 4 — CHR-55 remains the only device gate
+## Phase 4 — CHR-55 remains the only device gate [blocked]
 Simulator, CI, or workers.dev 200 is not acceptance. Exit: Linear CHR-55 open until archive IPA installed and validated on iPhone 16e.
 
-## Phase 5 — Conversation and memory budget
+## Phase 5 — Conversation and memory budget [in progress]
 Bounded windows, on-device embeddings. Exit: AppTests green; no unbounded history leakage.
 
-## Phase 6 — Gateway contract and free tier
+## Phase 6 — Gateway contract and free tier [passed]
 No paid Workers bindings. Exit: wrangler config clean; Workers entry returns honest 503 (Conduit #213, merged).
 
-## Phase 7 — Hygiene prune (ADJUSTED: now the top priority)
+## Phase 7 — Hygiene prune (ADJUSTED: now the top priority) [in progress]
 Exit: open PRs < 10 per repo, using only the merge-train PR class above plus closing verifiably superseded or docs-only PRs with a comment. Resonance needs owner approvals: the behind-main PRs (#215, #187, #183, #175, #203, #198, #193) were brought current on 2026-10-23 and wait for approval.
 
-## Phase 8 — Resonance control plane waits on stamp (ADJUSTED)
+## Phase 8 — Resonance control plane waits on stamp (ADJUSTED) [blocked]
 Contract decision: the Resonance `Readiness` response requires **`contractRevision` only**; `commitSha` is not part of the Resonance contract (Conduit #247 proposes it for Conduit only). Exit: live `GET /api/ready` returns `contractRevision` equal to `EXPECTED_CONTRACT_REVISION` (`2026-10-03-owner-gate`) — requires a redeploy of current main — and the owner key is set.
 
-## Phase 9 — Privacy and logging stay strict
+## Phase 9 — Privacy and logging stay strict [in progress]
 Exit: no request/response body logging; privacy manifest enforced.
 
-## Phase 10 — Cross-plane acceptance (split)
+## Phase 10 — Cross-plane acceptance (split) [blocked]
 - Readiness exit: one probe shows Conduit `/ready` 200 and Resonance `/api/ready` 200 with the stamped `contractRevision`. This is readiness evidence only.
 - Device exit (tracked separately): CHR-55 archive IPA evidence (installed + validated on iPhone 16e). Readiness probes never satisfy this.
 
@@ -63,7 +63,7 @@ Exit: no request/response body logging; privacy manifest enforced.
 2. Alias-drift report (landed, #236).
 3. Cross-plane consistency check exists as open #170; deploy-parity as #202/#179. Land those (after approval) instead of new duplicates. A schema-file diff is blocked: neither main has `schemas/readiness/v1.schema.json` (Conduit #247 adds it to Conduit only).
 4. Deploy-parity (#202) would have caught today's live-vs-main `contractRevision` lag; prioritize its approval.
-5. Stale-branch report (read-only).
+5. Stale-branch report (read-only) — landed in Conduit #288 (`--stale-branches`), plus owner decision queue (`--decisions`).
 
 ## Owner gates
 1. Set SUPABASE_SERVICE_ROLE_KEY in Netlify (Resonance) and redeploy main.
@@ -107,4 +107,14 @@ Exit: no request/response body logging; privacy manifest enforced.
 - Main CI green on all three. Open PRs: QuicksilverV1 18 (new #378, read-only for us), Conduit 27, Resonance 44. No merges or closes.
 - Conduit #288: CodeRabbit's 2 new findings on 84e7f9a (short env names; branches heading cross-repo PRs) fixed in 50c0783 with tests; CI green. Re-review is rate-limited again, so CHANGES_REQUESTED stands and #278 stays open.
 - Live stale-branch run: one stale branch, Resonance `hygiene/probe-2026-10-09-2300` (14d). Report-only, nothing deleted.
+- CHR-55 is still the only device gate.
+
+## Evidence 2026-10-23 20:00 EDT (2026-10-24 00:00Z)
+- Status tags: [passed] phases 2, 3, 6; [in progress] 5, 7, 9; [blocked] 1, 4, 8, 10 (owner key, CHR-55 device, redeploy stamp).
+- Probes: Conduit `/ready` 200; Resonance Netlify `/api/ready` 503 not_ready (production, authMode required, persistence not configured: SUPABASE_SERVICE_ROLE_KEY owner gate). `resonanceplane.vercel.app` 404 DEPLOYMENT_NOT_FOUND (alias drift). Portfolio maturity score 3.3/10.
+- Main CI: Conduit success (4a903b4), Resonance success (5e235bc), QuicksilverV1 success (db49692).
+- Conduit #288 merged (squash, 4a903b4) under owner authorization over CodeRabbit's stale CHANGES_REQUESTED; post-merge CI, Live Smoke and Lockfile Sync green; `/ready` 200. #278 closed as superseded by `--stale-branches`.
+- Open PRs: Conduit 25, Resonance 44, QuicksilverV1 18 (read-only).
+- `--decisions` (Resonance): bot-only approvals #157, #169, #193, #200, #212 (not mergeable without a human review); 33 PRs behind main.
+- `--stale-branches`: Resonance `hygiene/probe-2026-10-09-2300` (14d) only. Nothing deleted.
 - CHR-55 is still the only device gate.
