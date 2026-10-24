@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authRequired, authenticateNexusRequest } from "../../../../src/auth/nexus-request";
 import { discoverResolvedSkills } from "../../../../src/composition/skills";
+import { parseSkillDiscoveryParams } from "../../../../src/composition/discovery-params";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,9 @@ export async function GET(request: Request) {
     actorId = auth.userId;
   }
 
-  const tags = searchParams.get("tags")?.split(",").map((tag) => tag.trim()).filter(Boolean);
-  const resolutions = await discoverResolvedSkills(actorId, {
-    query: searchParams.get("query") ?? undefined,
-    namespace: searchParams.get("namespace") ?? undefined,
-    tags: tags?.length ? tags : undefined,
-  });
+  const filter = parseSkillDiscoveryParams(searchParams);
+  if (!filter.ok) return NextResponse.json({ error: filter.error }, { status: 400 });
+  const resolutions = await discoverResolvedSkills(actorId, filter.value);
 
   return NextResponse.json({
     source: "builtin",
