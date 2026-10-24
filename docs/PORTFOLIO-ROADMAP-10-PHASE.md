@@ -32,3 +32,9 @@ Resonance: 26 closed, 17 open (living docs, RLS/migration, security fail-closed,
 
 ## Owner-only gates
 Branch protection; Dependabot/next upgrade review; all migrations (#214, #208, #207, #173, Conduit #120); Conduit auth/grants PRs (#206 #212 #234 #238 #275), #155 DB TLS, #209 trust proxy; choosing one of Conduit #204/#267/#283; Vercel alias decision; Render plan (cold start).
+
+## Late 2026-10-24 evidence (22:00Z)
+See [AUDIT-2026-10-24-LATE.md](AUDIT-2026-10-24-LATE.md).
+- Both planes are ready. Resonance reports production=true. The unauthenticated executions request returns 401.
+- Open PRs: QuicksilverV1 12, Resonance 17 (down from 41), Conduit 14 (down from 25). CI on main is green in all three repos.
+- Innovation slices: (a) entropy-trend baseline gate (Conduit #309); (b) stricter stale-branch safe-delete with restore commands; (c) consistency assertion for the contractRevision format and production=true on both planes.
