@@ -10,25 +10,52 @@ import { describe, expect, it } from "vitest";
 
 const dir = join(process.cwd(), "supabase", "migrations");
 const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
-const strip = (sql: string) => sql.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+/** Remove -- and /* *\/ comments while leaving '...', "..." and $tag$...$tag$ literals intact. */
+export function strip(sql: string): string {
+  let out = "";
+  let i = 0;
+  while (i < sql.length) {
+    const c = sql[i];
+    const two = sql.slice(i, i + 2);
+    if (two === "--") { const n = sql.indexOf("\n", i); i = n === -1 ? sql.length : n; continue; }
+    if (two === "/*") { const n = sql.indexOf("*/", i + 2); i = n === -1 ? sql.length : n + 2; out += " "; continue; }
+    if (c === "'" || c === '"') {
+      let j = i + 1;
+      while (j < sql.length) { if (sql[j] === c) { if (sql[j + 1] === c) { j += 2; continue; } break; } j++; }
+      out += sql.slice(i, j + 1); i = j + 1; continue;
+    }
+    const tag = c === "$" ? /^\$[A-Za-z_]*\$/.exec(sql.slice(i)) : null;
+    if (tag) { const n = sql.indexOf(tag[0], i + tag[0].length); const end = n === -1 ? sql.length : n + tag[0].length; out += sql.slice(i, end); i = end; continue; }
+    out += c; i++;
+  }
+  return out;
+}
 const sql = files.map((f) => strip(readFileSync(join(dir, f), "utf8"))).join("\n");
-const norm = (name: string) => name.replace(/"/g, "").toLowerCase().replace(/^public\./, "");
+/** Postgres identifier rules: unquoted parts fold to lower case, quoted parts keep case. */
+export function norm(name: string): string {
+  const parts = name.match(/"(?:[^"]|"")*"|[^.]+/g) ?? [];
+  const folded = parts.map((p) => (p.startsWith('"') ? p.slice(1, -1).replace(/""/g, '"') : p.toLowerCase()));
+  if (folded.length === 2 && folded[0] === "public") folded.shift();
+  return folded.join(".");
+}
+const IDENT = String.raw`((?:"(?:[^"]|"")*"|[\w$]+)(?:\.(?:"(?:[^"]|"")*"|[\w$]+))?)`;
 
 export function createdTables(text: string): string[] {
-  const re = /create\s+table\s+(?:if\s+not\s+exists\s+)?([\w."]+)/gi;
+  const re = new RegExp(String.raw`create\s+(?:(?:global|local)\s+)?(?:(?:temp|temporary|unlogged)\s+)?table\s+(?:if\s+not\s+exists\s+)?` + IDENT, "gi");
   return [...text.matchAll(re)].map((m) => norm(m[1]));
 }
 export function rlsTables(text: string): Set<string> {
-  const re = /alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?([\w."]+)\s+enable\s+row\s+level\s+security/gi;
+  const re = new RegExp(String.raw`alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?` + IDENT + String.raw`\s+enable\s+row\s+level\s+security`, "gi");
   return new Set([...text.matchAll(re)].map((m) => norm(m[1])));
 }
 export function riskyGrants(text: string): string[] {
   const re = /grant\s+([^;]+?)\s+on\s+([^;]+?)\s+to\s+([^;]+);/gi;
   return [...text.matchAll(re)]
     .filter(([, priv, obj, to]) => {
-      if (/^\s*(function|schema)\b/i.test(obj)) return false; // execute/usage grants are policy-gated
-      if (/\b(anon|public)\b/i.test(to)) return true;
-      return /\ball\b/i.test(priv) && /\bauthenticated\b/i.test(to);
+      const all = /\ball\b/i.test(priv);
+      if (all && /\b(anon|public|authenticated)\b/i.test(to)) return true; // GRANT ALL on anything (incl. schema)
+      if (/^\s*(function|schema)\b/i.test(obj)) return false; // EXECUTE/USAGE grants are policy-gated
+      return /\b(anon|public)\b/i.test(to);
     })
     .map((m) => m[0].replace(/\s+/g, " ").trim());
 }
@@ -52,5 +79,11 @@ describe("supabase migrations: RLS + grants (static)", () => {
     expect(rlsTables(bad).has("x")).toBe(false);
     expect(riskyGrants(bad)).toHaveLength(2);
     expect(riskyGrants("grant execute on function private.f(uuid) to authenticated;")).toEqual([]);
+    expect(riskyGrants(strip("grant all on schema public to authenticated;"))).toHaveLength(1);
+    expect(riskyGrants(strip("select '/*'; grant select on table public.x to anon; select '*/';"))).toHaveLength(1);
+    expect(strip("select $f$ -- not a comment $f$; -- real")).toContain("not a comment");
+    expect(createdTables('create unlogged table public.u (id int); create table public."Accounts" (id int);')).toEqual(["u", "Accounts"]);
+    expect(rlsTables("alter table public.accounts enable row level security;").has("Accounts")).toBe(false);
+    expect(norm('PUBLIC.Foo')).toBe("foo");
   });
 });
