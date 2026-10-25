@@ -2,13 +2,13 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 11:15 ET)
+### Living status (2026-10-25 12:15 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Open issues | Top gate | Next slice |
 |---|---|---|---|---|---|---|
-| Conduit | /ready 200 warm (0.21 s), /mcp 401, probe `ready` | CI success on 2b09fdd | 17 | 2 (#201, #202) | auth/grants backlog needs owner review; main unprotected | owner merges #323, then #325 and #326 |
-| Resonance | /api/ready 200; all GETs 401; POST validation before auth on 4 routes (#243, #244, #245) | CI success on b032f57 | 20 | 2 (#166, #167) | human approvals; owner migrations | approve #243, #244, #245 |
-| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI success on 3dd53ce | 20 | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250, queue review |
+| Conduit | /ready 200 (0.21 s, 12:02 ET), /mcp 401, owned score 10/10 | CI success on 2b09fdd | 18 (incl. new #327) | 2 (#201, #202) | CodeRabbit re-review of #323/#326; auth/grants backlog | merge #326, then #323, #325, #327 once reviews clear |
+| Resonance | /api/ready 200; all GETs 401; POST validation before auth on 4 routes (#243, #244, #245) | CI success on b032f57 | 20 (unchanged 12:02 ET) | 2 (#166, #167) | human approvals; owner migrations | approve #243, #244, #245 |
+| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI success on 3dd53ce | 19 | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250, queue review |
 
 Note: main's 14:00Z refresh of this file (b032f57) was superseded on merge by this living version. See also AUDIT-2026-10-25-LATE.md.
 
@@ -18,7 +18,7 @@ Note: main's 14:00Z refresh of this file (b032f57) was superseded on merge by th
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245 |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 17 / 20 (QS / Conduit / Resonance); measured by Conduit #326 |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 19 / 18 / 20 (QS / Conduit / Resonance, 12:05 ET); measured by #326, trend by #327 |
 | 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 at 08:02 ET |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
