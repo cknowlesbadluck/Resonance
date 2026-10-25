@@ -6,47 +6,43 @@ export type SmokeCase = {
   path: string;
   headers?: Record<string, string>;
   body?: unknown;
+  /** Statuses that pass today. */
   expectStatus: number[];
+  /** Fail-closed target; when set and the live status is outside it, the case passes as "transitional". */
+  targetStatus?: number[];
   why: string;
 };
 
-/** Host-neutral production smoke. Fail closed on missing Idempotency-Key. */
+/** Public, unauthenticated probes; everything else must refuse anonymous callers. */
+export const PUBLIC_SMOKE_PATHS = ["/api/health", "/api/ready"];
+
+/**
+ * Host-neutral production smoke. Mirrors scripts/production-smoke-cases.mjs (parity is tested).
+ * Every non-public route must accept 401 and never 200 for an anonymous caller.
+ */
 export function productionSmokeCases(): SmokeCase[] {
   return [
+    { id: "health", method: "GET", path: "/api/health", expectStatus: [200], why: "Process liveness must succeed without secrets." },
+    { id: "ready", method: "GET", path: "/api/ready", expectStatus: [200, 503], why: "Readiness is structured even when the env contract is incomplete." },
     {
-      id: "health",
-      method: "GET",
-      path: "/api/health",
-      expectStatus: [200],
-      why: "Process liveness must succeed without secrets.",
-    },
-    {
-      id: "ready",
-      method: "GET",
-      path: "/api/ready",
-      expectStatus: [200, 503],
-      why: "Readiness is structured even when the env contract is incomplete.",
-    },
-    {
-      id: "idempotency-required",
+      id: "executions-post-unauth",
       method: "POST",
       path: "/api/nexus/executions",
       headers: { "content-type": "application/json" },
-      body: {
-        objective: "deployment-stage smoke",
-        requirements: [{ key: "demo.read" }],
-        projectId: "00000000-0000-4000-8000-000000000001",
-      },
-      expectStatus: [400],
-      why: "Execution initiation without Idempotency-Key must be 400.",
+      body: { objective: "deployment-stage smoke", requirements: [{ key: "demo.read" }], projectId: "00000000-0000-4000-8000-000000000001" },
+      expectStatus: [400, 401],
+      targetStatus: [401],
+      why: "Unauthenticated initiation must be refused. 400 (missing Idempotency-Key) is accepted only until #244 (401 before validation) is live.",
     },
-    {
-      id: "executions-auth-boundary",
-      method: "GET",
-      path: "/api/nexus/executions?projectId=00000000-0000-4000-8000-000000000001",
-      expectStatus: [200, 401],
-      why: "401 when auth is required; 200 only in optional/auto without a configured store.",
-    },
+    { id: "executions-get-unauth", method: "GET", path: "/api/nexus/executions?projectId=00000000-0000-4000-8000-000000000001", expectStatus: [401], why: "Production requires auth for listing." },
+    { id: "executions-get-bad-limit", method: "GET", path: "/api/nexus/executions?limit=abc", expectStatus: [401], why: "Auth precedes query validation." },
+    { id: "events-get-unauth", method: "GET", path: "/api/events", expectStatus: [401], why: "Event reads require auth." },
+    { id: "events-post-unauth", method: "POST", path: "/api/events", headers: { "content-type": "application/json" }, body: {}, expectStatus: [400, 401], targetStatus: [401], why: "400 accepted only until #244 is live." },
+    { id: "skills-resolve-post-unauth", method: "POST", path: "/api/nexus/skills/resolve", headers: { "content-type": "application/json" }, body: {}, expectStatus: [400, 401], targetStatus: [401], why: "400 accepted only until #243 is live." },
+    { id: "intents-post-unauth", method: "POST", path: "/api/nexus/intents", headers: { "content-type": "application/json" }, body: {}, expectStatus: [401], why: "Intent composition requires auth." },
+    { id: "resume-post-unauth", method: "POST", path: "/api/nexus/executions/smoke-id/resume", headers: { "content-type": "application/json" }, body: {}, expectStatus: [401], why: "Resume requires auth." },
+    { id: "resume-long-id-unauth", method: "POST", path: `/api/nexus/executions/${"a".repeat(600)}/resume`, headers: { "content-type": "application/json" }, body: {}, expectStatus: [400, 401], targetStatus: [401], why: "400 (id too long) accepted only until #246 is live." },
+    { id: "webhook-github-unsigned", method: "POST", path: "/api/webhooks/github", headers: { "content-type": "application/json" }, body: {}, expectStatus: [401], why: "Unsigned webhooks are rejected." },
   ];
 }
 
