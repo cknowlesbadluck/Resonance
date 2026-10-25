@@ -4,6 +4,7 @@ import type {
   StreamRequest,
 } from "../types";
 import { ProviderError } from "../types";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 
 /**
  * Google Gemini streaming adapter (streamGenerateContent SSE).
@@ -53,7 +54,7 @@ export function createGeminiAdapter(opts?: {
       }
 
       const url = `${baseUrl}/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
-      const res = await fetch(url, {
+      const res = await fetchWithTimeout("gemini", url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
