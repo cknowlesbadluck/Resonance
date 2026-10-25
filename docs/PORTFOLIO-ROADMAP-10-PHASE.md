@@ -57,3 +57,12 @@ Trackers (read-only references, Linear not edited): **Resonance Integration Plat
 
 Innovations this pass: (a) entropy-trend as a continue-on-error CI job (#309); (b) additive Conduit `/ready.production` (#311); (c) stricter stale-branch safe-delete: proposed, not built.
 QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] on CHR-55 evidence.
+
+## 20:00 ET refresh (2026-10-25 00:00Z)
+- Phase 1: [passed] both planes are ready and executions returns 401. Conduit `production` is still pending in #311 (approved and ready to merge).
+- Phase 2: **[passed]**. Conduit body-parser alert #1 was fixed on rescan, and all 3 repos show 0 open alerts.
+- Phase 4: [in progress] Conduit 20, Resonance 17, QS 13. QS #389 is closed (superseded by #390), and the next step is to fold #384 into #390.
+- Phase 6: [in progress] #312 is ready to merge. New: Conduit #313 is a CI gate that fails on cancelled tests.
+- Phase 10: [blocked] CHR-55 is not_recorded, and alias drift continues.
+- Scores: QS 7.7, Conduit 7.5, Resonance 6.8 (category table in AUDIT-2026-10-24-LATE.md).
+- Innovations: (a) cancelled-test gate (#313); (b) cold_start vs down classifier (#314), to be wired into portfolio-probe after #305-#309 land; (c) stricter stale-branch safe-delete: not built this pass.
