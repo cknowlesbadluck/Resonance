@@ -2,7 +2,7 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 18:20 ET)
+### Living status (2026-10-25 19:15 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Open issues | Top gate | Next slice |
 |---|---|---|---|---|---|---|
@@ -17,8 +17,8 @@ Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was sup
 | # | Phase | Exit criteria | Status |
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
-| 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 APPROVED, awaiting owner merge) |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 22 / 13 / 21 (QS / Conduit / Resonance, 18:20 ET); owner-only floor 22 / 9 / 21; measured by #326, trend by #327 |
+| 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 bot-approved, awaiting a human merge; live smoke #248 tracks them as transitional) |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 22 / 14 / 23 (QS / Conduit / Resonance, 19:10 ET, incl. this pass's hygiene PRs); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
 | 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 Dependabot at 18:01 ET; Conduit `npm run audit:deps` gate merged (#330) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
@@ -185,7 +185,7 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 
 **Stale-branch restore:** Conduit commands for all 45 branches are now in `/workspace/roadmaps/stale-branches-Conduit-restore.txt`, with the TSV in `stale-branches-Conduit.tsv`. Nothing was deleted.
 
-### Living status (2026-10-25 18:20 ET)
+### Living status (2026-10-25 19:15 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Score | Top gate | Next step |
 |---|---|---|---|---|---|---|
