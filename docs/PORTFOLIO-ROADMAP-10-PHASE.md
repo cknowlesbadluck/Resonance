@@ -118,7 +118,7 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 **Scores (owner rubric):** QS ~7.7, Conduit ~7.6, Resonance ~7.1, portfolio ~7.5. The 00:00 pass used a different rubric (6.7 / 6.5 / 6.2), so the two aren't comparable. Details are in `docs/AUDIT-2026-10-25.md`.
 
 **Merges done at 02:00 (Conduit, squash):** #312 (`d2657ab`), #311 (`67f5626`), #310 (`88992d6`), #316 (`41dd797`).
-**Merges this pass (Conduit):** #309 entropy-trend gate (`0711a9d`), after its non-blocking trend check was fixed to warn instead of fail.
+**Merges this pass (Conduit, squash):** #309 entropy-trend gate (`0711a9d`), after its non-blocking trend check was fixed to warn instead of fail. #318 `--auth-gate` probe (`b72c7ec`). After this pass: QS 15 (#393 was opened by another agent at 07:03Z), Conduit 19, Resonance 18.
 **Open PRs at 03:00 start:** QS 14, Conduit 20, Resonance 18. Nothing docs-only was strictly superseded, so no PRs were closed. QS #390's audit files and #384's roadmap don't exist on QS main and aren't covered by this audit.
 **CHR-55:** still open / `not_recorded`. No device claim.
 **Innovation:** Conduit stale-branch report gains restore commands (#319, read-only). Main's `--stale-branches` already handled open-PR/fork protection, the 14-day age cutoff, and squash-aware compare.
