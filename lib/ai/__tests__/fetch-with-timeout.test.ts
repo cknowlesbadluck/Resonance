@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { fetchWithTimeout } from "../providers/fetch-with-timeout";
+import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_PROVIDER_TIMEOUT_MS, fetchWithTimeout } from "../providers/fetch-with-timeout";
 import { ProviderError } from "../types";
 
 const hang: typeof fetch = (_u, init) =>
@@ -43,8 +43,30 @@ describe("fetchWithTimeout", () => {
   });
 
   it("clamps invalid timeouts to the default instead of disabling it", async () => {
-    const ok: typeof fetch = async () => new Response(null, { status: 204 });
-    const res = await fetchWithTimeout("openai", "https://x", {}, Number.NaN, ok);
-    expect(res.status).toBe(204);
+    vi.useFakeTimers();
+    try {
+      const hang: typeof fetch = (_u, init) =>
+        new Promise((_r, reject) => init?.signal?.addEventListener("abort", () => reject(new Error("aborted"))));
+      const p = fetchWithTimeout("openai", "https://x", {}, Number.NaN, hang).catch((e) => e);
+      await vi.advanceTimersByTimeAsync(DEFAULT_PROVIDER_TIMEOUT_MS);
+      const err = await p;
+      expect(err).toBeInstanceOf(ProviderError);
+      expect(err.status).toBe(504);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("still forwards caller aborts after headers arrive (body stream cancellable)", async () => {
+    let inner: AbortSignal | undefined;
+    const ok: typeof fetch = async (_u, init) => {
+      inner = init?.signal ?? undefined;
+      return new Response(null, { status: 200 });
+    };
+    const caller = new AbortController();
+    await fetchWithTimeout("anthropic", "https://x", { signal: caller.signal }, 1000, ok);
+    expect(inner?.aborted).toBe(false);
+    caller.abort();
+    expect(inner?.aborted).toBe(true);
   });
 });

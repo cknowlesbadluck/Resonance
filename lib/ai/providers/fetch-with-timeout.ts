@@ -41,8 +41,11 @@ export async function fetchWithTimeout(
   }, ms);
 
   try {
+    // On success the caller listener stays attached (once: true) so a caller
+    // abort after headers still cancels the body stream the adapters read.
     return await fetchImpl(url, { ...init, signal: controller.signal });
   } catch (err) {
+    caller?.removeEventListener("abort", onCallerAbort);
     if (caller?.aborted) throw err;
     if (timedOut) {
       throw new ProviderError(`${providerId} request timed out after ${ms}ms`, {
@@ -59,6 +62,5 @@ export async function fetchWithTimeout(
     });
   } finally {
     clearTimeout(timer);
-    caller?.removeEventListener("abort", onCallerAbort);
   }
 }
