@@ -66,3 +66,12 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 - Phase 10: [blocked] CHR-55 is not_recorded, and alias drift continues.
 - Scores: QS 7.7, Conduit 7.5, Resonance 6.8 (category table in AUDIT-2026-10-24-LATE.md).
 - Innovations: (a) cancelled-test gate (#313); (b) cold_start vs down classifier (#314), to be wired into portfolio-probe after #305-#309 land; (c) stricter stale-branch safe-delete: not built this pass.
+
+## 21:00 ET refresh (2026-10-25 01:00Z)
+- **Probes:** Conduit `/ready` 200 on the first try (0.8.0, `2026-10-03-ready-surface`, postgres). Resonance Netlify `/api/ready` 200 (production, authMode required, missingRequired []). Unauthenticated executions returned 401. `resonance.vercel.app` is still a third-party page (drift open).
+- **Main CI:** Conduit green (CI, Live Smoke, portfolio-probe). QS green (14:29Z). Resonance shows only Gemini CLI "skipped" runs at the top.
+- **Open PRs:** Conduit 20 → 22 (#315 classifier wiring stacked on #314, #316 roadmap refresh). Resonance 17. QS 13. 0 Dependabot alerts in all three repos (Resonance Dependabot PR #189 is still open).
+- **Hygiene:** #313 review findings fixed (gate tests run in CI; a missing `# fail` line fails closed). The CodeRabbit CHANGES_REQUESTED reviews on #302/#305/#307 are stale: later commits address them and need a re-review. Nothing was closed: #384 is not yet folded into #390 (#390 lacks QUICKSILVER-ROADMAP-1.0.md, and QS is read-only), and #275 touches capability matching (security-adjacent).
+- **Per-project roadmaps:** Conduit `docs/ROADMAP-10-PHASE.md` (Conduit #316). Resonance `docs/ROADMAP-10-PHASE.md` (this PR). The QS draft is held off-repo.
+- **Scores:** QS 7.7, Conduit 7.6 (+0.1 for cold-start observability), Resonance 6.8.
+- **CHR-55:** In Review in Linear, `not_recorded`. It gates phase 10.
