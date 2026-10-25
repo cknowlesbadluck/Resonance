@@ -44,6 +44,10 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  // Fail closed before any validation or body parsing: no token, no information about ids or bodies.
+  if (authRequired() && !request.headers.get("authorization")?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
   const { id } = await context.params;
   if (!id || id.length > MAX_ID_LENGTH) {
     return NextResponse.json({ error: "execution or request id is required" }, { status: 400 });
