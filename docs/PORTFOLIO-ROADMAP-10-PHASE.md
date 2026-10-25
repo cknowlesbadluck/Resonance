@@ -2,13 +2,15 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 09:10 ET)
+### Living status (2026-10-25 11:15 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Open issues | Top gate | Next slice |
 |---|---|---|---|---|---|---|
-| Conduit | /ready 200 (about 28 s wake), /mcp 401; probe `ready`; owned score 10/10 with #325 | CI success on 99608fd | 16 | 2 (#201, #202) | auth/grants backlog needs owner review | merge #323, then #325 |
-| Resonance | /api/ready 200; GETs 401; POST validation before auth on executions/events/skills/intents (#243, #244, #245) | CI success (last 11:01Z) | 20 | 2 (#166, #167) | human approvals; owner migrations | approve and merge #243, #244, #245 |
-| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI success on 6b1912c | 19 | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250 pinning, queue review |
+| Conduit | /ready 200 warm (0.21 s), /mcp 401, probe `ready` | CI success on 2b09fdd | 17 | 2 (#201, #202) | auth/grants backlog needs owner review; main unprotected | owner merges #323, then #325 and #326 |
+| Resonance | /api/ready 200; all GETs 401; POST validation before auth on 4 routes (#243, #244, #245) | CI success on b032f57 | 20 | 2 (#166, #167) | human approvals; owner migrations | approve #243, #244, #245 |
+| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI success on 3dd53ce | 20 | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250, queue review |
+
+Note: main's 14:00Z refresh of this file (b032f57) was superseded on merge by this living version. See also AUDIT-2026-10-25-LATE.md.
 
 ### Phases (exit criteria)
 
@@ -16,8 +18,8 @@ Projects stay separate (identity, credentials, backlog, release path). This file
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245 |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 15 / 19 / 19 |
-| 4 | Main protection + CI integrity | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 17 / 20 (QS / Conduit / Resonance); measured by Conduit #326 |
+| 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 at 08:02 ET |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
 | 7 | Bounded surface | Body caps, outbound timeouts (#242), idempotent replays (#209), resume guard (#206) | [in progress] |
@@ -192,3 +194,8 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 | QuicksilverV1 | n/a (iOS); CHR-55 not_recorded | `Quicksilver CI` (ci.yml) success on ba0ecd6. The 05:00 row cited Prune Merged Branches, which is not CI. | 17 | ~7.5 | CHR-55 device run (owner) | review #392/#395/#394; keep #384/#390 |
 
 Portfolio ~7.0. Resonance docs are canonical; not mirrored to other repos.
+
+
+### Innovation track (11:00 ET)
+- Done (PRs open): Resonance #245 route-auth matrix; Conduit #325 owned-only score; Conduit #326 PR hygiene report.
+- Next: wire #326 into the scheduled portfolio-probe as a report-only job; cross-plane contract-revision check (both /ready revisions vs committed expectations); an SSE idle watchdog for Resonance adapters.
