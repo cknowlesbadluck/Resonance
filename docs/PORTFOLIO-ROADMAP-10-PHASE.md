@@ -122,3 +122,21 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 **Open PRs at 03:00 start:** QS 14, Conduit 20, Resonance 18. Nothing docs-only was strictly superseded, so no PRs were closed. QS #390's audit files and #384's roadmap don't exist on QS main and aren't covered by this audit.
 **CHR-55:** still open / `not_recorded`. No device claim.
 **Innovation:** Conduit stale-branch report gains restore commands (#319, read-only). Main's `--stale-branches` already handled open-PR/fork protection, the 14-day age cutoff, and squash-aware compare.
+
+## 04:00 ET refresh (2026-10-25 08:00Z)
+
+| # | Phase | Exit criteria | Status |
+|---|---|---|---|
+| 1 | Fail-closed edges | Every mutating or lookup route returns 401 before parsing the body. No raw DB or upstream text reaches clients. Provider calls have time bounds. | **In progress**: #243 (skills early-401) and #242 (time-to-headers plus the abort fix) are open. Waiting on #172/#174/#177. |
+| 2 | Data-plane safety | RLS on every table (CI guard #241). SECURITY DEFINER search_path is set (#173). Null-project RLS is closed (#207). Live-vs-migration drift is checked (#196). | PRs open, and the owner applies the migrations |
+| 3 | Error hygiene | Provider errors only map codes to messages. Stream idle timeout. Unified `persistenceErrorResponse`. | Next slice after #242 |
+| 4 | Concurrency | Idempotent events (#209), resume guard (#206), shared fair-share leases (#214) | PRs open |
+| 5 | CI integrity | CI on every base (#204). Actions SHA-pinned (#189). knip runs in CI as a warning. | Partial |
+| 6 | Observability | Structured request IDs, a redacted evidence floor (#191), and a `/api/ready` drift alarm | Planned |
+| 7 | Hygiene | Branches below 60. knip finds no unused files. `domain/types` pruned. | 303 branches. Candidates listed. |
+| 8 | Adapters | Signed webhook adapter. GitHub adapter configured in prod. | Planned |
+| 9 | Chambers UX | Compose and explain, plus a policy-gate UI | Planned |
+| 10 | 1.0 | Every phase's exit criteria met, plus an SLO and a runbook | — |
+
+**Innovations:** a route-auth matrix test that enumerates `app/api/**/route.ts` and asserts 401-first. Provider error code tables. An SSE idle watchdog shared by the 3 adapters.
+**Next slice:** land #242, stack (b) and (c) on it, then merge the #172/#174/#177 trio (owner).
