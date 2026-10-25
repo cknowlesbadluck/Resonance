@@ -1,0 +1,32 @@
+# Portfolio Audit — 2026-10-25 14:00 UTC
+
+**Scope:** All current projects (QuicksilverV1, Conduit 0.8.0, Resonance). Full audit, hardening assessment, stabilization, hygiene pass and prune, 10-phase roadmap proposal, innovation. Evidence from live probes (2026-10-25T14:00Z), GitHub, Linear CHR-55. No secrets invented. No device claims.
+
+## Live Evidence
+- Conduit https://conduit-feco.onrender.com/ready : HTTP 200 ready, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true. Warm.
+- Resonance https://resonancenexus.netlify.app/api/ready : HTTP 200 ready, missingRequired=[], production true, authMode required ok, persistenceConfigured true, posture=contract_passed, contractRevision=2026-10-03-owner-gate. Timestamp 2026-10-25T14:02:18Z.
+- Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate.
+- Open PRs: QuicksilverV1 20, Conduit 16, Resonance 20. Entropy still primary operational debt. Target <10.
+- CHR-55: open, Urgent, In Review. Device Archive IPA on iPhone 16e / iOS 27 remains the sole critical path. deviceAcceptance=not_recorded.
+- CI: recent main runs green. Stabilization holds.
+
+## QuicksilverV1
+**Blunt:** Architecture solid (SENSE→THINK→EXPRESS). Privacy floor, memory resilience, AppTests hold. **Not production-ready.** Score ~7.6. Sole critical path: CHR-55 device evidence. Open PR noise at 20.
+
+## Conduit
+**Blunt:** Clean MCP bridge. /ready 200 stamped 0.8.0. Free-tier cold-start tolerant. Score ~7.4. Probe tools advancing in open PRs (maturity owned-only, etc.).
+
+## Resonance
+**Blunt:** Provider-neutral Nexus foundation strong. /api/ready stamped. Owner gate cleared. Score ~6.8+. Domain independence holds. Capability plane unblocked.
+
+Brutal portfolio maturity: ~7.2/10 when both warm. Dominant risks: CHR-55 device evidence + residual PR entropy (20/16/20) + Vercel alias drift. Stabilization holds. Fail-closed confirmed.
+
+## Highest-value next
+Aggressively prune open PR entropy (close superseded docs-only, merge green non-overlapping hardens). Then CHR-55 device IPA. Alias drift cleanup non-blocking.
+
+## Innovation notes
+- Cross-plane probe classifiers and cold-start distinction landed or in PRs.
+- Hygiene continues via entropy reduction.
+- No new gates violated. Implement owned-only maturity scoring and automated entropy dashboards next.
+
+Canonical. Mirror key notes to QuicksilverV1 and Conduit as needed.
