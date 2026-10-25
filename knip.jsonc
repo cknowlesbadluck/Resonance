@@ -1,0 +1,11 @@
+{
+  // knip baseline: run `npx knip`. Files below are unreferenced *today* but are planned
+  // architecture, so they must not be pruned as dead code:
+  //  - lib/ai/**          multi-provider LLM fallback adapter (#8); provider-neutral goal (Linear CHR-24)
+  //  - src/chambers/**    Chamber execution bridge (docs/ARCHITECTURE.md "Chambers")
+  //  - src/policy/gate.ts "foundational security boundary" (docs/ARCHITECTURE.md "Policy");
+  //                       removing it is a critical reformation (two-key rule)
+  // Anything else knip reports as an unused file is a real prune candidate.
+  "$schema": "https://unpkg.com/knip@5/schema-jsonc.json",
+  "ignore": ["lib/ai/**", "src/chambers/**", "src/policy/gate.ts"]
+}
