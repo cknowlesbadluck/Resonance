@@ -2,26 +2,26 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 08:10 ET)
+### Living status (2026-10-25 09:10 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Open issues | Top gate | Next slice |
 |---|---|---|---|---|---|---|
-| Conduit | /ready 200 (no cold start), /mcp 401; probe now `ready` (#324 fixed `shape_changed`) | CI, Live Smoke, portfolio-probe success | 15 | 2 (#201, #202) | auth/grants backlog (#206 #212 #234 #238 #243) needs owner review | land #323, then drop unowned Vercel targets from the score |
-| Resonance | /api/ready 200 contract_passed; GETs 401; POST executions/events/skills return 400 before 401 (#244, #243) | CI success | 19 | 2 (#166, #167) | human approvals; owner-applied migrations (#173 #207 #208) | review and merge #243 + #244, then the #172/#174/#177 trio |
-| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI on 6b1912c in progress; last completed run success | 19 | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: land #284 (#252), SHA-pin Actions (#250) |
+| Conduit | /ready 200 (about 28 s wake), /mcp 401; probe `ready`; owned score 10/10 with #325 | CI success on 99608fd | 16 | 2 (#201, #202) | auth/grants backlog needs owner review | merge #323, then #325 |
+| Resonance | /api/ready 200; GETs 401; POST validation before auth on executions/events/skills/intents (#243, #244, #245) | CI success (last 11:01Z) | 20 | 2 (#166, #167) | human approvals; owner migrations | approve and merge #243, #244, #245 |
+| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI success on 6b1912c | 19 | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250 pinning, queue review |
 
 ### Phases (exit criteria)
 
 | # | Phase | Exit criteria | Status |
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
-| 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation; Conduit /mcp 401 | [in progress] Resonance #243 and #244 |
+| 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245 |
 | 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 15 / 19 / 19 |
 | 4 | Main protection + CI integrity | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 at 08:02 ET |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
 | 7 | Bounded surface | Body caps, outbound timeouts (#242), idempotent replays (#209), resume guard (#206) | [in progress] |
-| 8 | Observability | Probe classifiers (cold start #314/#315, verdict #322, maturity #323) on main; score counts owned deployments only | [in progress] |
+| 8 | Observability | Probe classifiers (cold start #314/#315, verdict #322, maturity #323) on main; score counts owned deployments only | [in progress] #323 + #325 |
 | 9 | Branch hygiene | Stale branches listed with restore commands; deletes are owner-approved only | [in progress] 45 Conduit candidates listed; none deleted |
 | 10 | 1.0 | 30 days green, runbooks, alias decision made, CHR-55 recorded by the owner | [blocked] CHR-55 `not_recorded` |
 
