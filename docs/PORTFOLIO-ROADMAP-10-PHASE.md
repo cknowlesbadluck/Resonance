@@ -75,3 +75,36 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 - **Per-project roadmaps:** Conduit `docs/ROADMAP-10-PHASE.md` (Conduit #316). Resonance `docs/ROADMAP-10-PHASE.md` (this PR). The QS draft is held off-repo.
 - **Scores:** QS 7.7, Conduit 7.6 (+0.1 for cold-start observability), Resonance 6.8.
 - **CHR-55:** In Review in Linear, `not_recorded`. It gates phase 10.
+
+## 02:00 ET refresh (2026-10-25 06:00Z)
+
+**Evidence (live, unauthenticated, read-only):**
+- Resonance `/api/ready`: 200 `ready`, production true, authMode `required`, missingRequired `[]`, posture `contract_passed`, contractRevision `2026-10-03-owner-gate`.
+- Resonance fail-closed: `GET /api/nexus/executions` 401. `POST` with no auth: executions (with an Idempotency-Key) 401, intents 401, resume 401, events (valid UUID) 401, webhooks/github 401 (invalid signature). Requests without required fields get a 400 validation error before the auth check runs; nothing was accepted.
+- Conduit `/ready`: 200 `ready` 0.8.0, `2026-10-03-ready-surface`, postgres, and now `production: true` (#311). Unauthenticated `/mcp` GET and POST return 401 `invalid_token`.
+
+**Merges (Conduit only, squash):** #312 /ready timer leak, #311 `production` on /ready, #310 late audit docs, plus #316 if its CI is green after the conflict merge. Resonance: none, because merges need human approval.
+**Skipped:** #317, #313 and #314 (CodeRabbit CHANGES_REQUESTED; #314 got it again after the branch update), #315 (stacked on #314), #308 (unresolved valid finding: keep revisions from not-ready responses), #309 (its own `trend` check fails).
+**New:** Conduit #318 adds a `--auth-gate` probe flag: unauthenticated executions and /mcp must return 401/403.
+
+**Owner gates (only these):**
+1. QuicksilverV1: CHR-55 (device claim) is the only gate left.
+2. Resonance migrations (#173, #207, #208, #214 lease): the owner applies them in Supabase. Agents never do.
+3. Human review and approval: the Resonance queue and the Conduit auth backlog (#206, #212, #234, #238, #243). Bot approvals don't count.
+
+**Innovations:**
+1. **Shared lease wiring:** after the owner applies the #214 migration, switch fair share to the shared lease. Keep it opt-in, fall back to the in-process lease, and add a probe check that reports lease mode.
+2. **Probe classifiers:** cold_start vs down (#314/#315), auth-gate (#318), revision skew (#308). Each is a pure function with a test, and each probe result carries a reason.
+3. **Cross-plane health dashboard:** a static HTML page generated from `portfolio-probe --json` by a free Actions cron and published as an artifact or on Pages. No paid service and no secrets.
+
+**10 phases (one line each):**
+1. PR entropy down: ≤10 open PRs per repo, owner labels on anything older than 14 days.
+2. Meaningful CI: remove Workers Builds noise and land the cancelled-tests gate.
+3. Fail-closed auth: human-reviewed auth/RLS PRs plus an authz matrix test.
+4. Bounded surface: timeouts, body caps, SSE caps, idempotent replays.
+5. DB safety: owner-applied migrations, RLS static guard, TLS verify.
+6. Observable probes: cold start, auth gate and revision skew classifiers on main.
+7. Contract discipline: versioned /ready and MCP surface, with CI diff against docs.
+8. Hygiene automation: scheduled read-only checklist and stale-branch report.
+9. Cross-plane dashboard and shared leases (after the owner applies the migration).
+10. 1.0: 30 days green, runbooks, and the CHR-55 device gate cleared for QS.
