@@ -154,10 +154,12 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 
 **Stale-branch restore:** Conduit commands for all 45 branches are now in `/workspace/roadmaps/stale-branches-Conduit-restore.txt`, with the TSV in `stale-branches-Conduit.tsv`. Nothing was deleted.
 
-### Living status
+### Living status (2026-10-25 06:00 ET; canonical in Resonance #240)
 
-| Project | Readiness | CI (main) | Open PRs | Top gate | Next step |
-|---|---|---|---|---|---|
-| Conduit | /ready 200 x5, health ok; rev 22d old (drift) | success | 21 | prod lockdown (#206/#212) review | review #321/#322; bump contractRevision |
-| Resonance | /api/ready 200 contract_passed | success | 19 | unapplied migrations (#207/#208/#214), owner applies | merge-review #243, #174 auth fail-closed |
-| QuicksilverV1 | n/a (iOS); CHR-55 not_recorded | success (latest run) | 16 | CHR-55 device run (owner) | review #392/#394; keep #384/#390 |
+| Project | Readiness | CI (main) | Open PRs | Score | Top gate | Next step |
+|---|---|---|---|---|---|---|
+| Conduit | /ready 200 x5 warm, health ok, /mcp 401; probe flags `shape_changed` vs conduit-ready schema | `CI` success | 20 (+#323, -#317, -#319) | ~7.0 | prod lockdown (#206/#212) owner review | re-review #322/#313/#314; reconcile /ready schema |
+| Resonance | /api/ready 200 contract_passed; executions 401; skills/resolve 400 before 401 (#243 open) | `CI` success | 19 | ~6.8 | unapplied migrations (#207/#208/#214/#173) | owner applies migrations; review #243, #174 |
+| QuicksilverV1 | n/a (iOS); CHR-55 not_recorded | `Quicksilver CI` (ci.yml) success on ba0ecd6. The 05:00 row cited Prune Merged Branches, which is not CI. | 17 | ~7.5 | CHR-55 device run (owner) | review #392/#395/#394; keep #384/#390 |
+
+Portfolio ~7.0. Resonance docs are canonical; not mirrored to other repos.
