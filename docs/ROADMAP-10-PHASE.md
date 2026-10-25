@@ -29,3 +29,8 @@ Tags: **[passed]** · **[in progress]** · **[blocked]** (owner).
 1. Six auth and error-hygiene PRs are about 7 days old and waiting only on a human approval.
 2. `resonance.vercel.app` is served by a third party, which is a live impersonation risk.
 3. Main CI shows only "skipped" Gemini runs at the top, so "green main" is weak evidence.
+
+## Midnight update, 2026-10-25 ET
+- Phase (failure modes): #242 provider fetch timeout. Next is an SSE idle-chunk timeout.
+- Phase (auth/RLS): still blocked on human review of #172, #173, #174, #177, #185, #196, #207, #208, #214 and #241.
+- Phase (hygiene): #168 closed. Owner decisions still pending on #166 (Gemini) and #167 (auth default, which #174 implements).

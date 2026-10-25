@@ -60,3 +60,13 @@ These match the earlier estimates (QS about 7.6, Conduit about 7.4, Resonance ab
 
 ### Risks
 CHR-55 device IPA evidence is still not_recorded. PR entropy is 20/17/13. Vercel alias drift continues. Security PRs are unreviewed (Conduit #243 #206 #238; Resonance #174 #185 #172 #177 #207). Branch protection is off in all repos.
+
+
+## Midnight pass, 2026-10-25 00:00 ET
+- **Counts:** before, 3 issues and 17 PRs (20). After, 2 issues (#166, #167) and 18 PRs (20). #168 was closed as stale because the PRs it triaged are all closed. #242 was opened.
+- **Verified locally on main c288274:** vitest 45 files, 216 passed and 1 skipped; `tsc` clean; `npm audit --omit=dev` found 0 vulnerabilities. Outdated majors: next 16, typescript 7, vitest 5, lucide 1, @types/node 26.
+- **Main CI:** ci.yml already runs on push to main. The last real run was green on 2026-10-24 08:01 ET (https://github.com/cknowlesbadluck/Resonance/actions/runs/40092230426). The "skipped Gemini" rows are only noise, so no new workflow is needed.
+- **Probes (00:01 ET):** /api/ready returns ready, production, authMode=required, githubAdapterConfigured=false. Unauthenticated /api/nexus/executions returns 401. resonance.vercel.app returns 200 with the title "Detail Framework", so the third-party alias drift is still live.
+- **Changed:** #242 bounds time-to-headers on the OpenAI, Anthropic and Gemini fetches. A timeout becomes a retryable 504; a network error becomes a sanitized 502. It adds 5 tests (221 passed locally).
+- **Challenges (main):** `src/auth/nexus-request.ts:15,25` defaults to auto, so auth depends on env (#174 open). Raw DB `error.message` reaches clients at `app/api/events/route.ts:41,68`, `app/api/nexus/executions/route.ts:95` and `resume/route.ts:208` (#172 and #177 open). Provider errors embed 200 characters of the upstream body (`lib/ai/providers/openai.ts:57` and the same in anthropic and gemini), which is safe only while those errors never reach a client. Mid-stream SSE stalls are still unbounded.
+- **Scores (/10):** CI 8, security 6, hygiene 6, observability 5, docs 7, delivery 5.
