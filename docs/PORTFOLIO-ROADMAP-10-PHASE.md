@@ -2,15 +2,15 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 13:15 ET)
+### Living status (2026-10-25 15:10 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Open issues | Top gate | Next slice |
 |---|---|---|---|---|---|---|
-| Conduit | /ready 200 (22.4 s cold, 13:01 ET), /mcp 401 | CI success on 2b09fdd | 19 (incl. #327, #328) | 2 (#201, #202) | CodeRabbit re-review of #323/#326; auth/grants backlog | CodeRabbit re-review, then merge #326, #323, #325, #327 (gate via #328) |
-| Resonance | /api/ready 200; all GETs 401; POST validation before auth on 4 routes (#243, #244, #245) | CI success on b032f57 | 20 (unchanged 12:02 ET) | 2 (#166, #167) | human approvals; owner migrations | approve #243, #244, #245 |
-| QuicksilverV1 | iOS; CHR-55 `not_recorded` | Quicksilver CI success on 3dd53ce | 20 (new #400) | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250, queue review |
+| Conduit | /ready 200 (0.21 s, 15:02 ET), /mcp 401; rubric 6/10 | CI success on e98930a | 19 | 2 (#201, #202) | CodeRabbit re-review of #323/#326; auth/grants backlog | CodeRabbit re-review of #323/#326/#328; owner merges |
+| Resonance | /api/ready 200; all GETs 401; POST validation before auth on 4 routes (#243, #244, #245) | CI success on e01421d; rubric 5/10 | 20 | 2 (#166, #167) | human approvals; owner migrations | approve #243, #244, #245 |
+| QuicksilverV1 | iOS; CHR-55 `not_recorded` | **Quicksilver CI red on e513530 (UI-smoke a11y audit timeout, docs-only commit)**; rubric 2/10 | 20 (#400, #401 new) | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250, queue review |
 
-Note: main's 14:00Z refresh of this file (b032f57) was superseded on merge by this living version. See also AUDIT-2026-10-25-LATE.md.
+Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was superseded on merge by this living version. See also AUDIT-2026-10-25-LATE.md.
 
 ### Phases (exit criteria)
 
@@ -18,13 +18,13 @@ Note: main's 14:00Z refresh of this file (b032f57) was superseded on merge by th
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245 |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 19 / 20 (QS / Conduit / Resonance, 13:05 ET); measured by #326, trend by #327 |
-| 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
-| 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 at 08:02 ET |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 19 / 20 (QS / Conduit / Resonance, 15:02 ET); measured by #326, trend by #327 |
+| 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
+| 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 at 08:02 ET (not re-checked 15:00 ET) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
 | 7 | Bounded surface | Body caps, outbound timeouts (#242), idempotent replays (#209), resume guard (#206) | [in progress] |
 | 8 | Observability | Probe classifiers (cold start #314/#315, verdict #322, maturity #323) on main; score counts owned deployments only | [in progress] #323 + #325 |
-| 9 | Branch hygiene | Stale branches listed with restore commands; deletes are owner-approved only | [in progress] 20 merged Conduit branches deleted 13:0x ET (restore file kept); rest listed |
+| 9 | Branch hygiene | Stale branches listed with restore commands; deletes are owner-approved only | [in progress] 20 merged Conduit branches deleted ~13:03 ET (restore file kept); rest listed |
 | 10 | 1.0 | 30 days green, runbooks, alias decision made, CHR-55 recorded by the owner | [blocked] CHR-55 `not_recorded` |
 
 ---
@@ -185,7 +185,7 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 
 **Stale-branch restore:** Conduit commands for all 45 branches are now in `/workspace/roadmaps/stale-branches-Conduit-restore.txt`, with the TSV in `stale-branches-Conduit.tsv`. Nothing was deleted.
 
-### Living status (2026-10-25 06:00 ET; canonical in Resonance #240)
+### Living status (2026-10-25 15:10 ET)
 
 | Project | Readiness | CI (main) | Open PRs | Score | Top gate | Next step |
 |---|---|---|---|---|---|---|
