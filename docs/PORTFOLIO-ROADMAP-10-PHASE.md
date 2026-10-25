@@ -83,7 +83,7 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 - Resonance fail-closed: `GET /api/nexus/executions` 401. `POST` with no auth: executions (with an Idempotency-Key) 401, intents 401, resume 401, events (valid UUID) 401, webhooks/github 401 (invalid signature). Requests without required fields get a 400 validation error before the auth check runs; nothing was accepted.
 - Conduit `/ready`: 200 `ready` 0.8.0, `2026-10-03-ready-surface`, postgres, and now `production: true` (#311). Unauthenticated `/mcp` GET and POST return 401 `invalid_token`.
 
-**Merges (Conduit only, squash):** #312 /ready timer leak, #311 `production` on /ready, #310 late audit docs, plus #316 if its CI is green after the conflict merge. Resonance: none, because merges need human approval.
+**Merges (Conduit only, squash):** #312 /ready timer leak, #311 `production` on /ready, #310 late audit docs, and #316 roadmap refresh (merged 06:10Z, `41dd797`, after CI went green on the conflict merge). Resonance: none, because merges need human approval.
 **Skipped:** #317, #313 and #314 (CodeRabbit CHANGES_REQUESTED; #314 got it again after the branch update), #315 (stacked on #314), #308 (unresolved valid finding: keep revisions from not-ready responses), #309 (its own `trend` check fails).
 **New:** Conduit #318 adds a `--auth-gate` probe flag: unauthenticated executions and /mcp must return 401/403.
 
@@ -108,3 +108,17 @@ QS device phases (on-device intelligence polish, SideStore IPA) stay [blocked] o
 8. Hygiene automation: scheduled read-only checklist and stale-branch report.
 9. Cross-plane dashboard and shared leases (after the owner applies the migration).
 10. 1.0: 30 days green, runbooks, and the CHR-55 device gate cleared for QS.
+
+## 03:00 ET refresh (2026-10-25 07:00Z)
+
+**Live probes (unauthenticated, read-only):**
+- Conduit `/ready`, retried at t+0/10/20/30s (07:02:34–07:03:35Z): 200 `ready` on all 4 attempts (0.8.0, `2026-10-03-ready-surface`, postgres, production true). No cold start.
+- Resonance `/api/ready` (07:03:36Z): 200 `ready`, production true, authMode `required`, missingRequired `[]`, posture `contract_passed`. The owner gate is cleared.
+
+**Scores (owner rubric):** QS ~7.7, Conduit ~7.6, Resonance ~7.1, portfolio ~7.5. The 00:00 pass used a different rubric (6.7 / 6.5 / 6.2), so the two aren't comparable. Details are in `docs/AUDIT-2026-10-25.md`.
+
+**Merges done at 02:00 (Conduit, squash):** #312 (`d2657ab`), #311 (`67f5626`), #310 (`88992d6`), #316 (`41dd797`).
+**Merges this pass (Conduit):** #309 entropy-trend gate (`0711a9d`), after its non-blocking trend check was fixed to warn instead of fail.
+**Open PRs at 03:00 start:** QS 14, Conduit 20, Resonance 18. Nothing docs-only was strictly superseded, so no PRs were closed. QS #390's audit files and #384's roadmap don't exist on QS main and aren't covered by this audit.
+**CHR-55:** still open / `not_recorded`. No device claim.
+**Innovation:** Conduit stale-branch report gains restore commands (#319, read-only). Main's `--stale-branches` already handled open-PR/fork protection, the 14-day age cutoff, and squash-aware compare.
