@@ -45,6 +45,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const blocked = productionUserDataBlock();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
+  // Fail closed before reading headers/body: an unauthenticated caller gets 401,
+  // never validation detail (mirrors skills/resolve hardening).
+  if (authRequired() && !request.headers.get("authorization")?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
   let input: Record<string, unknown>;
   try { input = await body(request); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
   const projectId = input.project_id;
