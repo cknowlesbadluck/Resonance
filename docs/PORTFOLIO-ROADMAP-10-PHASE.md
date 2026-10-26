@@ -2,13 +2,13 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 23:05 ET; probes re-run 23:04 ET, unchanged from 22:05 apart from Conduit #326 extension)
+### Living status (2026-10-26 00:05 ET; canonical evidence: [AUDIT-2026-10-26.md](AUDIT-2026-10-26.md))
 
 | Project | Readiness | CI (main) | Open PRs | Assess (overall /10) | Top gate | Next slice |
 |---|---|---|---|---|---|---|
-| Conduit | /ready 200 production on Postgres, v0.8.0 (22:04 ET) | green d44b971; no direct pushes since 19:10 ET | 14 | 7.1 | CodeRabbit re-review of #323/#326/#328/#332; 9 owner-only PRs | merge #332 → #328 once reviews clear |
+| Conduit | /ready 200 production on Postgres, v0.8.0 (00:02 ET) | green d44b971; no direct pushes since 19:10 ET | 15 (incl. #333) | 7.1 | CodeRabbit re-review of #323/#326/#328/#332; 9 owner-only PRs | merge #332 → #328 once reviews clear |
 | Resonance | /api/ready 200 contract_passed; unauthenticated POST executions **400** (not 401) | green e01421d | 23 | 6.1 | human merge of #243 → #244 → #246 | then trim the transitional entries in #245/#248 |
-| QuicksilverV1 | iOS; CHR-55 `not_recorded` | green e513530 | 23 | 5.9 | CHR-55 device run (owner); 8 single-file guard PRs awaiting Quicksilver Dev | merge the non-overlapping guard tier (see audit 22:00 ET) |
+| QuicksilverV1 | iOS; CHR-55 `not_recorded` | green 8042e05 (a344a8d running) | 20 | 6.0 | CHR-55 device run (owner); 8 single-file guard PRs awaiting Quicksilver Dev | merge the non-overlapping guard tier (see audit 22:00 ET) |
 
 Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was superseded on merge by this living version. See also AUDIT-2026-10-25-LATE.md.
 
@@ -18,7 +18,7 @@ Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was sup
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 bot-approved, awaiting a human merge; live smoke #248 tracks them as transitional) |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 23 / 14 / 23 (QS / Conduit / Resonance, 22:05 ET); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 15 / 23 (QS / Conduit / Resonance, 00:05 ET 2026-10-26; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
 | 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329; re-checked 22:05 ET) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 Dependabot at 18:01 ET; Conduit `npm run audit:deps` gate merged (#330) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
@@ -226,3 +226,15 @@ Portfolio ~7.0. Resonance docs are canonical; not mirrored to other repos.
   - Resonance #167 (auth mode): main still defaults to `auto`. Prod is safe only because its env sets `required`. Decide on #174 (fail-closed default).
   - Resonance #166 (Gemini): `gemini.yml` still uses `gemini-1.5-pro` with continue-on-error, so the check gives no signal. Update the model or remove the workflow.
 - **Innovation:** the cross-repo entropy fields (age buckets, overlap pairs, owner-only count) were added to the existing #326 report rather than a duplicate script.
+
+### 2026-10-26 00:00 ET
+
+- **Canonical evidence:** [AUDIT-2026-10-26.md](AUDIT-2026-10-26.md).
+- **Dashboard (Conduit #333, stacked on #326):** live READY. Owned planes are ready; the Vercel aliases are not ours (informational, never a gate).
+- **Open PRs:** QS 20 / Conduit 14 (+#333 = 15) / Resonance 23.
+- **Phase 2:** still in progress. Live unauthenticated POST returns 400.
+- **Phase 3:** QS improved by 3 merges.
+- **Phase 5:** secret scan clean (fixtures only).
+- **Phase 10:** blocked on CHR-55 (`not_recorded`).
+- **Innovation track:** #333 dashboard; #326 entropy fields; #332 shared owner-only list; #328 code-constant env exemption.
+- **Next:** retarget #333 to main after #326 merges, then add a cross-repo contract and roadmap consistency check.
