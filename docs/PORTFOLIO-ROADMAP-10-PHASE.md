@@ -328,3 +328,20 @@ No main branch moved since 06:00 ET (0 merges in any repo). Scores unchanged: **
 | 8 | Observability | Owned-only score + scheduled dashboard | Conduit #323–#334 CodeRabbit still CHANGES_REQUESTED; Workers Builds check failing (external, non-gating) | in progress | address CodeRabbit, then merge |
 | 9 | Policy plane | `requirePolicy` refuses unapproved `requiresApproval`; deny-by-default test | **draft #250** (6 tests); log redaction #251 | draft | **two-key** (#250) |
 | 10 | 1.0 | 30 days green, runbooks, CHR-55 recorded | CHR-55 `not_recorded` | blocked | owner device run |
+
+## 2026-10-26 09:00 ET pass: portfolio 10-phase proposal (current)
+
+Identities stay separate: QuicksilverV1 (iOS, on-device-first, CHR-55 owner gate), Resonance (Netlify production `resonancenexus.netlify.app` + Supabase; the Vercel preview check on PRs is non-gating), Conduit (Render free tier, Postgres optional). No merges since 08:00 ET. Probes 09:0x ET: Conduit /ready 200 (`persistence: postgres`); Conduit POST /mcp unauthenticated → 401 with `WWW-Authenticate: Bearer … resource_metadata=https://…` (fails closed); Resonance /api/ready 200 `contract_passed`, served by Netlify.
+
+| # | Phase (scope) | Exit criteria | Evidence 09:15 ET | Status | Owner gate |
+|---|---|---|---|---|---|
+| 1 | Contract consistency (Res+Con) | /ready 200 + production on both; pins match | both 200 | passed | none |
+| 2 | Fail-closed edges (all) | 401 before validation; /mcp 401 with Bearer challenge; test-only switches refused in prod | Res #243/#244/#246/#245/#248 open; Conduit #335 (refuse CONDUIT_TEST_MEMORY in prod), #336 (auth-gate requires challenge) | in progress | human merge |
+| 3 | PR entropy (all) | <10 open per repo for 7 days | Res 26, Con 18, QS 17 | in progress | merges/closes |
+| 4 | Main protection (Con, QS) | rulesets + required checks | Resonance only | blocked | owner rulesets |
+| 5 | Dependencies (all) | audit 0; majors planned | npm audit 0/0 both; majors: TS 5→7 (both), next 15→16, lucide 0→1, @types/node; QS has 0 SPM deps | passed (majors open) | none |
+| 6 | Data-plane safety (Res, Con) | RLS guard in CI; migrations applied; DB TLS verify | #241, #173, #207, #208 unapplied; Conduit DB `rejectUnauthorized:false` (#155) | blocked | owner |
+| 7 | Bounded surface (Res) | provider timeouts; adapter contract | #242 green | ready | human merge |
+| 8 | Observability (Con) | owned-only score; scheduled dashboard; auth-gate with challenge | #323–#334 CodeRabbit CHANGES_REQUESTED; #336 | in progress | address CodeRabbit |
+| 9 | Policy plane (Res) | requirePolicy refuses unapproved approval-required decisions | draft #250 (6 tests, green); #251 log redaction green | draft | **two-key** |
+| 10 | 1.0 (QS) | 30 days green, runbooks, CHR-55 recorded | CHR-55 `not_recorded`; 12 `@unchecked Sendable` prod sites (issue #252) | blocked | owner device run |
