@@ -18,7 +18,7 @@ Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was sup
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 bot-approved, awaiting a human merge; live smoke #248 tracks them as transitional) |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 15 / 24 (QS / Conduit / Resonance, 01:10 ET 2026-10-26; Resonance +1 is the #249 guard; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 21 / 16 / 24 (QS / Conduit / Resonance, 05:10 ET 2026-10-26; new: QS #406 docs, Conduit #334 Bolt; Resonance +1 is the #249 guard; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
 | 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329; re-checked 22:05 ET) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 Dependabot at 18:01 ET; Conduit `npm run audit:deps` gate merged (#330) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
@@ -266,3 +266,27 @@ Consistency run (roadmap ref = this branch): CONSISTENT, no stale claims. Agains
 - Conduit `docs/ROADMAP-10-PHASE.md` (last edit 2026-10-25 02:10 ET): numbering differs (its 1 = PR entropy, 3 = fail-closed auth); it still names closed PRs #302 #305 #307 #308 #313 #314 #315 as the work items. Stale.
 - Resonance `docs/ROADMAP.md` (last edit 2026-09-30): P1 marks `RESONANCE_AUTH_MODE` done, but issue #167 (default still `auto`) is open; prod is `required` only by config. Nothing about the fail-closed 401 gap (phase 2) or the provider-neutral guard (#249). P0 "branch protection" agrees with GitHub (`protected: true`).
 - QuicksilverV1: the 1.0 roadmap exists only in unmerged #384; main has none. Its order (CHR-55 first) is consistent with phase 10 here.
+
+---
+
+## 2026-10-26 05:00 ET pass
+
+- **No merges.** No Conduit PR meets the merge criteria: #323, #326, #328, #332 and #333 still carry a CodeRabbit CHANGES_REQUESTED on record (the fixes are pushed; the re-reviews haven't landed), and #325 is stacked on #323. Resonance needs a human. QS is read-only.
+- **Main unchanged since 02:00 ET** in all three repos (Conduit d44b971, Resonance e01421d, QS a344a8d; all green).
+- **Phase 2 still fails live:** an unauthenticated POST /api/nexus/executions returns 400. #243, #244 and #246 are approved and green and are waiting on a human merge.
+- **Alias drift (phase 8):** the dashboard already treats the Vercel aliases as informational. On main, `portfolio-probe.mjs` still averages them into the score and gates its exit on them, so every run fails. #325 now fixes both (score over owned targets only; exit via `probeExitPass`, which fails closed when no owned target answers). The aliases are not ours, so this is not an owner action; the remaining decision is whether to claim or drop the names.
+- **Automation:** #333 adds a report-only dashboard `--consistency` step to the scheduled portfolio-probe workflow (default token, no secrets). Against `main` it will report `roadmap_unparseable` until #240 merges. That is correct, fail-closed behaviour.
+
+| # | Exit criteria | Evidence 05:10 ET | Owner gate |
+|---|---|---|---|
+| 1 | Both ready, revisions match | pass | none |
+| 2 | Unauthenticated → 401 | **fail** (400) | merge #246 → #243 → #244 |
+| 3 | <10 open PRs, 7 days | fail: 21 / 16 / 24 | merges and closes |
+| 4 | Rulesets | Conduit and QS unprotected | owner |
+| 5 | 0 vulnerabilities | pass (npm audit 0/0) | none |
+| 6 | Data-plane safety | unchanged | owner (DB TLS, migrations) |
+| 7 | Bounded surface | #242 open | human merge |
+| 8 | Owned-only probe score and gate | #325 open | merge stack #323 → #325 |
+| 9 | Branch hygiene | unchanged | owner |
+| 10 | 1.0 | CHR-55 `not_recorded` | owner device run |
+
