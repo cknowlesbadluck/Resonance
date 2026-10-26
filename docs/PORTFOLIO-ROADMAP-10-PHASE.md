@@ -18,7 +18,7 @@ Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was sup
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 bot-approved, awaiting a human merge; live smoke #248 tracks them as transitional) |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 15 / 23 (QS / Conduit / Resonance, 00:05 ET 2026-10-26; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 20 / 15 / 24 (QS / Conduit / Resonance, 01:10 ET 2026-10-26; Resonance +1 is the #249 guard; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
 | 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329; re-checked 22:05 ET) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 Dependabot at 18:01 ET; Conduit `npm run audit:deps` gate merged (#330) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
@@ -238,3 +238,31 @@ Portfolio ~7.0. Resonance docs are canonical; not mirrored to other repos.
 - **Phase 10:** blocked on CHR-55 (`not_recorded`).
 - **Innovation track:** #333 dashboard; #326 entropy fields; #332 shared owner-only list; #328 code-constant env exemption.
 - **Next:** retarget #333 to main after #326 merges, then add a cross-repo contract and roadmap consistency check.
+
+---
+
+## 2026-10-26 01:00 ET pass
+
+No merges in any repo this pass (rule for the pass). QS read-only.
+
+**Phase evidence, owner gate (machine-checked where marked ✓ by `portfolio-dashboard.mjs --consistency`, Conduit #333):**
+
+| # | Exit criteria | Evidence at 01:10 ET | Owner gate |
+|---|---|---|---|
+| 1 ✓ | Both /ready 200, production true, revisions match pins | Conduit `2026-10-03-ready-surface`, Resonance `2026-10-03-owner-gate`, both match; Resonance ownerKeys [] | none |
+| 2 ✓ | Unauthenticated routes 401 before validation | POST /api/nexus/executions unauthenticated → **400** (fail; #244 fixes) | human merge of #243 #244 #246 |
+| 3 ✓ | <10 open PRs per repo, 7 days | 20 / 15 / 24 | human merges / closes |
+| 4 | Rulesets + required checks | GitHub `protected`: Resonance true, Conduit false, QS false | owner rulesets |
+| 5 | 0 Dependabot; `npm audit` 0 | npm audit 0/0 (Conduit, Resonance) at 01:05 ET; QS has no third-party SwiftPM packages | none |
+| 6 | RLS guard, migrations, DB TLS | unchanged | owner (Render DATABASE_SSL, migrations) |
+| 7 | Bounded surface | unchanged; #242 open | human merge |
+| 8 | Probe classifiers on main | portfolio-probe report-only green 04:54Z run 40271466525 | none |
+| 9 | Branch hygiene | unchanged | owner deletes |
+| 10 ✓ | All above + CHR-55 | not met; CHR-55 `not_recorded` | owner |
+
+Consistency run (roadmap ref = this branch): CONSISTENT, no stale claims. Against `main` it fails closed with `roadmap_unparseable` because main's copy predates the current table — that is the real drift until #240 merges.
+
+**Drift against each repo's own roadmap:**
+- Conduit `docs/ROADMAP-10-PHASE.md` (last edit 2026-10-25 02:10 ET): numbering differs (its 1 = PR entropy, 3 = fail-closed auth); it still names closed PRs #302 #305 #307 #308 #313 #314 #315 as the work items. Stale.
+- Resonance `docs/ROADMAP.md` (last edit 2026-09-30): P1 marks `RESONANCE_AUTH_MODE` done, but issue #167 (default still `auto`) is open; prod is `required` only by config. Nothing about the fail-closed 401 gap (phase 2) or the provider-neutral guard (#249). P0 "branch protection" agrees with GitHub (`protected: true`).
+- QuicksilverV1: the 1.0 roadmap exists only in unmerged #384; main has none. Its order (CHR-55 first) is consistent with phase 10 here.
