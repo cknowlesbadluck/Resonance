@@ -53,10 +53,11 @@ export function createGeminiAdapter(opts?: {
         };
       }
 
-      const url = `${baseUrl}/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
+      // Key goes in a header, never the URL: URLs end up in proxy logs, traces and error text.
+      const url = `${baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
       const res = await fetchWithTimeout("gemini", url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           contents,
           generationConfig: {
