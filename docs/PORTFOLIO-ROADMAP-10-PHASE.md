@@ -2,7 +2,7 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 22:05 ET)
+### Living status (2026-10-25 23:05 ET; probes re-run 23:04 ET, unchanged from 22:05 apart from Conduit #326 extension)
 
 | Project | Readiness | CI (main) | Open PRs | Assess (overall /10) | Top gate | Next slice |
 |---|---|---|---|---|---|---|
@@ -208,3 +208,21 @@ Portfolio ~7.0. Resonance docs are canonical; not mirrored to other repos.
 - **Next (proposed, structural):**
   - A read-only cross-repo consistency check (Conduit script): compare each repo's `/ready` `contractRevision` and owner-gate stamps, plus the roadmap phase statuses in this file, against live evidence; fail-closed on mismatch.
   - Have #328 import #332's module once both land.
+
+### 23:00 ET evidence (2026-10-25)
+
+- **Probes (23:04 ET):**
+  - Conduit `/ready` 200 (production on Postgres, v0.8.0).
+  - Resonance `/api/ready` 200 (contract_passed, auth required).
+  - Unauthenticated POST executions still returns **400**; the 401 fix (#244) is unmerged.
+- **Main CI:** green (Conduit d44b971, Resonance e01421d). No direct pushes since 22:00 ET.
+- **Open PRs:** Conduit 14, Resonance 23. Owner-only, measured with #332's list via #326: Conduit 9, Resonance 10.
+- **Age buckets (0-1d / 2-7d / 8-14d / 15d+):** Conduit 6/0/6/2, Resonance 9/0/14/0.
+- **Overlap pairs:** Conduit 21 (nearly all among the owner-gated auth/grants/TLS PRs), Resonance 13.
+- **Hygiene:** no docs-only or roadmap-refresh PR is fully superseded by main. Resonance #240 is the only docs PR and carries content not on main, so it stays open.
+- **Conduit #202:** every listed stale branch is already gone (verified via the API), so there is nothing to prune.
+- **Pending decisions:**
+  - Conduit #201 (DB TLS): set the Render `DATABASE_SSL` env, then merge #155 (#162 overlaps it). Live DB TLS still doesn't verify certs.
+  - Resonance #167 (auth mode): main still defaults to `auto`. Prod is safe only because its env sets `required`. Decide on #174 (fail-closed default).
+  - Resonance #166 (Gemini): `gemini.yml` still uses `gemini-1.5-pro` with continue-on-error, so the check gives no signal. Update the model or remove the workflow.
+- **Innovation:** the cross-repo entropy fields (age buckets, overlap pairs, owner-only count) were added to the existing #326 report rather than a duplicate script.
