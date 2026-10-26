@@ -103,7 +103,11 @@ export interface SkillResolution {
 }
 
 export interface NexusIntent { id: string; objective: string; projectId: string; requirements: CapabilityRequirement[]; contextRefs?: string[]; requestedBy: string; metadata?: Record<string, unknown>; }
-export interface ExecutionStep { id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; dependsOn?: string[]; }
+export interface ExecutionStep {
+  id: string; capabilityId: string; adapterId: string; input: unknown; requiresApproval: boolean; dependsOn?: string[];
+  /** True when the capability mutates external state; ambiguous failures (timeout/unavailable) are then not blindly retried. See retry-policy.ts. */
+  sideEffect?: boolean;
+}
 export interface ExecutionRetryPolicy { maxAttempts: number; backoffMs: number; }
 export interface NexusExecutionPlan { id: string; intentId: string; projectId: string; actorId: string; mode: ExecutionMode; steps: ExecutionStep[]; contextRefs: string[]; approvalRequired: boolean; rationale: string[]; retry?: ExecutionRetryPolicy; }
 export interface StepOutcome {

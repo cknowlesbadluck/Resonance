@@ -9,11 +9,6 @@ export class InMemoryEventStore implements EventStore {
   async hasExternal(source: string, externalId: string): Promise<boolean> { return this.events.some((e) => e.source === source && e.externalId === externalId); }
 }
 
-export class InMemoryAuditRecorder implements AuditRecorder {
-  readonly records: NexusEvidence[] = [];
-  async record(evidence: NexusEvidence): Promise<void> { this.records.push(evidence); }
-}
-
 export class EventBus {
   constructor(private readonly store: EventStore) {}
   async publish(event: NexusEvent): Promise<boolean> {

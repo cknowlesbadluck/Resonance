@@ -53,15 +53,6 @@ export function dissolveChamber(chamber: Chamber): Chamber {
   };
 }
 
-/** Mark plan as chamber mode when multi-step coordinated work is required. */
-export function asChamberPlan(plan: NexusExecutionPlan, chamberId: string): NexusExecutionPlan {
-  return {
-    ...plan,
-    mode: "chamber",
-    rationale: [...plan.rationale, `chamber:${chamberId}`],
-  };
-}
-
 export function agendaFromIntent(intent: NexusIntent): Agenda {
   return {
     id: crypto.randomUUID(),
