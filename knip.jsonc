@@ -5,7 +5,9 @@
   //  - src/chambers/**    Chamber execution bridge (docs/ARCHITECTURE.md "Chambers")
   //  - src/policy/gate.ts "foundational security boundary" (docs/ARCHITECTURE.md "Policy");
   //                       removing it is a critical reformation (two-key rule)
+  // ignoreFiles only suppresses the *unused file* finding; broken imports, unused deps and
+  // other issue types inside these paths are still reported.
   // Anything else knip reports as an unused file is a real prune candidate.
   "$schema": "https://unpkg.com/knip@5/schema-jsonc.json",
-  "ignore": ["lib/ai/**", "src/chambers/**", "src/policy/gate.ts"]
+  "ignoreFiles": ["lib/ai/**", "src/chambers/**", "src/policy/gate.ts"]
 }
