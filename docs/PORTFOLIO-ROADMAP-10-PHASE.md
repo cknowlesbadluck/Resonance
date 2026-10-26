@@ -311,3 +311,20 @@ Scores (unchanged; no main branch moved since 02:00 ET): **Conduit 7.1, Resonanc
 
 Highest-value next steps: (1) human merge of Resonance #246 → #243 → #244 (closes phase 2); (2) re-request CodeRabbit on the Conduit stacks so they become mergeable under the criteria; (3) decide #167 (auth default) together with #174; (4) a two-key decision on the policy-gate fix below before any chamber is wired.
 
+
+## 2026-10-26 08:00 ET pass: 10-phase status (current)
+
+No main branch moved since 06:00 ET (0 merges in any repo). Scores unchanged: **Conduit 7.1, Resonance 6.1, QuicksilverV1 6.0**. Probes 08:03 ET: Conduit /ready 200; Resonance /api/ready 200 `contract_passed`, `authMode: required`.
+
+| # | Phase | Exit criteria | Evidence 08:05 ET | Status | Owner gate |
+|---|---|---|---|---|---|
+| 1 | Contract consistency | Both /ready 200 + production; pins match | both 200, revision `2026-10-03-owner-gate` | passed | none |
+| 2 | Fail-closed edges | 401 before validation on every route | #243/#244/#246/#245/#248 still open, all MERGEABLE | in progress | human merge |
+| 3 | PR entropy | <10 open per repo for 7 days | Resonance 26 (incl. new #250/#251), Conduit 16, QS 17 | in progress | merges/closes |
+| 4 | Main protection | Rulesets + required checks in all 3 repos | unchanged | blocked | owner rulesets |
+| 5 | Dependency hygiene | audit 0; majors tracked | unchanged | passed (majors open) | none |
+| 6 | Data-plane safety | RLS guard in CI; migrations applied; DB TLS | #241, #173, #207, #208, #155 unchanged | blocked | owner |
+| 7 | Bounded surface | Provider timeouts; adapter contract | #242 all checks green incl. ios + CodeRabbit | ready for review | human merge #242 |
+| 8 | Observability | Owned-only score + scheduled dashboard | Conduit #323–#334 CodeRabbit still CHANGES_REQUESTED; Workers Builds check failing (external, non-gating) | in progress | address CodeRabbit, then merge |
+| 9 | Policy plane | `requirePolicy` refuses unapproved `requiresApproval`; deny-by-default test | **draft #250** (6 tests); log redaction #251 | draft | **two-key** (#250) |
+| 10 | 1.0 | 30 days green, runbooks, CHR-55 recorded | CHR-55 `not_recorded` | blocked | owner device run |
