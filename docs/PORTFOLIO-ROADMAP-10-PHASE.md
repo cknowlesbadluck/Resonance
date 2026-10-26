@@ -368,3 +368,32 @@ Probes 10:04 ET (all HTTP codes observed live):
 | 10 | 1.0 | 30 days green; CHR-55 recorded | not recorded | blocked | owner device run |
 
 Mirrors: Conduit #338 (pointer + Conduit-only phases). QuicksilverV1: no mirror opened. #406 already edits the same two files, and the shared account means authorship can't be told apart from Quicksilver Dev's, so it stays a proposal.
+
+## 2026-10-26 11:00 ET pass: net PR reduction (current)
+
+Probes 11:02:33 ET: Conduit `/ready` **200 on the first attempt** (the owner's 503 cold start had already cleared). Body: `ready, 0.8.0, contractRevision 2026-10-03-ready-surface, postgres, production true`. Conduit `POST /mcp` with no credentials: 401 with a Bearer challenge carrying `resource_metadata`. Resonance `/api/ready` 200 `contract_passed`, `missingRequired=[]`, `persistenceConfigured=true`.
+
+Open PRs before → after this pass: QuicksilverV1 18 → 18 (proposals only), Conduit 20 → 16, Resonance 26 → 23. Nothing closed was lost: each was folded into a surviving PR.
+
+| # | Phase | Exit criteria | Status | Owner gate |
+|---|---|---|---|---|
+| 1 | Contract consistency | both /ready 200 and posture-pinned | passed | none |
+| 2 | Fail-closed edges | 401 before validation everywhere; /mcp challenge; test switches refused outside test | in progress (Res #243/#244/#245 updated to main, #246; Con #335) | human merge |
+| 3 | PR entropy | <10 open per repo for 7 days | in progress (16 / 23 / 18) | merges |
+| 4 | Main protection | rulesets in Conduit + QS | blocked | owner |
+| 5 | Dependencies | audit 0; majors planned | passed (majors open) | none |
+| 6 | Data-plane safety | RLS migrations applied; DB TLS verify | blocked | owner |
+| 7 | Bounded surface | provider timeouts + neutrality guard | in progress (#242 now includes the #249 guard) | human merge |
+| 8 | Observability | owned-only score, dashboard, merge gates on one path list | in progress (Con #325, #333, #328) | address CodeRabbit |
+| 9 | Policy plane | requirePolicy deny-by-default | draft #250 | **two-key** |
+| 10 | 1.0 | 30 days green, runbooks, CHR-55 recorded | blocked | owner device run |
+
+### Innovation track
+
+| Item | Where | Status | Owner gate |
+|---|---|---|---|
+| Posture pins + Bearer-challenge auth gate | Conduit #336 (folded #337) | open, green | review |
+| One owner-only path list for merge-train + merge-readiness | Conduit #328 (folded #332) | open | review |
+| Cross-plane dashboard + PR hygiene report | Conduit #333 (folded #326) | open | address CodeRabbit |
+| Policy deny-by-default | Resonance #250 | draft | two-key |
+| Content-free device run stamp (QS) | QuicksilverV1 #392 (Quicksilver Dev) | open | owner, CHR-55 |
