@@ -345,3 +345,26 @@ Identities stay separate: QuicksilverV1 (iOS, on-device-first, CHR-55 owner gate
 | 8 | Observability (Con) | owned-only score; scheduled dashboard; auth-gate with challenge | #323–#334 CodeRabbit CHANGES_REQUESTED; #336 | in progress | address CodeRabbit |
 | 9 | Policy plane (Res) | requirePolicy refuses unapproved approval-required decisions | draft #250 (6 tests, green); #251 log redaction green | draft | **two-key** |
 | 10 | 1.0 (QS) | 30 days green, runbooks, CHR-55 recorded | CHR-55 `not_recorded`; 12 `@unchecked Sendable` prod sites (issue #252) | blocked | owner device run |
+
+## 2026-10-26 10:00 ET pass (current)
+
+Probes 10:04 ET (all HTTP codes observed live):
+- Conduit `/ready` 200 on first try: `status=ready, version=0.8.0, contractRevision=2026-10-03-ready-surface, persistence=postgres, production=true`.
+- Conduit `POST /mcp` with no credentials: 401, `WWW-Authenticate: Bearer error="invalid_token", error_description="Missing Authorization header", resource_metadata="https://conduit-feco.onrender.com/.well-known/oauth-protected-resource/mcp"`.
+- Resonance `/api/ready` 200 (Netlify): `status=ready, production=true, authMode=required, authModeOk=true, persistenceConfigured=true, githubAdapterConfigured=false, missingRequired=[], posture=contract_passed, contractRevision=2026-10-03-owner-gate`, timestamp 2026-10-26T14:04:18.882Z.
+- Open PRs at 10:04 ET: QuicksilverV1 18 (new #411 by Quicksilver Dev), Conduit 18 (then 20 with #337/#338), Resonance 26. No merges since 09:00 ET.
+
+| # | Phase | Exit criteria | Evidence 10:15 ET | Status | Owner gate |
+|---|---|---|---|---|---|
+| 1 | Contract consistency | both /ready 200 and pinned | Conduit #337 ready-pins: both OK pinned | passed | none |
+| 2 | Fail-closed edges | 401 before validation; /mcp 401 + Bearer challenge; test switches only in test | Res #246 (behind 0, CodeRabbit approved), #243/#244 approved but behind main; Conduit #335/#336 review fixes pushed | in progress | human merge |
+| 3 | PR entropy | <10 open per repo for 7 days | 18 / 20 / 26 | in progress | merges |
+| 4 | Main protection | rulesets in Conduit and QS | none | blocked | owner |
+| 5 | Dependencies | audit 0; majors planned | 0/0; TS 7, next 16 pending | passed (majors open) | none |
+| 6 | Data-plane safety | RLS applied; DB TLS verify | #241 (CodeRabbit CHANGES_REQUESTED), #173/#207/#208, #155 | blocked | owner |
+| 7 | Bounded surface | provider timeouts | #242 behind 6, 4 unresolved threads | in progress | rebase, then human merge |
+| 8 | Observability | owned-only score; posture pins | #323 → #325 stack; #337 | in progress | address CodeRabbit |
+| 9 | Policy plane | requirePolicy deny-by-default | draft #250 green | draft | **two-key** |
+| 10 | 1.0 | 30 days green; CHR-55 recorded | not recorded | blocked | owner device run |
+
+Mirrors: Conduit #338 (pointer + Conduit-only phases). QuicksilverV1: no mirror opened. #406 already edits the same two files, and the shared account means authorship can't be told apart from Quicksilver Dev's, so it stays a proposal.
