@@ -92,13 +92,32 @@ export class DefaultPolicyGate implements PolicyGate {
   }
 }
 
+export type RequirePolicyOptions = {
+  /**
+   * Set only when a human approval for this exact action has been verified
+   * by the caller. Absent/false means "no approval on record".
+   */
+  approved?: boolean;
+};
+
+/**
+ * Deny-by-default enforcement. Throws unless the decision is allowed AND
+ * either needs no approval or the caller passes a verified approval.
+ * "allowed, needs approval" without approval is treated as a denial.
+ */
 export async function requirePolicy(
   gate: PolicyGate,
-  params: Parameters<PolicyGate["evaluate"]>[0]
+  params: Parameters<PolicyGate["evaluate"]>[0],
+  options: RequirePolicyOptions = {}
 ): Promise<PolicyDecision> {
   const decision = await gate.evaluate(params);
-  if (!decision.allowed) {
-    throw new Error(`Policy denied: ${decision.reason ?? "access denied"}`);
+  if (!decision || decision.allowed !== true) {
+    throw new Error(`Policy denied: ${decision?.reason ?? "access denied"}`);
+  }
+  if (decision.requiresApproval !== false && options.approved !== true) {
+    throw new Error(
+      `Policy denied: approval required (${decision.reason ?? "unapproved"})`
+    );
   }
   return decision;
 }
