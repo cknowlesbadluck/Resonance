@@ -16,3 +16,12 @@ describe("safeErrorSummary", () => {
     expect(JSON.stringify(safeErrorSummary("password=x"))).not.toMatch(/password/);
   });
 });
+
+describe("safeErrorSummary hostile shapes (review)", () => {
+  it("does not throw on non-primitive or throwing code", () => {
+    expect(safeErrorSummary({ code: { toString: null } })).toEqual({ code: "unknown", kind: "object" });
+    const hostile = Object.defineProperty({}, "code", { get() { throw new Error("boom"); } });
+    expect(safeErrorSummary(hostile).code).toBe("unknown");
+    expect(safeErrorSummary({ code: 23505 }).code).toBe("23505");
+  });
+});
