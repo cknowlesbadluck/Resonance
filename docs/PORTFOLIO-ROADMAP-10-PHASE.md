@@ -18,7 +18,7 @@ Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was sup
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 bot-approved, awaiting a human merge; live smoke #248 tracks them as transitional) |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 21 / 16 / 24 (QS / Conduit / Resonance, 05:10 ET 2026-10-26; new: QS #406 docs, Conduit #334 Bolt; Resonance +1 is the #249 guard; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 23 / 16 / 24 (QS / Conduit / Resonance, 06:05 ET 2026-10-26; QS +2 from Quicksilver Dev (#407, #408); new: QS #406 docs, Conduit #334 Bolt; Resonance +1 is the #249 guard; QS −3 via Quicksilver Dev merges #397 #400 #401); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
 | 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329; re-checked 22:05 ET) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 Dependabot at 18:01 ET; Conduit `npm run audit:deps` gate merged (#330) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
@@ -289,4 +289,25 @@ Consistency run (roadmap ref = this branch): CONSISTENT, no stale claims. Agains
 | 8 | Owned-only probe score and gate | #325 open | merge stack #323 → #325 |
 | 9 | Branch hygiene | unchanged | owner |
 | 10 | 1.0 | CHR-55 `not_recorded` | owner device run |
+
+---
+
+## 2026-10-26 06:00 ET pass: 10-phase proposal (current)
+
+Scores (unchanged; no main branch moved since 02:00 ET): **Conduit 7.1, Resonance 6.1, QuicksilverV1 6.0**, mean 6.4.
+
+| # | Phase | Exit criteria | Evidence 06:05 ET | Status | Owner gate |
+|---|---|---|---|---|---|
+| 1 | Contract consistency | Both /ready 200 and production; revisions match pins; parity tests | dashboard `--consistency` CONSISTENT | passed | none |
+| 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation; Conduit /mcp 401 | Resonance POST /api/nexus/executions → 400 | in progress | human merge #246 → #243 → #244, then #245 and #248 |
+| 3 | PR entropy | <10 open per repo for 7 days | 23 / 16 / 24 | in progress | merges and closes |
+| 4 | Main protection | Rulesets with required checks in all 3 repos | Resonance protected; Conduit and QS not | blocked | owner rulesets |
+| 5 | Dependency hygiene | npm audit 0; Dependabot 0; majors tracked | audit 0/0; next 15→16 and typescript 5→7 behind | passed (majors open) | none |
+| 6 | Data-plane safety | RLS guard in CI; migrations applied; Conduit DB TLS verify | #241 open; #173, #207 and #208 not applied; #155 waits on Render env | blocked | owner |
+| 7 | Bounded surface and adapters | Timeouts on provider fetches; adapter contract (neutral surface, fail-closed unconfigured, no key in URL or errors); body caps | #242 now carries the timeouts, the Gemini key moved to a header, and the contract test | in progress | human merge #242 |
+| 8 | Observability | Owned-only score and exit gate; scheduled dashboard | #325 (exit gate), #333 (scheduled step) | in progress | merge stacks #323 → #325, #326 → #333 |
+| 9 | Capability and policy plane wired | Policy gate on every chamber and provider call; `requirePolicy` refuses `requiresApproval` decisions; deny-by-default test | gate exists but has **no caller**; chambers are interfaces only; `lib/ai` is imported nowhere outside itself | planned | two-key (policy gate) |
+| 10 | 1.0 | 30 days green, runbooks, alias decision, CHR-55 recorded | CHR-55 `not_recorded` | blocked | owner device run |
+
+Highest-value next steps: (1) human merge of Resonance #246 → #243 → #244 (closes phase 2); (2) re-request CodeRabbit on the Conduit stacks so they become mergeable under the criteria; (3) decide #167 (auth default) together with #174; (4) a two-key decision on the policy-gate fix below before any chamber is wired.
 
