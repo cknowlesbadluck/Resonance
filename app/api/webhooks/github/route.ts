@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { decideGitHubWebhook, isUniqueViolation } from "../../../../src/nexus/github-webhook";
+import { safeErrorSummary } from "../../../../src/nexus/log-safe";
 
 function getDbClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
   });
   if (error) {
     if (isUniqueViolation(error)) return NextResponse.json({ accepted: true, duplicate: true });
-    console.error("github webhook: failed to persist event", error);
+    console.error("github webhook: failed to persist event", safeErrorSummary(error));
     return NextResponse.json({ error: "Failed to persist event" }, { status: 500 });
   }
   return NextResponse.json({ accepted: true });
