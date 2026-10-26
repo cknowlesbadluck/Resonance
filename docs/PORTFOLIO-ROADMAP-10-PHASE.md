@@ -2,13 +2,13 @@
 
 Projects stay separate (identity, credentials, backlog, release path). This file only tracks gates. Evidence: docs/AUDIT-2026-10-25.md, "08:00 ET pass".
 
-### Living status (2026-10-25 19:15 ET)
+### Living status (2026-10-25 22:05 ET)
 
-| Project | Readiness | CI (main) | Open PRs | Open issues | Top gate | Next slice |
+| Project | Readiness | CI (main) | Open PRs | Assess (overall /10) | Top gate | Next slice |
 |---|---|---|---|---|---|---|
-| Conduit | /ready 200 (0.35 s, 17:02 ET), /mcp 401; rubric 6/10 | CI green; #329 merged (bedef3d) | 19 | 2 (#201, #202) | CodeRabbit re-review of #323/#326; auth/grants backlog | CodeRabbit re-review of #323/#326/#328; owner merges |
-| Resonance | /api/ready 200; all GETs 401; POST validation before auth on 4 routes + resume long-id (#243, #244, #245, #246) | CI success on e01421d; rubric 5/10 | 21 (+#246) | 2 (#166, #167) | human approvals; owner migrations | approve #243, #244, #245, #246 |
-| QuicksilverV1 | iOS; CHR-55 `not_recorded` | **Quicksilver CI red on e513530 (UI-smoke a11y audit: timeout, then "Contrast failed" on rerun)**; rubric 2/10 | 21 (#400, #401, #402) | 2 (#250, #252) | CHR-55 device run (owner) | Quicksilver Dev: #284 (#252), #250, queue review |
+| Conduit | /ready 200 production on Postgres, v0.8.0 (22:04 ET) | green d44b971; no direct pushes since 19:10 ET | 14 | 7.1 | CodeRabbit re-review of #323/#326/#328/#332; 9 owner-only PRs | merge #332 → #328 once reviews clear |
+| Resonance | /api/ready 200 contract_passed; unauthenticated POST executions **400** (not 401) | green e01421d | 23 | 6.1 | human merge of #243 → #244 → #246 | then trim the transitional entries in #245/#248 |
+| QuicksilverV1 | iOS; CHR-55 `not_recorded` | green e513530 | 22 | 5.9 | CHR-55 device run (owner); 8 single-file guard PRs awaiting Quicksilver Dev | merge the non-overlapping guard tier (see audit 22:00 ET) |
 
 Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was superseded on merge by this living version. See also AUDIT-2026-10-25-LATE.md.
 
@@ -18,8 +18,8 @@ Note: main's 14:00Z and 18:01Z refreshes of this file (b032f57, e01421d) was sup
 |---|---|---|---|
 | 1 | Contract consistency | Both /ready 200 with `production` true; probe schemas match the emitted body (parity test) | [passed] Conduit #324 adds the parity test; Resonance parity exists |
 | 2 | Fail-closed edges | Every unauthenticated route returns 401 before validation (enforced by the route-auth matrix); Conduit /mcp 401 | [in progress] Resonance #243, #244, #245, #246 (resume long-id 400 found live 17:03 ET; #243, #244 and #246 bot-approved, awaiting a human merge; live smoke #248 tracks them as transitional) |
-| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 22 / 14 / 23 (QS / Conduit / Resonance, 19:10 ET, incl. this pass's hygiene PRs); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
-| 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
+| 3 | PR entropy | Fewer than 10 open PRs per repo for 7 days | [in progress] 22 / 14 / 23 (QS / Conduit / Resonance, 22:05 ET); owner-only floor 22 / 9 / 21+; measured by #326, trend by #327 |
+| 4 | Main protection + CI integrity (direct docs pushes to main seen 14:06Z and 18:02Z; none since, per direct-push-audit #329; re-checked 22:05 ET) | Rulesets with required checks; Actions SHA-pinned (Conduit done; Resonance #189; QS #250); Workers Builds noise removed | [blocked] owner rulesets |
 | 5 | Dependency hygiene | 0 Dependabot alerts | [passed] 0/0/0 Dependabot at 18:01 ET; Conduit `npm run audit:deps` gate merged (#330) |
 | 6 | Data-plane safety | RLS guard in CI (#241); migrations applied by the owner (#173 #207 #208); Conduit DB TLS verify (#155, #201) | [blocked] owner |
 | 7 | Bounded surface | Body caps, outbound timeouts (#242), idempotent replays (#209), resume guard (#206) | [in progress] |
@@ -199,3 +199,12 @@ Portfolio ~7.0. Resonance docs are canonical; not mirrored to other repos.
 ### Innovation track (11:00 ET)
 - Done (PRs open): Resonance #245 route-auth matrix; Conduit #325 owned-only score; Conduit #326 PR hygiene report.
 - Next: wire #326 into the scheduled portfolio-probe as a report-only job; cross-plane contract-revision check (both /ready revisions vs committed expectations); an SSE idle watchdog for Resonance adapters.
+
+### Innovation track (22:00 ET)
+
+- **Shipped (open PRs):**
+  - Conduit #332: one shared, fail-closed owner-only path list for the merge gates.
+  - Conduit #328 round 6: an all-caps name declared as a code constant in the PR's own diff is no longer an env var; with no diff evidence it still blocks. The external-policy, bridge and receipt files are now gated.
+- **Next (proposed, structural):**
+  - A read-only cross-repo consistency check (Conduit script): compare each repo's `/ready` `contractRevision` and owner-gate stamps, plus the roadmap phase statuses in this file, against live evidence; fail-closed on mismatch.
+  - Have #328 import #332's module once both land.
