@@ -1,12 +1,12 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-27 09:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-27 10:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-Live probes 2026-10-27T09:01Z:
-- Conduit https://conduit-feco.onrender.com/ready : **ready** (HTTP 200, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (HTTP 200, missingRequired=[], production true, authMode required ok, persistenceConfigured true, posture=contract_passed, contractRevision=2026-10-03-owner-gate, githubAdapterConfigured=false). Timestamp 2026-10-27T09:01:21.118Z.
+Live probes 2026-10-27T10:01Z:
+- Conduit https://conduit-feco.onrender.com/ready : **ready** (HTTP 200, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm (initial 503 recovered).
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (HTTP 200, missingRequired=[], production true, authMode required ok, persistenceConfigured true, posture=contract_passed, contractRevision=2026-10-03-owner-gate, githubAdapterConfigured=false). Timestamp 2026-10-27T10:01:17.933Z.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant HTML). resonancenexus.vercel.app 404 DEPLOYMENT_NOT_FOUND. quicksilver.vercel.app 200 stranger. quicksilverv1.vercel.app 404. Drift persists; never gate on non-owned.
 - Open PR counts: QuicksilverV1 18, Conduit 17, Resonance 23. Residual entropy; target <10. Candidates for prune: close superseded docs-only (Resonance #240, QS #406, Conduit #338 — forms presented for owner confirmation); merge green non-overlapping hardens after CI confirm (QS #408-#412, Conduit #335/#336/#333/#328, Resonance #243-#248/#251).
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. DeviceRunStamp + share evidence in flight (#392/#412).
-- CI: main green across planes. No open Dependabot alerts.
+- CI: main green across planes (recent runs success). No open Dependabot alerts observed.
 - Portfolio maturity ~7.4/10 (owned planes warm and contract_passed). Scores: QS ~7.6, Conduit ~7.5, Resonance ~7.1. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false.
 - No secrets invented. No device claim. Classifier ≠ proof. Cold-start distinguished from not-ready.
 
