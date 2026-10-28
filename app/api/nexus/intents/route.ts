@@ -15,6 +15,11 @@ function isRequirement(value: unknown): value is CapabilityRequirement {
 }
 
 export async function POST(request: Request) {
+  // Fail closed before reading or parsing the body: an unauthenticated caller gets 401,
+  // never validation detail (same pattern as #243/#244).
+  if (authRequired() && !request.headers.get("authorization")?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: "Request body exceeds the 64 KiB limit." }, { status: 400 });
   const text = await request.text();
