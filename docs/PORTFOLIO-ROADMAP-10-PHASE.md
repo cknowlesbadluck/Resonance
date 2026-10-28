@@ -1,8 +1,8 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-28 01:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-28 06:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Live probe evidence (2026-10-28T01:01Z):**
+**Live probe evidence (2026-10-28T06:00Z):**
 - Conduit https://conduit-feco.onrender.com/ready : **ready OK** (HTTP 200, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (HTTP 200, missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Timestamp 2026-10-28T01:01:35.961Z.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (HTTP 200, missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Timestamp 2026-10-28T06:00:52.881Z.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate on non-owned.
 - Open PR counts: QuicksilverV1 18, Conduit 17, Resonance 23. Residual entropy; target <10. Docs-only close candidates (#240, #406, #338) still open. Green non-overlapping hardens remain merge candidates (QS #408-#412, Conduit #335/#336/#333/#328/#325, Resonance #243-#248/#251/#172/#185).
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. DeviceRunStamp + share evidence in flight (#392/#412).
@@ -56,6 +56,6 @@ Binding: CHR-55 remains the production gate for Quicksilver. Entropy and alias m
 9. Chamber/capability advances unblocked once adapters configured.
 10. Post-device diagnostics and full production verdict only after CHR-55.
 11. Hygiene confirmation forms for prune (ongoing).
-12. Fresh 01Z probe and docs update this pass (both planes ready; warm state holds).
+12. Fresh 06Z probe and docs update this pass (both planes ready; warm state holds across hours).
 
 Highest-value next: complete hygiene prune (close docs-only superseded), merge green non-overlapping hardens after CI, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence.
