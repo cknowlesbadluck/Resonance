@@ -102,6 +102,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const blocked = productionUserDataBlock();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
+  // Fail closed before reading headers/body: an unauthenticated caller gets 401,
+  // never validation detail (mirrors skills/resolve hardening).
+  if (authRequired() && !request.headers.get("authorization")?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
   if (!idempotencyKey || idempotencyKey.length > MAX_IDEMPOTENCY_LENGTH) return NextResponse.json({ error: "Idempotency-Key header is required" }, { status: 400 });
 
