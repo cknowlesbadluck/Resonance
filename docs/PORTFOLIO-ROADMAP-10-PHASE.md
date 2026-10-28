@@ -1,16 +1,16 @@
-# Portfolio 10-phase roadmap — refreshed 2026-10-28 10:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-10-28 17:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Live probe evidence (2026-10-28T10:00Z):**
-- Conduit https://conduit-feco.onrender.com/ready : **ready OK** (HTTP 200, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm after brief cold-start recovery.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (HTTP 200, missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Timestamp 2026-10-28T10:00:48.499Z.
+**Live probe evidence (2026-10-28T17:01Z):**
+- Conduit https://conduit-feco.onrender.com/ready : **ready OK** (HTTP 200, version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (HTTP 200, missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Timestamp 2026-10-28T17:00:43.107Z.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate on non-owned.
-- Open PR counts: QuicksilverV1 18, Conduit 18, Resonance 23. Residual entropy; target <10. Docs-only close candidates (#240, #406, #338) still open. Green non-overlapping hardens remain merge candidates (QS #408-#412, Conduit #335/#336/#333/#328/#325/#340, Resonance #243-#248/#251/#172/#185).
+- Open PR counts (post-docs-prune): QuicksilverV1 ~17, Conduit ~17, Resonance ~22. Residual entropy; target <10. Docs-only closed this pass (#240, #406, #338). Green non-overlapping hardens remain merge candidates (QS #408-#412, Conduit #335/#336/#333/#328/#325/#340/#339, Resonance #243-#248/#251/#172/#185).
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. DeviceRunStamp + share evidence in flight (#392/#412).
 - CI: main green across planes. No open Dependabot alerts observed.
 - Portfolio maturity ~7.4/10 when both warm. Scores: QS ~7.6, Conduit ~7.5, Resonance ~7.1. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable).
 - No secrets invented. No device claim. Classifier ≠ proof.
 
-Brutal assessment: Stabilization holds. Fail-closed posture confirmed. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) is the highest operational lever. Cold-start recoverable (observed recovery this probe). Innovation continues under constraints.
+Brutal assessment: Stabilization holds. Fail-closed posture confirmed. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) reduced by docs-only closes; still the highest operational lever. Cold-start recoverable. Innovation: portfolio-ready-check.mjs landed.
 
 ## Phase 1 — Owner gate cleared
 Exit met. missingRequired=[] , posture contract_passed on Resonance Netlify. Conduit ready when warm.
@@ -31,7 +31,7 @@ Bounded, on-device first. AppTests green. Resilience tests progressing.
 No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold.
 
 ## Phase 7 — Hygiene prune
-Target open PRs <10/repo. Close docs-only superseded (forms presented). Merge green hardens with no file overlap after CI green. One canonical roadmap (this file). Mirror audit notes to other repos.
+Target open PRs <10/repo. Docs-only superseded closed (#240/#406/#338). Merge green hardens with no file overlap after CI green. One canonical roadmap (this file). Mirror audit notes to other repos. portfolio-ready-check.mjs for automated baseline.
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify host. Advance secondary clients under constraints. githubAdapterConfigured remains false until owner sets.
@@ -55,8 +55,9 @@ Binding: CHR-55 remains the production gate for Quicksilver. Entropy and alias m
 8. Knip baseline for planned adapters.
 9. Chamber/capability advances unblocked once adapters configured.
 10. Post-device diagnostics and full production verdict only after CHR-55.
-11. Hygiene confirmation forms for prune (ongoing).
-12. Fresh 10Z probe and docs update this pass (both planes ready; Conduit recovered from cold-start).
+11. Hygiene: docs-only PRs closed this pass.
+12. Fresh 17Z probe and docs update this pass (both planes ready).
 13. Jules-generated performance optimizations in Conduit (#339/#340) as low-risk hygiene candidates once CI green.
+14. New: scripts/portfolio-ready-check.mjs fail-closed owned-planes probe (this pass).
 
-Highest-value next: complete hygiene prune (close docs-only superseded #240/#406/#338), merge green non-overlapping hardens after CI, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence.
+Highest-value next: merge green non-overlapping hardens after CI, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence.
