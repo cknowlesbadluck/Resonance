@@ -6,9 +6,8 @@ import { nexusAdapters } from "../../../../../../src/nexus/runtime";
 import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
 import { productionUserDataBlock } from "../../../../../../src/nexus/production-boundary";
+import { MAX_RESUME_BODY_BYTES, RESUME_STALE_MS, conditionalUpdateOutcome, isValidResumeId, parseResumeBody, resumeEligibility } from "../../../../../../src/nexus/resume-guard";
 import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../../../src/nexus/types";
-
-const MAX_ID_LENGTH = 128;
 
 interface StoredPlan {
   approvalRequired?: boolean;
@@ -45,16 +44,18 @@ export async function POST(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  if (!id || id.length > MAX_ID_LENGTH) {
+  if (!isValidResumeId(id)) {
     return NextResponse.json({ error: "execution or request id is required" }, { status: 400 });
   }
   const blocked = productionUserDataBlock();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
 
-  const body = await request.json().catch(() => ({})) as {
-    projectId?: string;
-    approved?: boolean;
-  };
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_RESUME_BODY_BYTES) {
+    return NextResponse.json({ error: "Request body exceeds the 16 KiB limit." }, { status: 400 });
+  }
+  const parsed = parseResumeBody(await request.text());
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const body = parsed.body;
 
   const projectId = body.projectId ?? process.env.RESONANCE_PROJECT_ID ?? null;
   if (authRequired()) {
@@ -83,7 +84,7 @@ export async function POST(
 
   if (body.approved !== true) {
     if (body.approved === false && existing.status === "waiting") {
-      const { data: cancelled } = await db
+      const cancelResult = await db
         .from("nexus_execution_requests")
         .update({
           status: "cancelled",
@@ -95,16 +96,22 @@ export async function POST(
         .eq("status", "waiting")
         .select("id")
         .maybeSingle();
-      if (cancelled) return NextResponse.json({ status: "cancelled", id }, { status: 200 });
+      const cancelOutcome = conditionalUpdateOutcome(cancelResult);
+      if (cancelOutcome === "db_error") {
+        console.error("resume: failed to cancel execution request", cancelResult.error);
+        return NextResponse.json({ error: "Failed to update execution request." }, { status: 500 });
+      }
+      if (cancelOutcome === "updated") return NextResponse.json({ status: "cancelled", id }, { status: 200 });
     }
     return NextResponse.json({ error: "Explicit approval=true is required to resume this execution." }, { status: 409 });
   }
 
-  const isStuck = existing.status === "accepted" && existing.updated_at && (new Date().getTime() - new Date(existing.updated_at).getTime() > 5 * 60 * 1000);
-
-  if (existing.status !== "waiting" && !isStuck) {
-    return NextResponse.json({ error: `Execution request is not awaiting approval (status: ${existing.status}).` }, { status: 409 });
+  // Decide eligibility BEFORE claiming, so an ineligible request is never mutated.
+  const eligibility = resumeEligibility(existing);
+  if (!eligibility.ok) {
+    return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
   }
+  const isStuck = eligibility.stuck;
 
   // Claim the waiting request before composing or executing. A second concurrent
   // resume sees no row because the conditional update requires status=waiting (or stuck accepted).
@@ -117,11 +124,16 @@ export async function POST(
     .eq("status", expectedStatus);
 
   const claimReq = isStuck
-    ? claimQuery.lt("updated_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+    ? claimQuery.lt("updated_at", new Date(Date.now() - RESUME_STALE_MS).toISOString())
     : claimQuery;
 
-  const { data: claimed } = await claimReq.select("id").maybeSingle();
-  if (!claimed) {
+  const claimResult = await claimReq.select("id").maybeSingle();
+  const claimOutcome = conditionalUpdateOutcome(claimResult);
+  if (claimOutcome === "db_error") {
+    console.error("resume: failed to claim execution request", claimResult.error);
+    return NextResponse.json({ error: "Failed to update execution request." }, { status: 500 });
+  }
+  if (claimOutcome === "not_matched") {
     return NextResponse.json({ error: "Execution approval was already claimed or is no longer pending." }, { status: 409 });
   }
 
