@@ -4,6 +4,7 @@ import type {
   StreamRequest,
 } from "../types";
 import { ProviderError } from "../types";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 
 /**
  * Anthropic Messages API streaming adapter (SSE).
@@ -46,7 +47,7 @@ export function createAnthropicAdapter(opts?: {
           content: m.content,
         }));
 
-      const res = await fetch(`${baseUrl}/v1/messages`, {
+      const res = await fetchWithTimeout("anthropic", `${baseUrl}/v1/messages`, {
         method: "POST",
         headers: {
           "x-api-key": apiKey,
