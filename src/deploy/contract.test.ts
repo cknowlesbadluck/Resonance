@@ -63,4 +63,19 @@ describe("deploy contract", () => {
     expect(result.production).toBe(true);
     expect(result.ready).toBe(false);
   });
+  it("reports an unknown RESONANCE_AUTH_MODE as invalid and fails closed without echoing it", () => {
+    for (const NODE_ENV of ["production", "development"]) {
+      const result = evaluateDeployContract({ NODE_ENV, RESONANCE_AUTH_MODE: "sk-live-zq9leak" });
+      expect(result.authMode).toBe("invalid");
+      expect(result.authModeOk).toBe(false);
+      expect(result.ready).toBe(false);
+      expect(JSON.stringify(result)).not.toContain("zq9leak");
+    }
+  });
+
+  it("echoes known modes normalized", () => {
+    expect(evaluateDeployContract({ RESONANCE_AUTH_MODE: "  Required " }).authMode).toBe("required");
+    expect(evaluateDeployContract({ RESONANCE_AUTH_MODE: "optional" }).authMode).toBe("optional");
+    expect(evaluateDeployContract({}).authMode).toBe("auto");
+  });
 });
