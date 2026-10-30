@@ -7,6 +7,7 @@ import { NexusExecutor } from "../../../../../../src/nexus/executor";
 import { createNexusPersistenceFromEnv } from "../../../../../../src/nexus/persistence/supabase";
 import { productionUserDataBlock } from "../../../../../../src/nexus/production-boundary";
 import type { NexusEvent, NexusEvidence, NexusExecution, NexusIntent } from "../../../../../../src/nexus/types";
+import { safeErrorSummary } from "../../../../../../src/nexus/log-safe";
 
 const MAX_ID_LENGTH = 128;
 
@@ -74,7 +75,7 @@ export async function POST(
   try {
     existing = await loadRequest(db, projectId, id);
   } catch (error) {
-    console.error("resume: failed to load execution request", error);
+    console.error("resume: failed to load execution request", safeErrorSummary(error));
     return NextResponse.json({ error: "Failed to load execution request." }, { status: 500 });
   }
   if (!existing) {
