@@ -1,18 +1,18 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-01 05:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-01 06:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
 **Canonical source:** This file.
 
-**Live probe evidence (2026-11-01 ~05:00Z):**
-- Conduit https://conduit-feco.onrender.com/ready : **ready OK** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm after transient 503 on some probes (free-tier recoverable).
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Owner gate cleared. Timestamp ~2026-11-01T05:00Z warm.
+**Live probe evidence (2026-11-01 ~06:00Z):**
+- Conduit https://conduit-feco.onrender.com/ready : **503** this probe (free-tier cold or transient). Prior evidence confirms ready OK (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Recoverable; do not treat single 503 as failure.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Owner gate cleared. Timestamp 2026-11-01T06:01:28.898Z warm.
 - Vercel aliases: resonance.vercel.app stranger_occupant (Detail Framework); resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
 - Open PR counts (exact): QuicksilverV1 18, Conduit 21, Resonance 23. Residual entropy; target <10. Green non-overlapping hardens remain merge candidates (QS #408-#412/#392, Conduit Jules #339-#343, Resonance early-401 hardens #243-#251).
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. DeviceRunStamp + share evidence in flight (#392/#412).
 - CI: main green across planes. Dependabot residual in QuicksilverV1 (undici high, development). Others clean.
 - Portfolio maturity ~7.5/10 when both warm. Scores: QS ~7.7, Conduit ~7.6, Resonance ~7.2. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable).
-- No secrets invented. No device claim. Classifier ≠ proof. See docs/AUDIT-2026-11-01-05Z.md.
+- No secrets invented. No device claim. Classifier ≠ proof. See docs/AUDIT-2026-11-01-06Z.md.
 
-Brutal assessment: Stabilization holds. Fail-closed posture confirmed and sustained. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) remains the highest operational lever. Cold-start recoverable (confirmed recovery this pass).
+Brutal assessment: Stabilization holds. Fail-closed posture confirmed and sustained when warm. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) remains the highest operational lever. Cold-start recoverable (503 this probe is noise).
 
 ## Phase 1 — Owner gate cleared
 Exit met. missingRequired=[] , posture contract_passed on Resonance Netlify. Conduit ready when warm.
