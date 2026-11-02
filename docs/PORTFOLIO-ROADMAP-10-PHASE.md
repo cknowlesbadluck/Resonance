@@ -1,49 +1,57 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-01 21:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-Phase Roadmap — refreshed 2026-11-02 (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file.
+**Canonical source:** this file in Resonance (mirrors in Conduit/QuicksilverV1 for convenience).
 
-**Live probe evidence (2026-11-01 ~21:00Z):**
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 503** (cold start / free-tier recoverable). Prior probes confirmed ready when warm (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface).
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Owner gate cleared. Timestamp 2026-11-01T21:00:33.832Z warm.
-- Vercel aliases: resonance.vercel.app stranger_occupant; resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
-- Open PR counts (exact): QuicksilverV1 18, Conduit ~22, Resonance 23. Residual entropy; target <10. Green non-overlapping hardens remain merge candidates (QS #408-#412/#392, Conduit Jules #339-#343, Resonance early-401 hardens #243-#251).
-- CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. DeviceRunStamp + share evidence in flight (#392/#412).
-- CI: main green across planes. Dependabot residual in QuicksilverV1 (undici high, development). Others clean.
-- Portfolio maturity ~7.5/10 when both warm. Scores: QS ~7.7, Conduit ~7.6, Resonance ~7.2. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable).
-- No secrets invented. No device claim. Classifier ≠ proof. See docs/AUDIT-2026-11-01-21Z.md.
+**Live probe evidence (2026-11-02 ~05:02Z):**
+- Conduit /ready: ready OK (0.8.0, postgres, production true).
+- Resonance /api/ready: ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, authMode=required).
+- Open PR counts (approx): QuicksilverV1 ~20, Resonance ~25, Conduit ~24. Target <10. Many Bolt micro-opts and docs mirrors.
+- CHR-55: In Review. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded.
+- CI main green. Dependabot residual low.
 
-Brutal assessment: Stabilization holds. Fail-closed posture confirmed and sustained when warm. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) remains the highest operational lever. Cold-start recoverable (Conduit currently cold).
+Brutal assessment: Stabilization holds. Fail-closed confirmed when warm. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) remains the highest operational lever.
 
-## Phase 1 — Owner gate cleared
-Exit met. missingRequired=[] , posture contract_passed on Resonance Netlify. Conduit ready when warm.
+## Phase 1 — Immediate Hygiene Prune (this sprint)
+Goals: Close or delete all pure docs/audit mirror branches and Jules/Bolt micro-opt PRs that do not change behavior. Merge green non-overlapping hardens (QS privacy/intents/memory clamps, Resonance early-401s).  
+Exit: Open PRs ≤10 per repo. Stale branches without PRs deleted. One canonical audit + roadmap committed.  
+Innovate: entropy score script gates CI.
 
-## Phase 2 — Alias and stranger classification strict
-Tests reject non-owned as ready. Clean Vercel aliases (non-blocking, informational only).
+## Phase 2 — CHR-55 Device Gate
+Goals: Archive IPA on real iPhone 16e / iOS 27, install via SideStore, record DeviceRunStamp evidence, mark CHR-55.  
+Exit: deviceAcceptance recorded by owner. Linear done.
 
-## Phase 3 — Device fence immutable
-claimDeviceAcceptance rejects. deviceAcceptance stays not_recorded until owner records real IPA.
+## Phase 3 — Auth Fail-Closed Complete
+Goals: Land remaining early-401, log redaction, route matrix. Confirm RESONANCE_AUTH_MODE=required.  
+Exit: Anonymous traffic always 401 on non-public routes. Tests green on main.
 
-## Phase 4 — CHR-55 sole device gate
-Archive IPA on target iPhone 16e / iOS 27 only. Simulator/CI/Swift package tests insufficient. Linear CHR-55 In Review.
+## Phase 4 — Adapter Configuration
+Goals: Owner sets GITHUB_TOKEN + webhook secret on Resonance Netlify. Verify githubAdapterConfigured=true.  
+Exit: Live GitHub adapter vertical slice produces durable evidence.
 
-## Phase 5 — Memory and conversation budgets
-Bounded, on-device first. AppTests green. Resilience tests progressing.
+## Phase 5 — Memory / Budget Hardening (QS)
+Goals: Finish remaining memory resilience tests, importance sanitize, budgets, IntegrationEventStore cap.  
+Exit: AppTests green at scale. No unbounded stores.
 
-## Phase 6 — Gateway free-tier contract
-No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold.
+## Phase 6 — Chamber Persistence (Resonance)
+Goals: Persist Chamber scenario in Supabase, surface in control plane.  
+Exit: Form → work → dissolve with audit intact, survives restart.
 
-## Phase 7 — Hygiene prune
-Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current 18/22/23 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization (Conduit #333 partial). Proposal: score PRs by age, CI status, file overlap, and docs-only flag for automated close candidates.
+## Phase 7 — iOS Native Peer (Resonance + QS alignment)
+Goals: Single capability model, compose/execute/approve loop on iOS.  
+Exit: Intent → plan → approve → evidence on device.
 
-## Phase 8 — Resonance adapters
-Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify host. Advance secondary clients under constraints. githubAdapterConfigured remains false until owner sets.
+## Phase 8 — Observability & Probe Hardening
+Goals: Cold-start classifier in every probe. Entropy trend gate. Deploy-parity check.  
+Exit: Probes distinguish cold from down. No false outages.
 
-## Phase 9 — Privacy and logging strict
-Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens in flight.
+## Phase 9 — Privacy / Logging Strict
+Goals: Full redaction, Privacy Manifest reasons complete, no body logging.  
+Exit: Guards green. Manifest matches shipped APIs.
 
-## Phase 10 — Cross-plane acceptance
-Probe + device evidence + low entropy. Production verdict only after all gates. Unified acceptance harness that never invents owner evidence. Warm ready is the confirmed baseline.
+## Phase 10 — Cross-Plane Acceptance & 1.0 Prep
+Goals: Unified acceptance harness. Semver 1.0 contracts. Runbooks.  
+Exit: All gates green, entropy <10 sustained 30 days, device evidence present, ready warm. Production verdict.
 
-Binding: CHR-55 remains the production gate for Quicksilver. Entropy and alias must prune. Free-tier cold starts OK if they recover to ready. No auto-merge of overlapping or untested.
+Binding: CHR-55 remains the production gate for Quicksilver. Entropy must prune. Free-tier cold starts OK if they recover to ready. No auto-merge of overlapping or untested.
 
-Highest-value next: merge green non-overlapping hardens after CI (QS #408-#412/#392), configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence.
+Highest-value next: merge green non-overlapping hardens after CI, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence.
