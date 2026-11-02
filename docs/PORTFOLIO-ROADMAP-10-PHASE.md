@@ -1,11 +1,11 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-02 12:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-02 22:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
 **Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-02-FULL-PORTFOLIO.md
 
-**Live probe evidence (2026-11-02 ~12:01Z):**
-- Conduit https://conduit-feco.onrender.com/ready : **ready OK** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Recovered from initial 503 cold-start. Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp 2026-11-02T12:00:27.899Z). Owner gate cleared. Warm.
-- Vercel aliases: resonance.vercel.app 200 (stranger_occupant risk); resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
+**Live probe evidence (2026-11-02 ~22:00Z):**
+- Conduit https://conduit-feco.onrender.com/ready : **ready OK** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp 2026-11-02T22:00:58.565Z). Owner gate cleared. Warm.
+- Vercel aliases: resonance.vercel.app 200 (stranger_occupant / data-cruncher risk); resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
 - Open PR counts (exact): QuicksilverV1 18, Conduit 23, Resonance 23. Residual entropy; target <10. Green non-overlapping hardens remain merge candidates (QS #392/#408/#410/#412, Resonance early-401s). Jules Bolt micro-opts on Conduit are close-candidates.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. DeviceRunStamp + share evidence in flight (#392/#412).
 - CI: main green across planes when warm. Free-tier cold starts recoverable (observed this session).
