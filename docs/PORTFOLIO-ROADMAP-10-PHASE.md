@@ -1,15 +1,15 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-06 13:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-06 14:03 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-13Z.md (created this pass)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-14Z.md (created this pass)
 
-**Live probe evidence (2026-11-06 ~13:02Z):**
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200** {status:ready, version:0.8.0, contractRevision:2026-10-03-ready-surface, persistence:postgres, production:true}. Warm. Diagnostics all ok (JWKS, scopes, CIMD/DCR).
-- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T13:02:00.672Z). Owner gate cleared. Warm.
-- Vercel aliases: resonance.vercel.app 200 (stranger_occupant Detail Framework). resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
-- Open PR counts (exact at probe): QuicksilverV1 17, Conduit 19, Resonance 24. Residual entropy; target <10. Close candidates (docs mirrors + pure Bolt micro-opts + drafts): QS #413, Conduit #347/#348/#349/#338, Resonance #253/#250. Interactive close forms presented; prune on confirmation. Residual Jules/Bolt volume remains the operational killer.
+**Live probe evidence (2026-11-06 ~14:03Z):**
+- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200** {status:ready, version:0.8.0, contractRevision:2026-10-03-ready-surface, persistence:postgres, production:true}. Warm (recovered from prior 503 cold start).
+- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T14:03:04.685Z). Owner gate cleared. Warm. Fail-closed holds.
+- Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate on non-owned.
+- Open PR counts (exact at probe): QuicksilverV1 17, Conduit 19, Resonance 24. Residual entropy; target <10. Close candidates remain docs mirrors + pure Bolt micro-opts. Entropy is the current operational killer.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. No simulator/CI substitutes.
-- CI: main green across planes when warm. Free-tier cold starts recoverable (seen earlier). Dependabot undici alerts open in QS gateway.
-- Portfolio maturity ~7.5/10 when both warm. Scores: QS ~7.7, Conduit ~7.5, Resonance ~7.2. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable) + undici surface.
+- CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot undici alerts open in QS gateway.
+- Portfolio maturity ~7.6/10 when both warm. Scores: QS ~7.8, Conduit ~7.6, Resonance ~7.3. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable) + undici surface.
 - No secrets invented. No device claim. Classifier ≠ proof.
 
 Brutal assessment: Stabilization holds. Fail-closed posture confirmed and sustained when warm. Architecture solid (Sense-Think-Express, Core contracts, modular). Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) remains the highest operational lever. Continuous probe refresh is the innovation in practice.
@@ -33,7 +33,7 @@ Bounded, on-device first. AppTests green. Resilience tests progressing (QS #410)
 No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold. undici upgrade pending.
 
 ## Phase 7 — Hygiene prune
-Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current ~17/19/24 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates. entropy-dashboard.mjs exists in Conduit (supports --json). Interactive close forms presented this pass for clear noise; residual requires confirmation.
+Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current ~17/19/24 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates. entropy-dashboard.mjs exists in Conduit (supports --json).
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify host. Advance secondary clients under constraints. githubAdapterConfigured remains false until owner sets.
@@ -46,4 +46,4 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 
 Binding: CHR-55 remains the production gate for Quicksilver. Entropy and alias must prune. Free-tier cold starts OK if they recover to ready. No auto-merge of overlapping or untested. undici patch is low-risk hygiene.
 
-Highest-value next: confirm/close prune targets on noise PRs, merge green non-overlapping hardens after CI (QS DeviceRunStamp #412, privacy #411, memory #410; Resonance auth hardens; Conduit probe #336), upgrade undici, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
+Highest-value next: selective prune of pure noise PRs, merge green non-overlapping hardens after CI (QS DeviceRunStamp #412, privacy #411, memory #410; Resonance auth hardens; Conduit probe #336), upgrade undici, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
