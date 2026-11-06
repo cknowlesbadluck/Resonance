@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-06 18:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-06 19:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-18Z.md (created this pass)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-19Z.md (created this pass)
 
-**Live probe evidence (2026-11-06 ~18:01Z):**
+**Live probe evidence (2026-11-06 ~19:01Z):**
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200** {status:ready, version:0.8.0, contractRevision:2026-10-03-ready-surface, persistence:postgres, production:true}. Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T18:01:41.691Z). Owner gate cleared. Warm. Fail-closed holds.
-- Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate on non-owned.
+- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T19:01:14.783Z). Owner gate cleared. Warm. Fail-closed holds.
+- Vercel aliases: resonance.vercel.app 200 (stranger_occupant), resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
 - Open PR counts (exact at probe): QuicksilverV1 17, Conduit 19, Resonance 24. Residual entropy; target <10. Close candidates remain docs mirrors + pure Bolt/Jules micro-opts. Entropy is the current operational killer.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. No simulator/CI substitutes.
-- CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot undici alerts open in QS gateway.
+- CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot undici high alerts open in QS gateway (development scope).
 - Portfolio maturity ~7.6/10 when both warm. Scores: QS ~7.8, Conduit ~7.6, Resonance ~7.3. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable) + undici surface.
 - No secrets invented. No device claim. Classifier ≠ proof.
 
@@ -30,7 +30,7 @@ Archive IPA on target iPhone 16e / iOS 27 only. Simulator/CI/Swift package tests
 Bounded, on-device first. AppTests green. Resilience tests progressing (QS #410).
 
 ## Phase 6 — Gateway free-tier contract
-No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold. undici upgrade pending.
+No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold. undici upgrade pending (to 7.30.1+).
 
 ## Phase 7 — Hygiene prune
 Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current ~17/19/24 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates. entropy-dashboard.mjs exists in Conduit (supports --json).
