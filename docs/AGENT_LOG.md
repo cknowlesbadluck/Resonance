@@ -406,3 +406,15 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+
+## 2026-11-06 — Jules (Fix Gemini CLI Action Model)
+
+**Checked:**
+- Evaluated `.github/workflows/gemini.yml` for the `google-github-actions/run-gemini-cli` action configuration.
+- Found `gemini_model` was set to `gemini-1.5-pro` which causes issues with the CI failing due to unsupported model errors.
+
+**Decided / Done:**
+- Changed `gemini_model` from `gemini-1.5-pro` to `gemini-1.5-flash` in `.github/workflows/gemini.yml` to resolve CI failures.
+
+**Verified:**
+- `npm run typecheck`, `npm run test` and `npm run build` completed successfully.
