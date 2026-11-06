@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-06 20:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-06 21:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-20Z.md (created this pass)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-21Z.md (created this pass)
 
-**Live probe evidence (2026-11-06 ~20:00Z):**
-- Conduit https://conduit-feco.onrender.com/ready : Transient 503, recovered to **HTTP 200** {status:ready, version:0.8.0, contractRevision:2026-10-03-ready-surface, persistence:postgres, production:true}. Warm after recovery.
-- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T20:01:05.661Z). Owner gate cleared. Warm. Fail-closed holds.
+**Live probe evidence (2026-11-06 ~21:00Z):**
+- Conduit https://conduit-feco.onrender.com/ready : Recovers to **HTTP 200** {status:ready, version:0.8.0, contractRevision:2026-10-03-ready-surface, persistence:postgres, production:true}. Warm after recovery. Free-tier cold starts recoverable.
+- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Owner gate cleared. Warm. Fail-closed holds.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant), resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
 - Open PR counts (exact at probe): QuicksilverV1 17, Conduit 19, Resonance 24. Residual entropy; target <10. Close candidates remain docs mirrors + pure Bolt/Jules micro-opts. Entropy is the current operational killer.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. No simulator/CI substitutes.
-- CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot undici high alerts open in QS gateway (development scope).
+- CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot undici high alerts open in QS gateway (development scope, 4 open). Upgrade to 7.30.1+ low-risk.
 - Portfolio maturity ~7.6/10 when both warm. Scores: QS ~7.8, Conduit ~7.6, Resonance ~7.3. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable) + undici surface.
 - No secrets invented. No device claim. Classifier ≠ proof.
 
@@ -46,4 +46,4 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 
 Binding: CHR-55 remains the production gate for Quicksilver. Entropy and alias must prune. Free-tier cold starts OK if they recover to ready. No auto-merge of overlapping or untested. undici patch is low-risk hygiene.
 
-Highest-value next: selective prune of pure noise PRs, merge green non-overlapping hardens after CI (QS DeviceRunStamp #412, privacy #411, memory #410; Resonance auth hardens; Conduit probe #336), upgrade undici, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
+Highest-value next: selective prune of pure noise PRs (docs mirrors #413/#253/#347, Bolt #349/#348, Jules #254), merge green non-overlapping hardens after CI (QS DeviceRunStamp #412, privacy #411, memory #410; Resonance auth hardens; Conduit probe #336), upgrade undici, configure Resonance githubAdapter on host, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
