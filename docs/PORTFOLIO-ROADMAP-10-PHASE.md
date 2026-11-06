@@ -1,10 +1,10 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-06 15:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-06 18:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-15Z.md (created this pass)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-18Z.md (created this pass)
 
-**Live probe evidence (2026-11-06 ~15:01Z):**
+**Live probe evidence (2026-11-06 ~18:01Z):**
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200** {status:ready, version:0.8.0, contractRevision:2026-10-03-ready-surface, persistence:postgres, production:true}. Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T15:01:16.313Z). Owner gate cleared. Warm. Fail-closed holds.
+- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp=2026-11-06T18:01:41.691Z). Owner gate cleared. Warm. Fail-closed holds.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate on non-owned.
 - Open PR counts (exact at probe): QuicksilverV1 17, Conduit 19, Resonance 24. Residual entropy; target <10. Close candidates remain docs mirrors + pure Bolt/Jules micro-opts. Entropy is the current operational killer.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. No simulator/CI substitutes.
