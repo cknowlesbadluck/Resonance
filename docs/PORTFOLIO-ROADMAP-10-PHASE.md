@@ -1,16 +1,16 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-06 10:01 UTC (full audit + harden + stabilize + hygiene prune targets + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-06 11:02 UTC (full audit + harden + stabilize + hygiene prune targets + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-10Z.md
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-06-11Z.md
 
-**Live probe evidence (2026-11-06 ~10:01Z):**
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 503** (free-tier cold start). Previously recovered to 200; expected to warm. Do not treat cold as failure.
-- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp ~2026-11-06T10:00:59Z). Owner gate cleared. Warm.
+**Live probe evidence (2026-11-06 ~11:02Z):**
+- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200** (warm, recovered). 
+- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate, timestamp ~2026-11-06T11:02:01Z). Owner gate cleared. Warm.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant). Drift persists; never gate on non-owned.
-- Open PR counts (recent exact): QuicksilverV1 ~17, Conduit ~18, Resonance ~23. Residual entropy; target <10. Close candidates (docs mirrors + Jules/Bolt + drafts): QS #413, Conduit #347/#348/#349/#334/#338, Resonance #253/#250. Prune targets listed; close on interactive confirmation.
+- Open PR counts (exact): QuicksilverV1 17, Conduit 19, Resonance 23. Residual entropy; target <10. Close candidates (docs mirrors + Bolt + drafts): QS #413, Conduit #347/#348/#349/#334/#338, Resonance #253/#250. Prune targets listed; close on interactive confirmation.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded.
 - CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot undici alerts open in QS gateway.
 - Portfolio maturity ~7.5/10 when both warm. Scores: QS ~7.7, Conduit ~7.5, Resonance ~7.2. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable) + undici surface.
-- No secrets invented. No device claim. Classifier ≠ proof. See docs/AUDIT-2026-11-06-10Z.md.
+- No secrets invented. No device claim. Classifier ≠ proof. See docs/AUDIT-2026-11-06-11Z.md.
 
 Brutal assessment: Stabilization holds. Fail-closed posture confirmed and sustained when warm. Architecture solid. Not production-ready for Quicksilver until real device IPA evidence. Hygiene debt (PR entropy) remains the highest operational lever.
 
@@ -33,7 +33,7 @@ Bounded, on-device first. AppTests green. Resilience tests progressing (QS #410)
 No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold. undici upgrade pending.
 
 ## Phase 7 — Hygiene prune
-Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current ~17/18/23 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates. entropy-dashboard.mjs exists in Conduit (supports --json). Prune targets initiated this pass (interactive closes pending confirmation).
+Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current 17/19/23 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates. entropy-dashboard.mjs exists in Conduit (supports --json). Prune targets initiated this pass (interactive closes pending confirmation).
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify host. Advance secondary clients under constraints. githubAdapterConfigured remains false until owner sets.
