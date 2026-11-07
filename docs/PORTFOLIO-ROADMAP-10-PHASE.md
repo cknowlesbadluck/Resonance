@@ -1,12 +1,12 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-07 05:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-07 06:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-07-05Z.md (this pass)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-07-06Z.md (this pass)
 
-**Live probe evidence (2026-11-07 ~05:01Z):**
+**Live probe evidence (2026-11-07 ~06:00Z):**
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200** when warm (0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres). Free-tier cold starts recoverable.
-- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Fail-closed holds.
+- Resonance https://resonancenexus.netlify.app/api/ready : **HTTP 200 ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-07T06:00:31.469Z). Owner gate cleared. Fail-closed holds.
 - Vercel aliases: resonance.vercel.app 200 (stranger_occupant), resonancenexus.vercel.app 404. Drift persists; never gate on non-owned.
-- Open PR counts (approx at probe): QuicksilverV1 ~17, Conduit ~19, Resonance ~24. Residual entropy; target <10. Close candidates remain docs mirrors + pure Bolt/Jules micro-opts. Entropy is the current operational killer.
+- Open PR counts (exact at probe): QuicksilverV1 17, Conduit 19, Resonance 24. Residual entropy; target <10. Close candidates remain docs mirrors + pure Bolt/Jules micro-opts. Entropy is the current operational killer.
 - CHR-55: In Review Urgent. Device Archive IPA on iPhone 16e/iOS 27 sole critical path. deviceAcceptance=not_recorded. No simulator/CI substitutes.
 - CI: main green across planes when warm. Free-tier cold starts recoverable. Dependabot clean on Resonance; undici alerts in QS gateway (development scope).
 - Portfolio maturity ~7.5/10 when both warm. Scores: QS ~7.7, Conduit ~7.5, Resonance ~7.4. Dominant risks: CHR-55 device evidence + PR entropy + alias drift + githubAdapterConfigured=false + free-tier cold starts (recoverable).
@@ -33,7 +33,7 @@ Bounded, on-device first. AppTests green. Resilience tests progressing (QS #410)
 No paid bindings. Cold-start recoverable. Free-only AI path. Probe tools distinguish cold. undici upgrade pending.
 
 ## Phase 7 — Hygiene prune
-Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current ~17/19/24 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates.
+Target open PRs <10/repo. Docs-only superseded closed. Merge green hardens with no file overlap after CI green. One canonical roadmap. Mirror audit notes. Entropy score: current 17/19/24 → target <10. **Innovate:** entropy dashboard script + close-candidate prioritization. Score PRs by age, CI status, file overlap, and docs-only/Jules/Bolt flag for automated close candidates. Continuous probe refresh already in practice. Residual Bolt micro-opts and docs mirrors identified as immediate close candidates.
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify host. Advance secondary clients under constraints. githubAdapterConfigured remains false until owner sets.
