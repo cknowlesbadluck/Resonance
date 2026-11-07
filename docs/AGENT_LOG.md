@@ -406,3 +406,17 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+---
+
+## 2026-11-07 12:44 EDT — Jules (RPC `emit_event` transition)
+
+**Checked:**
+- Discovered code was directly issuing `.from("events").insert(...)` and `.from("events").upsert(...)` for event tracking. This diverges from best practices since the custom `emit_event` RPC is designed to handle raw event deduplication smoothly.
+
+**Decided / Done:**
+- Converted database event operations in `app/api/events/route.ts` and `app/api/webhooks/github/route.ts` to execute `.rpc("emit_event", {...})`
+- Converted execution loop event storage operations in `app/api/nexus/executions/route.ts` and `app/api/nexus/executions/[id]/resume/route.ts` to execute `.rpc("emit_event", {...})`
+
+**Verified:**
+- `npm run typecheck`, `npm test`, and `npm run build` pass cleanly.
+- (Acknowledged constraint: `emit_event` currently does not natively support `p_actor_id` which was supplied under the `upsert(...)` model. Further changes to the RPC migration script are required to prevent actor attrition).
