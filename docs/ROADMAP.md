@@ -2,6 +2,8 @@
 
 Canonical product and engineering roadmap for `Cknowlesbadluck/resonance`.
 
+> **2026-11-07 update:** Live probes confirm Conduit /ready 200 and Resonance /api/ready 200 (githubAdapterConfigured=false). Portfolio scores ~7.2/10. Open PR entropy remains high. Highest leverage: prune + owner gates (CHR-55, GitHub adapter credentials) then continuous probe. See docs/AUDIT-2026-11-07-FULL-PORTFOLIO.md for full assessment and 10-phase proposal.
+
 ## North star
 
 Resonance is a **provider-neutral integration and intelligence Nexus**.
@@ -59,3 +61,17 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 1. On `main` via green PR
 2. Linear Done + AGENT_LOG
 3. No parallel domain model for that concern
+
+## 10-Phase Portfolio Roadmap (2026-11-07)
+See AUDIT-2026-11-07-FULL-PORTFOLIO.md for full text. Summary:
+0. Prune & Stabilize
+1. Owner Gates Clearance
+2. Memory & Resilience (QS)
+3. Policy & Auth Completion
+4. Chamber Persistence
+5. Continuous Probe + Hygiene Automation
+6. iOS Native Client Maturity
+7. Adapter Expansion
+8. Observability Depth
+9. Performance & Free-Tier Hardening
+10. Production Release Candidate
