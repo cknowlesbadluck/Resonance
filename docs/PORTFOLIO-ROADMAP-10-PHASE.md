@@ -1,10 +1,10 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-08 11:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-08 12:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-08-11Z.md
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-08-12Z.md
 
-**Live probe evidence (2026-11-08 ~11:01Z):**
-- Conduit https://conduit-feco.onrender.com/ready : HTTP 200 ready (0.8.0, postgres, production true). Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : HTTP 200 ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Timestamp 2026-11-08T11:01:55.913Z. Owner gate cleared.
+**Live probe evidence (2026-11-08 ~12:01Z):**
+- Conduit https://conduit-feco.onrender.com/ready : HTTP 503 (free-tier cold start, recoverable). Was 200 at 11:01Z.
+- Resonance https://resonancenexus.netlify.app/api/ready : HTTP 200 ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Timestamp 2026-11-08T12:01:04.201Z. Owner gate cleared.
 - Open PR entropy: QuicksilverV1 17, Conduit 20, Resonance 25. Target <10. Noise close candidates presented.
 - CHR-55: In Review. deviceAcceptance=not_recorded.
 - Portfolio maturity ~7.5/10 when both warm.
@@ -29,7 +29,7 @@ No paid bindings. Cold-start recoverable. Free-only AI path. undici upgrade pend
 
 ## Phase 7 — Hygiene prune
 Target open PRs <10/repo. Close docs-only superseded and pure micro-opts (Bolt/Jules). Merge green hardens with no file overlap after CI. One canonical roadmap.
-**Innovate:** entropy dashboard script + close-candidate prioritization by age, CI, overlap, Jules/Bolt/docs flag. Continuous probe refresh in practice.
+**Innovate:** entropy dashboard script + close-candidate prioritization by age, CI, overlap, Jules/Bolt/docs flag. Continuous probe refresh in practice. **Implemented:** scripts/entropy-probe.mjs on this branch.
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify. githubAdapterConfigured remains false until owner sets.
@@ -44,4 +44,4 @@ Binding: CHR-55 remains the production gate for Quicksilver. Entropy must prune.
 
 Highest-value next: confirm close of pure noise PRs (docs mirrors + pure micro-opts), merge green non-overlapping hardens after CI, configure Resonance githubAdapter, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
 
-Date: 2026-11-08 11:01 UTC
+Date: 2026-11-08 12:05 UTC
