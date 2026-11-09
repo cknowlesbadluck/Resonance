@@ -1,12 +1,13 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-09 05:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-09 12:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-09-05Z.md (prior 03Z)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-09-12Z.md
 
-**Live probe evidence (2026-11-09 ~05:01Z):**
-- Conduit /ready 503 (free-tier cold start; recoverable as confirmed in prior passes).
-- Resonance /api/ready confirmed 200 ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Timestamp 2026-11-09T05:01:14.835Z.
+**Live probe evidence (2026-11-09 ~12:01Z):**
+- Conduit /ready 200 (warm, version 0.8.0, postgres).
+- Resonance /api/ready confirmed 200 ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Timestamp 2026-11-09T12:01:09.159Z.
 - Open PR entropy: QuicksilverV1 17, Conduit 20, Resonance 25. Target <10. Pure docs mirrors identified for close (#413 QS, #253 Resonance, #347 Conduit).
 - CHR-55: In Review. deviceAcceptance=not_recorded.
+- Dependabot: QS undici high (dev), Conduit @hono/node-server medium (runtime).
 - Portfolio maturity ~7.6/10 when both warm.
 
 ## Phase 1 — Owner gate cleared
@@ -44,4 +45,4 @@ Binding: CHR-55 remains the production gate for Quicksilver. Entropy must prune.
 
 Highest-value next: Confirm close of pure noise PRs (docs mirrors + Bolt micro-opts), merge green non-overlapping hardens after CI, patch medium/high Dependabot, configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
 
-Date: 2026-11-09 05:00 UTC
+Date: 2026-11-09 12:00 UTC
