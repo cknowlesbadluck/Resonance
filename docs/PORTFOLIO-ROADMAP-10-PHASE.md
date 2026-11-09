@@ -1,13 +1,13 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-09 15:06 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-09 21:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-09-15Z.md (prior 14Z/05Z/03Z)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-09-21Z.md (prior 15Z/14Z/05Z/03Z)
 
-**Live probe evidence (2026-11-09 ~15:06Z):**
-- Conduit /ready 200 (warm).
-- Resonance /api/ready confirmed 200 ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Timestamp 2026-11-09T15:06:45.739Z.
-- Open PR entropy: QuicksilverV1 17, Conduit 20, Resonance 25. Target <10. Pure docs mirrors and Bolt micro-opts presented for close via interactive forms (#413 QS, #253/#254 Resonance, #347/#348/#349/#350 Conduit).
+**Live probe evidence (2026-11-09 ~21:01Z):**
+- Conduit /ready 200 (recovered from cold; warm now).
+- Resonance /api/ready confirmed 200 ready OK (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Timestamp 2026-11-09T21:01:11.446Z.
+- Open PR entropy: QuicksilverV1 17, Conduit 20, Resonance 25. Target <10. Pure docs mirrors and Bolt micro-opts presented for close (#413 QS, #253/#254 Resonance, #347/#348/#349/#350 Conduit).
 - CHR-55: In Review. deviceAcceptance=not_recorded.
-- Dependabot: undici high/medium on QS gateway (dev). Patch pending.
+- Dependabot: undici high/medium on QS gateway (dev). Patch to 7.30.1 pending.
 - Portfolio maturity ~7.6/10 when both warm.
 
 ## Phase 1 — Owner gate cleared
@@ -45,4 +45,4 @@ Binding: CHR-55 remains the production gate for Quicksilver. Entropy must prune.
 
 Highest-value next: Confirm close of pure noise PRs via presented interactive forms (docs mirrors + Bolt micro-opts), merge green non-overlapping hardens after CI, patch medium/high Dependabot (undici), configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
 
-Date: 2026-11-09 15:06 UTC
+Date: 2026-11-09 21:01 UTC
