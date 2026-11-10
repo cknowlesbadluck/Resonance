@@ -406,3 +406,25 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+
+## 2026-11-10 — Jules (Update Gemini CLI action model)
+
+**Intent:**
+Update the `.github/workflows/gemini.yml` to use `gemini-1.5-flash` instead of `gemini-1.5-pro` as required to prevent API limits and 404 errors.
+
+**What changed:**
+- Replaced `gemini_model: gemini-1.5-pro` with `gemini_model: gemini-1.5-flash` in `.github/workflows/gemini.yml`.
+- `continue-on-error: true` was verified as already present.
+
+**Verified locally:**
+- Verified modification locally using `cat`.
+- Ran `npm test` and `npm run typecheck`, both passed.
+
+**Pending verification:**
+- None locally.
+
+**Not fixed / out of scope:**
+- N/A
+
+**Two-Key check:**
+- Not required for CI workflow modifications.
