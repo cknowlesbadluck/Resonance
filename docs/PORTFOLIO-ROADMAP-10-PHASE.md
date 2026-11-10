@@ -1,13 +1,13 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-09 22:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-10 00:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-09-22Z.md (prior 05Z / 03Z)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-10-00Z.md (prior 22Z / 05Z)
 
-**Live probe evidence (2026-11-09 ~22:02Z):**
+**Live probe evidence (2026-11-10 ~00:02Z):**
 
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Recovered from prior cold 503. Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Owner gate cleared. Timestamp 2026-11-09T22:02:12.184Z.
-- Open PR entropy (exact): QuicksilverV1 17, Resonance 25, Conduit 20. Total 62. Target <10. Pure docs mirrors + Bolt micro-opts identified for immediate close (#413 QS, #253/#254 Resonance, #347/#348/#349/#350 Conduit).
-- CHR-55: In Review. deviceAcceptance=not_recorded.
+- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, contractRevision=2026-10-03-owner-gate). Owner gate cleared. Timestamp ~2026-11-10T00:02Z.
+- Open PR entropy (exact): QuicksilverV1 17, Resonance 25, Conduit 20. Total 62. Target <10. Pure docs mirrors + Bolt micro-opts identified for immediate close (#413 QS, #253/#254 Resonance, #347/#348/#349/#350 Conduit). Interactive forms generated for primary docs mirrors.
+- CHR-55: In Review (Urgent). deviceAcceptance=not_recorded.
 - Portfolio maturity ~7.6/10 when both warm.
 
 ## Phase 1 — Owner gate cleared
@@ -36,13 +36,13 @@ Target open PRs <10/repo. Close docs-only superseded and pure micro-opts (Bolt/J
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify. githubAdapterConfigured remains false until owner sets.
 
 ## Phase 9 — Privacy and logging strict
-Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens in flight (#243-#246). Privacy reason guards (#411).
+Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens in flight. Privacy reason guards (#411).
 
 ## Phase 10 — Cross-plane acceptance
 Probe + device evidence + low entropy. Production verdict only after all gates. Unified acceptance harness that never invents owner evidence.
 
 **Binding:** CHR-55 remains the production gate for Quicksilver. Entropy must prune. Free-tier cold starts OK if recoverable. No auto-merge of overlapping or untested. undici / hono patches low-risk hygiene.
 
-**Highest-value next:** Confirm close of pure noise PRs (docs mirrors + Bolt micro-opts), merge green non-overlapping hardens after CI, patch medium Dependabot, configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
+**Highest-value next:** Confirm close of pure noise PRs (docs mirrors + Bolt micro-opts via forms), merge green non-overlapping hardens after CI review, patch Dependabot, configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
 
-Date: 2026-11-09 22:02 UTC
+Date: 2026-11-10 00:02 UTC
