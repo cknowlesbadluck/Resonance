@@ -1,12 +1,12 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-10 13:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-10 19:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-10-13Z.md (prior 08Z / 22Z / 09Z)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-10-19Z.md (prior 13Z / 08Z / 02Z)
 
-**Live probe evidence (2026-11-10 ~13:00Z):**
+**Live probe evidence (2026-11-10 ~19:00Z):**
 
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm.
 - Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared.
-- Open PR entropy (exact): QuicksilverV1 17, Resonance ~25, Conduit ~20. Total ~62. Target <10. Pure docs mirrors + Bolt micro-opts + gemini micro close candidates identified (#413 QS, #253/#254/#256 Resonance, #347/#348/#349/#350/#351 Conduit). Confirmation pending.
+- Open PR entropy (exact pre-confirm): QuicksilverV1 17, Resonance 26, Conduit 21. Total 64. Target <10. Pure docs mirrors + Bolt micro-opts + gemini micro close forms presented this pass (#413 QS, #253/#254/#256 Resonance, #348/#349/#350/#351 Conduit). Confirmation pending via interactive forms.
 - CHR-55: In Review. deviceAcceptance=not_recorded.
 - Portfolio maturity ~7.6/10 when both warm.
 
@@ -43,6 +43,6 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 
 **Binding:** CHR-55 remains the production gate for Quicksilver. Entropy must prune. Free-tier cold starts OK if recoverable. No auto-merge of overlapping or untested. undici / hono patches low-risk hygiene.
 
-**Highest-value next:** Confirm close of pure noise PRs (docs mirrors + Bolt micro-opts + micro-fixes — candidates listed), merge green non-overlapping hardens after CI, patch medium/high Dependabot (undici gateway, hono), configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
+**Highest-value next:** Confirm close of pure noise PRs (docs mirrors + Bolt micro-opts + micro-fixes — forms presented), merge green non-overlapping hardens after CI, patch medium/high Dependabot (undici gateway, hono), configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
 
-Date: 2026-11-10 13:05 UTC
+Date: 2026-11-10 19:05 UTC
