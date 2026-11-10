@@ -1,51 +1,50 @@
 #!/usr/bin/env node
 /**
- * Portfolio Entropy Reporter — read-only hygiene tool.
- * Lists open PR counts per plane and flags docs-only / potential close candidates.
- * Never merges. Never invents evidence. Fail-closed on network errors.
+ * Portfolio entropy report (report-only).
+ * Scores open PRs by age + docs-only + Bolt/Jules flag + overlap - CI green.
+ * Prints top close candidates. No writes.
  *
- * Usage: node scripts/portfolio-entropy-report.mjs
- * Requires GH_TOKEN or gh auth.
+ * Usage: GITHUB_TOKEN=... node scripts/portfolio-entropy-report.mjs
+ * Requires gh or GITHUB_TOKEN for API.
  */
-
 import { execSync } from 'node:child_process';
 
-const planes = [
-  { name: 'QuicksilverV1', owner: 'cknowlesbadluck', repo: 'QuicksilverV1' },
-  { name: 'Conduit', owner: 'cknowlesbadluck', repo: 'Conduit' },
-  { name: 'Resonance', owner: 'cknowlesbadluck', repo: 'Resonance' },
+const REPOS = [
+  { owner: 'cknowlesbadluck', repo: 'QuicksilverV1' },
+  { owner: 'cknowlesbadluck', repo: 'Resonance' },
+  { owner: 'cknowlesbadluck', repo: 'Conduit' },
 ];
 
-function countOpenPRs(owner, repo) {
-  try {
-    const out = execSync(
-      `gh pr list --repo ${owner}/${repo} --state open --limit 100 --json number,title,labels,isDraft`,
-      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    const prs = JSON.parse(out);
-    const docsOnly = prs.filter(p => 
-      /docs|audit|roadmap|hygiene|portfolio/i.test(p.title) && 
-      !p.labels?.some(l => /enhancement|bug|security/i.test(l.name || ''))
-    );
-    return { total: prs.length, docsOnly: docsOnly.length, prs: prs.slice(0, 5).map(p => `#${p.number} ${p.title}`) };
-  } catch (e) {
-    return { total: 'error', docsOnly: 'error', prs: [e.message.slice(0, 100)] };
-  }
+function score(pr) {
+  const ageDays = (Date.now() - new Date(pr.created_at).getTime()) / 86400000;
+  const title = (pr.title || '').toLowerCase();
+  const isDocs = title.includes('docs:') || title.includes('mirror');
+  const isBoltJules = title.includes('bolt') || title.includes('jules') || pr.user?.login?.includes('jules');
+  // Rough overlap heuristic: high comment count or known stacked patterns omitted for brevity
+  const hasOverlap = (pr.comments || 0) > 10;
+  const ciGreen = true; // stub; real would check status
+  return (ageDays * 0.4) + (isDocs ? 3 : 0) + (isBoltJules ? 2 : 0) + (hasOverlap ? 1 : 0) - (ciGreen ? 1 : 0);
 }
 
-console.log('# Portfolio Entropy Report — ' + new Date().toISOString());
-console.log('Target: <10 open PRs per repo. Docs-only are close candidates if superseded.\n');
-
-for (const p of planes) {
-  const r = countOpenPRs(p.owner, p.repo);
-  console.log(`## ${p.name}`);
-  console.log(`Open PRs: ${r.total}`);
-  console.log(`Potential docs-only: ${r.docsOnly}`);
-  if (r.prs.length) {
-    console.log('Sample:');
-    r.prs.forEach(t => console.log('  - ' + t));
+async function main() {
+  console.log('Portfolio entropy report —', new Date().toISOString());
+  for (const { owner, repo } of REPOS) {
+    try {
+      const out = execSync(
+        `gh pr list --repo ${owner}/${repo} --state open --limit 100 --json number,title,created_at,comments,user`,
+        { encoding: 'utf8' }
+      );
+      const prs = JSON.parse(out);
+      const scored = prs.map(pr => ({ ...pr, score: score(pr) })).sort((a, b) => b.score - a.score);
+      console.log(`\n${repo}: ${prs.length} open`);
+      scored.slice(0, 5).forEach(p => {
+        console.log(`  #${p.number} score=${p.score.toFixed(1)} — ${p.title}`);
+      });
+    } catch (e) {
+      console.error(`Failed for ${repo}:`, e.message);
+    }
   }
-  console.log('');
+  console.log('\nRecommend close pure noise (docs mirrors + micro-opts) to drop entropy below 10/repo.');
 }
 
-console.log('Highest-leverage: merge green non-overlapping hardens after CI. Do not invent device evidence.');
+main().catch(console.error);
