@@ -1,48 +1,42 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-11 10:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# PORTFOLIO-ROADMAP-10-PHASE.md (refreshed 2026-11-11 11Z)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-11-10Z.md (prior 09Z / 07Z)
+**Live probe evidence (2026-11-11 ~11:00Z):**  
+Conduit ready 200 (recovered from cold). Resonance ready 200 OK (missingRequired=[], githubAdapterConfigured=false, posture=contract_passed).  
+Open PRs: QS 3 / Resonance 8 / Conduit 7. Total **18**. Target <10. Entropy largely resolved.  
+CHR-55 sole critical path for QS. deviceAcceptance=not_recorded.  
+Portfolio maturity ~7.8/10 when both warm.
 
-**Live probe evidence (2026-11-11 ~10:01Z):**
+## Phase 1 — Owner gate cleared  
+**Status: Met.** missingRequired=[], posture contract_passed on Resonance Netlify. Conduit ready when warm.
 
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Recovered from cold start.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Timestamp 2026-11-11T10:00:43.883Z.
-- Open PR entropy (exact): QuicksilverV1 **5**, Resonance **23**, Conduit **10**. Total **38**. Stable. Target <10. Remaining primarily hardens and hygiene scripts.
-- CHR-55: In Review. deviceAcceptance=not_recorded.
-- Portfolio maturity ~7.7/10 when both warm.
+## Phase 2 — Alias and stranger classification strict  
+**Status: Met.** Tests reject non-owned as ready. Clean Vercel aliases (non-blocking). Stranger occupant confirmed. Never gate on non-owned.
 
-## Phase 1 — Owner gate cleared
-Exit met. missingRequired=[] , posture contract_passed on Resonance Netlify. Conduit ready when warm.
+## Phase 3 — Device fence immutable  
+**Status: Met.** claimDeviceAcceptance rejects. deviceAcceptance stays not_recorded until owner records real IPA. DeviceRunStamp scaffolding complete.
 
-## Phase 2 — Alias and stranger classification strict
-Tests reject non-owned as ready. Clean Vercel aliases (non-blocking). Stranger occupant confirmed. Never gate on non-owned.
+## Phase 4 — CHR-55 sole device gate  
+**Status: Open (critical).** Archive IPA on target iPhone 16e / iOS 27 only. Simulator/CI insufficient. Share path via Diagnostics ready. Linear In Progress.  
+**Innovate:** Shortcuts-based on-device install + evidence export automation (owner-triggered only).
 
-## Phase 3 — Device fence immutable
-claimDeviceAcceptance rejects. deviceAcceptance stays not_recorded until owner records real IPA.
+## Phase 5 — Memory and conversation budgets  
+**Status: Progressing.** Bounded, on-device first. AppTests green. Resilience tests hold. Spotlight opt-in (#414) and content-free diagnostics (#415) in flight.
 
-## Phase 4 — CHR-55 sole device gate
-Archive IPA on target iPhone 16e / iOS 27 only. Simulator/CI insufficient. Linear CHR-55 In Review. Share path via Diagnostics ready.
+## Phase 6 — Gateway free-tier contract  
+**Status: Met.** No paid bindings. Cold-start recoverable. Free-only AI path. Residual Dependabot hygiene pending.
 
-## Phase 5 — Memory and conversation budgets
-Bounded, on-device first. AppTests green. Resilience tests progressing.
+## Phase 7 — Hygiene prune  
+**Status: Largely met.** Open PRs <10/repo achieved (total 18). Close residual pure noise if any. Merge green hardens with no file overlap after CI. One canonical roadmap.  
+**Innovate:** Daily auto entropy scorer + close-candidate report (age*0.4 + docs + bolt/jules - CI). Interactive forms. Continuous probe refresh.
 
-## Phase 6 — Gateway free-tier contract
-No paid bindings. Cold-start recoverable. Free-only AI path. undici / @hono/node-server patches pending (low-risk hygiene).
+## Phase 8 — Resonance adapters  
+**Status: Pending owner.** Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify. githubAdapterConfigured remains false until owner sets. Event RPC migration (#255) and indexes (#208) ready for review.
 
-## Phase 7 — Hygiene prune
-Target open PRs <10/repo. Close pure noise if any remain. Merge green hardens with no file overlap after CI. One canonical roadmap.
-**Innovate:** Enhanced entropy scoring (age + docs-only + Bolt/Jules flag + overlap - CI green). Interactive close forms for pure noise. Continuous probe refresh. Auto-report top close candidates. Direct main updates for docs hygiene. Cold-start timing in probes.
+## Phase 9 — Privacy and logging strict  
+**Status: Progressing.** Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens and URL redact in flight. Privacy reason guards hold.
 
-## Phase 8 — Resonance adapters
-Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify. githubAdapterConfigured remains false until owner sets.
+## Phase 10 — Cross-plane acceptance  
+**Status: Blocked on Phase 4.** Probe + device evidence + low entropy. Production verdict only after all gates. Unified acceptance harness that never invents owner evidence.  
+**Innovate:** Cross-plane acceptance harness that consumes DeviceRunStamp + ready stamps + entropy score; fails closed without real device evidence.
 
-## Phase 9 — Privacy and logging strict
-Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens in flight. Privacy reason guards.
-
-## Phase 10 — Cross-plane acceptance
-Probe + device evidence + low entropy. Production verdict only after all gates. Unified acceptance harness that never invents owner evidence.
-
-**Binding:** CHR-55 remains the production gate for Quicksilver. Entropy must prune. Free-tier cold starts OK if recoverable. No auto-merge of overlapping or untested. undici / hono patches low-risk hygiene.
-
-**Highest-value next:** Merge green non-overlapping hardens after CI review (early-401 cluster, redaction, policy), patch medium/high Dependabot (undici gateway, hono), configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
-
-Date: 2026-11-11 10:01 UTC
+Highest-value next: record CHR-55 on real device, then merge green hardens. Entropy no longer the bottleneck.
