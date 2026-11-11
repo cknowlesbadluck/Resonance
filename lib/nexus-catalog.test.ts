@@ -1,8 +1,14 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "./nexus-catalog";
 import type { NexusCapability } from "../src/nexus/types";
 
 const bindGitHub = (capability: NexusCapability) => (capability.providerId === "GitHub" ? "github" : undefined);
+
+const capabilityMigration = readFileSync(
+  new URL("../supabase/migrations/20261111000000_nexus_capabilities_sync.sql", import.meta.url),
+  "utf8",
+);
 
 describe("catalog → NexusCapability", () => {
   it("maps catalog entries to the NexusCapability shape", () => {
@@ -71,6 +77,14 @@ describe("catalog → NexusCapability", () => {
       "tool.github",
       "skill.ios-swiftui",
     ]);
+  });
+
+  it("preserves legacy capability tables until their data is migrated", () => {
+    expect(capabilityMigration).not.toMatch(/drop\\s+table\\s+if\\s+exists\\s+public\\.(capabilities|capability_dependencies)/i);
+  });
+
+  it("allows planned capabilities before seeding the catalog", () => {
+    expect(capabilityMigration).toMatch(/availability\\s+in\\s*\\([^)]*'planned'[^)]*\\)/i);
   });
 
   it("reports missing dependencies instead of fabricating them", () => {
