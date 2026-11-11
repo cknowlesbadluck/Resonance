@@ -46,7 +46,8 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 ### P5 — Chamber / composition fabric (IN PROGRESS)
 - [x] Bounded chamber scenario: agenda, participants, permitted capabilities, context, approval pause, resume or cancel, dissolve, retained project-scoped audit (`src/nexus/chamber-scenario.ts`)
 - [x] Skill plane is reachable as resolution-only HTTP (`GET /api/nexus/skills`). It does not execute skill code and is not yet durable
-- [ ] Same chamber scenario persisted in Supabase and visible from the control surface
+- [x] Same chamber scenario is reachable on `POST /api/nexus/chambers` (policy gate, approval pause, dissolve, audit). Durable when Supabase is configured (`nexus_executions.output` snapshot, `nexus_evidence` audit, `nexus_context_entries` idempotency marker). Control surface has Open chamber. Provider invocation uses the bound adapter; a missing adapter fails the step. Replay does not depend on the last 100 execution rows.
+- [ ] Owner applies no extra migration for this path. `GITHUB_TOKEN` on Netlify is still required before `github.repository.read` can succeed inside a chamber.
 
 ### P6 — Release / deployment stage (IN PROGRESS)
 - [x] Host-neutral deploy contract and `/api/health` + `/api/ready`

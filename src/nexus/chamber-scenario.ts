@@ -29,6 +29,7 @@ export interface ChamberScenarioStore {
   saveEvidence(projectId: string, evidence: NexusEvidence): Promise<void>;
   listAudit(projectId: string, chamberId: string): Promise<ChamberAuditRecord[]>;
   listEvidence(projectId: string): Promise<NexusEvidence[]>;
+  listChambers(projectId: string): Promise<Array<{ chamber: Chamber; cursor: number }>>;
   getChamber(projectId: string, chamberId: string): Promise<{ chamber: Chamber; cursor: number } | null>;
 }
 
@@ -68,6 +69,12 @@ export class MemoryChamberStore implements ChamberScenarioStore {
 
   async listEvidence(projectId: string) {
     return this.evidence.filter((record) => record.projectId === projectId).map((record) => record.item);
+  }
+
+  async listChambers(projectId: string) {
+    return [...this.chambers.entries()]
+      .filter(([key]) => key.startsWith(`${projectId}\n`))
+      .map(([, value]) => value);
   }
 
   async getChamber(projectId: string, chamberId: string) {
