@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicFailure } from "../../../../../../src/nexus/db-error";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest } from "../../../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../../../src/composition/root";
@@ -205,7 +206,7 @@ export async function POST(
   } catch (error) {
     await db.from("nexus_execution_requests").update({ status: "failed", updated_at: new Date().toISOString() }).eq("project_id", projectId).eq("idempotency_key", existing.idempotency_key);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) },
+      publicFailure(error),
       { status: 422 },
     );
   }

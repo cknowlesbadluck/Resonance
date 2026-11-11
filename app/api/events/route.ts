@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { bodyErrorMessage, persistenceErrorResponse } from "../../../src/nexus/db-error";
 import { createClient } from "@supabase/supabase-js";
 import { authRequired, authenticateNexusRequest, isUuid } from "../../../src/auth/nexus-request";
 import { productionUserDataBlock } from "../../../src/nexus/production-boundary";
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
   const supabase = client();
   if (!supabase) return NextResponse.json({ events: [], source: "unconfigured" });
   const { data, error } = await supabase.from("events").select("id,project_id,source,type,status,correlation_id,actor_id,resource_type,resource_id,payload,created_at").eq("project_id", projectId).order("created_at", { ascending: false }).limit(limit);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return persistenceErrorResponse("events.list", error);
   return NextResponse.json({ events: data ?? [] });
 }
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
   const blocked = productionUserDataBlock();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 503 });
   let input: Record<string, unknown>;
-  try { input = await body(request); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON body." }, { status: 400 }); }
+  try { input = await body(request); } catch (error) { return NextResponse.json({ error: bodyErrorMessage(error) }, { status: 400 }); }
   const projectId = input.project_id;
   if (!isUuid(projectId)) return NextResponse.json({ error: "project_id is required and must be a UUID." }, { status: 400 });
   if (authRequired()) {
@@ -65,6 +66,6 @@ export async function POST(request: Request) {
   if (!supabase) return NextResponse.json({ error: "Supabase is not configured" }, { status: 503 });
   const event = { project_id: projectId, source, type, status, payload, external_id: externalId };
   const { data, error } = await supabase.from("events").insert(event).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return persistenceErrorResponse("events.insert", error);
   return NextResponse.json({ event: data }, { status: 201 });
 }
