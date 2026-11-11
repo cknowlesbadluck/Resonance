@@ -4,6 +4,7 @@ import type {
   StreamRequest,
 } from "../types";
 import { ProviderError } from "../types";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 
 /**
  * OpenAI-compatible streaming adapter.
@@ -34,7 +35,7 @@ export function createOpenAIAdapter(opts?: {
       }
 
       const model = request.model || opts?.defaultModel || "gpt-4o-mini";
-      const res = await fetch(`${baseUrl}/chat/completions`, {
+      const res = await fetchWithTimeout("openai", `${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
