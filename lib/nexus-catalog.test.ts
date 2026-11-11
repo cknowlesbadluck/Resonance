@@ -51,6 +51,28 @@ describe("catalog → NexusCapability", () => {
     expect(github?.unexecutableReason).toBeUndefined();
   });
 
+  it("passes the fully hydrated capability to custom adapter bindings", () => {
+    const bound = listNexusCapabilitiesFromCatalog((capability) =>
+      capability.kind === "tool" && capability.requiredPermissions.includes("repo.write")
+        ? "write-capable-tool"
+        : undefined,
+    );
+    const github = bound.find((capability) => capability.id === "tool.github");
+    expect(github?.adapterId).toBe("write-capable-tool");
+  });
+
+  it("does not expose the catalog dependency arrays to caller mutation", () => {
+    const listed = listNexusCapabilitiesFromCatalog();
+    const skill = listed.find((capability) => capability.id === "skill.ios-swiftui");
+    skill?.dependencies?.splice(0);
+
+    const resolved = resolveNexusCapabilities(["skill.ios-swiftui"]);
+    expect(resolved.resolved.map((capability) => capability.key)).toEqual([
+      "tool.github",
+      "skill.ios-swiftui",
+    ]);
+  });
+
   it("reports missing dependencies instead of fabricating them", () => {
     const result = resolveNexusCapabilities(["missing.capability"]);
     expect(result.resolved).toEqual([]);
