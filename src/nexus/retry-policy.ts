@@ -22,10 +22,10 @@ import type { ExecutionRetryPolicy, ExecutionStep } from "./types";
  *   adapters that do not classify yet are unaffected.
  */
 
-export const PERMANENT_FAILURE_CODES: ReadonlySet<string> = new Set([
+const PERMANENT_FAILURE_CODES: ReadonlySet<string> = new Set([
   "invalid_input", "unsupported_capability", "unauthorized", "forbidden", "not_found", "malformed_response",
 ]);
-export const AMBIGUOUS_FAILURE_CODES: ReadonlySet<string> = new Set(["timeout", "unavailable"]);
+const AMBIGUOUS_FAILURE_CODES: ReadonlySet<string> = new Set(["timeout", "unavailable"]);
 
 export const MAX_RETRY_ATTEMPTS = 5;
 export const MAX_RETRY_DELAY_MS = 30_000;
