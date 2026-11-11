@@ -426,3 +426,22 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test` (220 passed, 1 skipped), `npm run typecheck`, `npm run build`.
 
 
+
+## 2026-11-11 — Grok (capability convergence migration)
+
+**Checked:**
+- `lib/capabilities.ts` contained legacy definitions that were wrapped into `NexusCapability` via `src/nexus/capability-bridge.ts`.
+- `capabilities` and `capability_dependencies` tables in Supabase were out-of-date and missing `dependencies` jsonb structure on the newly created `nexus_capabilities` table.
+
+**Done:**
+- Removed `lib/capabilities.ts` and `src/nexus/capability-bridge.ts`, consolidating all definitions directly into `lib/nexus-catalog.ts` matching the `NexusCapability` types natively.
+- Adapted `src/composition/root.ts` to bind adapters directly on `NexusCapability` instances instead of the removed `CatalogEntry`.
+- Restored testing for dependency graph resolution directly into `lib/nexus-catalog.test.ts`.
+- Created Supabase migration `20261111000000_nexus_capabilities_sync.sql` to safely port all capabilities natively into `nexus_capabilities`, dropping old `capabilities` and `capability_dependencies` tables, while preserving foreign keys mapping to `providers(id)`.
+
+**Not claimed:**
+- The actual running of the SQL migrations on production.
+- A physical test run with SideStore client.
+
+**Verified:**
+- `npm test` (332 passed), `npm run typecheck`, and `npm run build` completed cleanly without regress or legacy shape errors.

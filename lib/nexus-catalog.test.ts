@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "./nexus-catalog";
-import { catalogEntryToNexus } from "../src/nexus/capability-bridge";
+import type { NexusCapability } from "../src/nexus/types";
 
-const bindGitHub = (entry: { provider: string }) => (entry.provider === "GitHub" ? "github" : undefined);
+const bindGitHub = (capability: NexusCapability) => (capability.providerId === "GitHub" ? "github" : undefined);
 
 describe("catalog → NexusCapability", () => {
   it("maps catalog entries to the NexusCapability shape", () => {
@@ -51,12 +51,9 @@ describe("catalog → NexusCapability", () => {
     expect(github?.unexecutableReason).toBeUndefined();
   });
 
-  it("does not couple the nexus core to the catalog fixture", () => {
-    const mapped = catalogEntryToNexus({
-      id: "custom.thing", name: "Custom", kind: "tool", provider: "Acme",
-      status: "available", permissions: ["thing.read"],
-    });
-    expect(mapped.risk).toBe("low");
-    expect(mapped.providerId).toBe("Acme");
+  it("reports missing dependencies instead of fabricating them", () => {
+    const result = resolveNexusCapabilities(["missing.capability"]);
+    expect(result.resolved).toEqual([]);
+    expect(result.missing).toEqual(["missing.capability"]);
   });
 });
