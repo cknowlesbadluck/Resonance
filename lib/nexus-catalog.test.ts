@@ -80,11 +80,12 @@ describe("catalog → NexusCapability", () => {
   });
 
   it("preserves legacy capability tables until their data is migrated", () => {
-    expect(capabilityMigration).not.toMatch(/drop\\s+table\\s+if\\s+exists\\s+public\\.(capabilities|capability_dependencies)/i);
+    expect(capabilityMigration.toLowerCase()).not.toContain("drop table if exists public.capabilities");
+    expect(capabilityMigration.toLowerCase()).not.toContain("drop table if exists public.capability_dependencies");
   });
 
   it("allows planned capabilities before seeding the catalog", () => {
-    expect(capabilityMigration).toMatch(/availability\\s+in\\s*\\([^)]*'planned'[^)]*\\)/i);
+    expect(capabilityMigration).toContain("check (availability in ('available', 'degraded', 'unavailable', 'planned'))");
   });
 
   it("reports missing dependencies instead of fabricating them", () => {
