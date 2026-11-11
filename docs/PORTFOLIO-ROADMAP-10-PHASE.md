@@ -1,12 +1,12 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-11 00:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-11 01:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-11-00Z.md (prior 22Z / 19Z / 13Z / 08Z)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-11-01Z.md (prior 02Z)
 
-**Live probe evidence (2026-11-11 ~00:02Z):**
+**Live probe evidence (2026-11-11 ~01:01Z):**
 
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-11T00:02:22.861Z). Owner gate cleared.
-- Open PR entropy (exact): QuicksilverV1 17, Resonance 26, Conduit 21. Total 64. Target <10. Pure docs mirrors + Bolt micro-opts + gemini micro close candidates: #413 QS, #253/#254/#256 Resonance, #347/#348/#349/#350/#351 Conduit. Forms presented; still open pending owner Submit.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed). Owner gate cleared. Timestamp 2026-11-11T01:01:23.778Z.
+- Open PR entropy (exact): QuicksilverV1 17, Resonance 26, Conduit 21. Total 64. Target <10. Pure docs mirrors + Bolt micro-opts + gemini micro close forms previously presented; confirmation pending.
 - CHR-55: In Review. deviceAcceptance=not_recorded.
 - Portfolio maturity ~7.6/10 when both warm.
 
@@ -30,19 +30,19 @@ No paid bindings. Cold-start recoverable. Free-only AI path. undici / @hono/node
 
 ## Phase 7 — Hygiene prune
 Target open PRs <10/repo. Close docs-only superseded and pure micro-opts (Bolt/Jules). Merge green hardens with no file overlap after CI. One canonical roadmap.
-**Innovate:** Enhanced entropy scoring (age + docs-only + Bolt/Jules flag + overlap - CI green). Interactive close forms for pure noise. Continuous probe refresh. Auto-report top close candidates.
+**Innovate:** Enhanced entropy scoring (age + docs-only + Bolt/Jules flag + overlap - CI green). Interactive close forms for pure noise. Continuous probe refresh. Auto-report top close candidates via scripts/entropy-score.mjs. Comments + close forms previously presented on primary noise PRs.
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify. githubAdapterConfigured remains false until owner sets.
 
 ## Phase 9 — Privacy and logging strict
-Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens in flight. Privacy reason guards.
+Manifest enforced. No body logging. Redact errors and credentials. Early-401 hardens in flight. Privacy reason guards (#411).
 
 ## Phase 10 — Cross-plane acceptance
 Probe + device evidence + low entropy. Production verdict only after all gates. Unified acceptance harness that never invents owner evidence.
 
 **Binding:** CHR-55 remains the production gate for Quicksilver. Entropy must prune. Free-tier cold starts OK if recoverable. No auto-merge of overlapping or untested. undici / hono patches low-risk hygiene.
 
-**Highest-value next:** Submit the pure-noise close forms, merge green non-overlapping hardens after CI, patch medium/high Dependabot (undici gateway, hono), configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
+**Highest-value next:** Confirm close of pure noise PRs (docs mirrors + Bolt micro-opts + micro-fixes — forms previously presented), merge green non-overlapping hardens after CI, patch medium/high Dependabot (undici gateway, hono), configure Resonance githubAdapter if desired, then record CHR-55 device IPA on real iPhone. Stabilization holds. Innovate under constraints. Do not invent owner evidence. Entropy is the current killer.
 
-Date: 2026-11-11 00:02 UTC
+Date: 2026-11-11 01:01 UTC
