@@ -10,7 +10,7 @@ const rawCatalog = [
   { id: "skill.ios-swiftui", name: "iOS SwiftUI", description: "Production SwiftUI architecture, implementation and testing.", kind: "skill", providerId: "Build iOS Apps", version: "1.0.0", availability: "available", requiredPermissions: ["repo.read", "repo.write", "build.run", "test.run"], dependencies: [{ capabilityKey: "tool.github", kind: "tool" }], tags: ["ios", "swift", "swiftui"] },
   { id: "skill.code-review", name: "Code Review", description: "Independent correctness, maintainability and security review.", kind: "skill", providerId: "CodeRabbit", version: "1.0.0", availability: "available", requiredPermissions: ["repo.read", "review.write"], dependencies: [{ capabilityKey: "tool.github", kind: "tool" }], tags: ["review", "quality"] },
   { id: "skill.supabase-architecture", name: "Supabase Architecture", description: "Database, RLS, Realtime and Edge Function design.", kind: "skill", providerId: "Supabase", version: "1.0.0", availability: "available", requiredPermissions: ["database.read", "database.write"], dependencies: [{ capabilityKey: "integration.supabase", kind: "integration" }], tags: ["supabase", "postgres", "rls"] },
-  { id: "skill.workflow-governance", name: "Workflow Governance", description: "Plan, execute and verify governed multi-step work.", kind: "skill", providerId: "aictrl.dev", version: "1.0.0", availability: "available", requiredPermissions: ["workflow.start", "workflow.read"], dependencies: [{ capabilityKey: "tool.linear", kind: "tool" }], tags: ["workflow", "governance"] },
+  { id: "skill.workflow-governance", name: "Workflow Governance", description: "Plan, execute and verify governed multi-step workflows.", kind: "skill", providerId: "aictrl.dev", version: "1.0.0", availability: "available", requiredPermissions: ["workflow.start", "workflow.read"], dependencies: [{ capabilityKey: "tool.linear", kind: "tool" }], tags: ["workflow", "governance"] },
   { id: "tool.github", name: "GitHub", description: "Repositories, branches, commits, issues and pull requests.", kind: "tool", providerId: "GitHub", version: "1.0.0", availability: "available", requiredPermissions: ["repo.read", "repo.write", "pr.write"], dependencies: [], tags: ["git", "github", "code"] },
   { id: "tool.linear", name: "Linear", description: "Project, milestone and issue tracking.", kind: "tool", providerId: "Linear", version: "1.0.0", availability: "available", requiredPermissions: ["issue.read", "issue.write"], dependencies: [], tags: ["planning", "issues"] },
   { id: "tool.figma", name: "Figma", description: "Design inspection and component integration.", kind: "tool", providerId: "Figma", version: "1.0.0", availability: "available", requiredPermissions: ["design.read"], dependencies: [], tags: ["design", "ui"] },
@@ -25,31 +25,35 @@ const rawCatalog = [
 
 function hydrateCapability(raw: typeof rawCatalog[number], bindAdapter: AdapterBinding): NexusCapability {
   const kind = raw.kind as CapabilityKind;
-  const permissions = raw.requiredPermissions as unknown as string[];
+  const permissions = [...raw.requiredPermissions];
 
-  // Create a partial capability to pass to bindAdapter
-  const partialCap = { id: raw.id, providerId: raw.providerId } as NexusCapability;
-  const adapterId = bindAdapter(partialCap);
-
-  return {
+  // Bind against the complete immutable capability contract, not a partial provider/id stub.
+  const capability: NexusCapability = {
     id: raw.id,
     key: raw.id,
     name: raw.name,
     description: raw.description,
     providerId: raw.providerId,
-    adapterId,
     kind,
     requiredPermissions: permissions,
     risk: riskForGrants(permissions),
     tags: [...raw.tags, `kind:${kind}`],
-    availability: raw.availability as any,
+    availability: raw.availability as NexusCapability["availability"],
     version: raw.version,
-    dependencies: raw.dependencies as any,
+    dependencies: raw.dependencies.map((dependency) => ({ ...dependency })),
     provenance: "catalog",
+    executable: false,
+    unexecutableReason: `No adapter is bound to provider "${raw.providerId}" in this deployment.`,
+  };
+  const adapterId = bindAdapter(capability);
+
+  return {
+    ...capability,
+    adapterId,
     executable: Boolean(adapterId),
     unexecutableReason: adapterId
       ? undefined
-      : `No adapter is bound to provider "${raw.providerId}" in this deployment.`,
+      : capability.unexecutableReason,
   };
 }
 
@@ -61,7 +65,9 @@ export function resolveNexusCapabilities(
   requested: string[],
   bindAdapter: AdapterBinding = noAdapterBinding,
 ): NexusCapabilityResolution {
-  const byId = new Map(rawCatalog.map(raw => [raw.id, raw]));
+  const byId = new Map<string, typeof rawCatalog[number]>();
+  for (const raw of rawCatalog) byId.set(raw.id, raw);
+
   const resolved: NexusCapability[] = [];
   const missing: string[] = [];
   const unavailable: string[] = [];
@@ -73,7 +79,7 @@ export function resolveNexusCapabilities(
     if (visiting.has(id)) throw new Error(`Capability dependency cycle detected at ${id}`);
     visiting.add(id);
 
-    const raw = byId.get(id as any);
+    const raw = byId.get(id);
     if (!raw) {
       missing.push(id);
       visiting.delete(id);
