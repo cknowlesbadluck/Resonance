@@ -1,8 +1,18 @@
 -- 20261111000000_nexus_capabilities_sync.sql
-drop table if exists public.capability_dependencies cascade;
-drop table if exists public.capabilities cascade;
+-- Keep the legacy catalog tables intact. This migration does not copy their rows,
+-- so dropping them (especially with CASCADE) would risk irreversible data loss.
+-- Remove them only in a later migration after an explicit data audit and rollback plan.
 
 alter table public.nexus_capabilities add column if not exists dependencies jsonb not null default '[]'::jsonb;
+
+-- The native catalog includes planned capabilities; widen the original check
+-- constraint before inserting any of those rows.
+alter table public.nexus_capabilities
+  drop constraint if exists nexus_capabilities_availability_check;
+
+alter table public.nexus_capabilities
+  add constraint nexus_capabilities_availability_check
+  check (availability in ('available', 'degraded', 'unavailable', 'planned'));
 
 insert into public.providers (key, name, category) values ('build-ios-apps', 'Build iOS Apps', 'integration') on conflict (key) do update set name = excluded.name;
 insert into public.providers (key, name, category) values ('coderabbit', 'CodeRabbit', 'integration') on conflict (key) do update set name = excluded.name;
