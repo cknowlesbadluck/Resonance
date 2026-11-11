@@ -72,6 +72,7 @@ export default function Home() {
   const [execution, setExecution] = useState<ExecutionResponse | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
   const [history, setHistory] = useState<History | null>(null);
+  const [chamberNote, setChamberNote] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sessionLabel, setSessionLabel] = useState(supabase ? "signed out" : "auth not configured");
@@ -150,6 +151,33 @@ export default function Home() {
       setExecution({ status: "error", error: error instanceof Error ? error.message : "Plan preview failed" });
     } finally {
       setPreviewing(false);
+    }
+  }
+
+  async function openChamber() {
+    if (!hostReady || !selected || executing) return;
+    setExecuting(true);
+    setChamberNote(null);
+    try {
+      const token = await accessToken();
+      const response = await fetch("/api/nexus/chambers", {
+        method: "POST",
+        headers: { "content-type": "application/json", "Idempotency-Key": crypto.randomUUID(), ...authHeaders(token) },
+        body: JSON.stringify({
+          projectId,
+          objective: objective.trim() || `Chamber ${selected.name}`,
+          capabilityKey: selected.key,
+          input: selected.key === "github.repository.read" ? { owner, repo } : {},
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok && response.status !== 202) setChamberNote(errorText(data, `Chamber HTTP ${response.status}`));
+      else setChamberNote(`Chamber ${data.status ?? "opened"}${data.replayed ? " (replayed)" : ""}`);
+      await load();
+    } catch (error) {
+      setChamberNote(error instanceof Error ? error.message : "Chamber failed");
+    } finally {
+      setExecuting(false);
     }
   }
 
@@ -256,8 +284,12 @@ export default function Home() {
             <button className="primary" onClick={() => void composeIntent()} disabled={!hostReady || !selectedInvocable || executing || !execution?.plan}>
               {executing ? "Executing…" : !hostReady ? "Execute locked" : !selectedInvocable ? "Execute locked" : "Execute plan"}
             </button>
+            <button className="primary" onClick={() => void openChamber()} disabled={!hostReady || !selected || executing}>
+              {executing ? "Working…" : "Open chamber"}
+            </button>
             <div className="policy-badge"><ShieldCheck size={16} /> {sessionLabel}</div>
           </div>
+          {chamberNote ? <small>{chamberNote}</small> : null}
           {supabase && sessionLabel !== "signed in" && (
             <form className="composer" onSubmit={signIn}>
               <div className="split">

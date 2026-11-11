@@ -406,3 +406,23 @@ CodeRabbit auto-reviewed `858b03b` and confirmed CHR-47/48/49 resolved (LGTM on 
 - `npm test`, `npm run typecheck`, and `npm run build` in this session.
 
 
+---
+
+## 2026-11-11 — Grok (chamber HTTP)
+
+**Checked:**
+- Live `https://resonancenexus.netlify.app/api/ready` was 200 with `persistenceConfigured=true` and `githubAdapterConfigured=false`. That token was not invented.
+- Chamber scenario existed only in process memory. `nexus_executions.output`, `nexus_evidence`, and `nexus_context_entries` already exist. No new migration.
+
+**Done:**
+- `POST /api/nexus/chambers` runs the existing chamber scenario: policy, approval pause (202), dissolve, audit. Unknown capability keys are 404. A missing adapter fails the step.
+- Durable store writes the chamber snapshot on `nexus_executions.output`, audit on `nexus_evidence`, and an idempotency marker on `nexus_context_entries`. Replay does not scan only the latest 100 executions.
+- Control surface has Open chamber. It reports the chamber status or the error. It does not claim the GitHub adapter is configured.
+
+**Not claimed:**
+- `GITHUB_TOKEN` or `GITHUB_WEBHOOK_SECRET` on Netlify. CHR-55. A SideStore IPA.
+
+**Verified:**
+- `npm test` (220 passed, 1 skipped), `npm run typecheck`, `npm run build`.
+
+
