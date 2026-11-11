@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { publicFailure } from "../../../../src/nexus/db-error";
-import { authRequired, authenticateNexusRequest, isUuid } from "../../../../src/auth/nexus-request";
+import { authRequired, authenticateNexusUser, authorizeNexusProject, isUuid } from "../../../../src/auth/nexus-request";
 import { composeIntentWithCatalog as composeNexusIntent } from "../../../../src/composition/root";
 import type { CapabilityRequirement, NexusIntent } from "../../../../src/nexus/types";
 
@@ -16,6 +16,14 @@ function isRequirement(value: unknown): value is CapabilityRequirement {
 }
 
 export async function POST(request: Request) {
+  // Verify credentials before reading or validating the body. This prevents
+  // unauthenticated callers from using validation responses as an API oracle.
+  const requiresAuth = authRequired();
+  const authenticatedUser = requiresAuth ? await authenticateNexusUser(request) : null;
+  if (requiresAuth && !authenticatedUser) {
+    return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+  }
+
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: "Request body exceeds the 64 KiB limit." }, { status: 400 });
   const text = await request.text();
@@ -31,10 +39,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "projectId must be a UUID." }, { status: 400 });
   }
   let actorId: string | undefined = typeof body.requestedBy === "string" ? body.requestedBy.trim() : undefined;
-  if (authRequired()) {
-    const auth = await authenticateNexusRequest(request, projectId);
-    if (!auth) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
-    actorId = auth.userId;
+  if (authenticatedUser) {
+    const isMember = await authorizeNexusProject(authenticatedUser.userId, projectId);
+    if (!isMember) return NextResponse.json({ error: "Authentication or project authorization required." }, { status: 401 });
+    actorId = authenticatedUser.userId;
   }
   if (typeof body.objective !== "string" || !body.objective.trim() || body.objective.length > MAX_OBJECTIVE_LENGTH) {
     return NextResponse.json({ error: "objective is required and must be at most 4000 characters." }, { status: 400 });
