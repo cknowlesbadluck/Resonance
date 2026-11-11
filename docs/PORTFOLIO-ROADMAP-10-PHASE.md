@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-11 ~15:05 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-11 ~23:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-11-1505Z.md
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-11-2302Z.md
 
-**Live probe evidence (2026-11-11 ~15:05Z):**
+**Live probe evidence (2026-11-11 ~23:02Z):**
 
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-11T15:01:41.228Z). Owner gate cleared.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-11T23:01:44.104Z). Owner gate cleared.
 - Open PR entropy: QuicksilverV1 **2**, Resonance **9**, Conduit **7**. Total **18**. Down from ~38. Target <10. Remaining primarily hardens, hygiene scripts, owner-gated migrations, auth matrices, redaction.
 - CHR-55: In Review. deviceAcceptance=not_recorded.
-- Portfolio maturity ~8.1/10 when both warm.
+- Portfolio maturity ~8.2/10 when both warm.
 
 ## Phase 1 — Owner gate cleared
 Exit met. missingRequired=[] , posture contract_passed on Resonance Netlify. Conduit ready when warm.
@@ -51,4 +51,4 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 3. Hygiene bot or manual queue for owner-gated items (migrations list, env checklist).
 4. Direct docs commits for living audits to reduce PR noise.
 
-Date: 2026-11-11 ~15:05 UTC
+Date: 2026-11-11 ~23:02 UTC
