@@ -9,6 +9,10 @@ const capabilityMigration = readFileSync(
   new URL("../supabase/migrations/20261111000000_nexus_capabilities_sync.sql", import.meta.url),
   "utf8",
 );
+const capabilityPolicyMigration = readFileSync(
+  new URL("../supabase/migrations/20261112093000_nexus_capability_policy_consolidation.sql", import.meta.url),
+  "utf8",
+);
 
 describe("catalog → NexusCapability", () => {
   it("maps catalog entries to the NexusCapability shape", () => {
@@ -77,6 +81,15 @@ describe("catalog → NexusCapability", () => {
       "tool.github",
       "skill.ios-swiftui",
     ]);
+  });
+
+  it("uses one read policy and separate project-member write policies", () => {
+    expect(capabilityPolicyMigration).toContain("CREATE POLICY nexus_capabilities_read");
+    expect(capabilityPolicyMigration).toContain("CREATE POLICY nexus_capabilities_member_insert");
+    expect(capabilityPolicyMigration).toContain("CREATE POLICY nexus_capabilities_member_update");
+    expect(capabilityPolicyMigration).toContain("CREATE POLICY nexus_capabilities_member_delete");
+    expect(capabilityPolicyMigration.match(/CREATE POLICY/g)?.length).toBe(4);
+    expect(capabilityPolicyMigration).not.toMatch(/FOR ALL|TO anon/i);
   });
 
   it("seeds providers against the live name/type/metadata schema", () => {
