@@ -18,7 +18,7 @@ alter table public.nexus_capabilities
 -- Project-scoped entries remain manageable by authenticated project members.
 DROP POLICY IF EXISTS nexus_capabilities_member_all ON public.nexus_capabilities;
 CREATE POLICY nexus_capabilities_global_read
-  ON public.nexus_capabilities FOR SELECT TO anon, authenticated
+  ON public.nexus_capabilities FOR SELECT TO authenticated
   USING (project_id IS NULL);
 CREATE POLICY nexus_capabilities_member_read
   ON public.nexus_capabilities FOR SELECT TO authenticated
@@ -29,7 +29,6 @@ CREATE POLICY nexus_capabilities_member_write
   WITH CHECK (project_id IS NOT NULL AND private.is_project_member(project_id));
 
 REVOKE ALL ON TABLE public.nexus_capabilities FROM anon, authenticated;
-GRANT SELECT ON TABLE public.nexus_capabilities TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nexus_capabilities TO authenticated;
 
 -- The live providers table has (name, type, metadata), not key/category columns.
