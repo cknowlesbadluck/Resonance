@@ -2,14 +2,16 @@
   "name": "resonance",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/production-smoke.mjs",
-    "alias-drift": "node scripts/vercel-alias-drift.mjs"
+    "smoke": "node scripts/production-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

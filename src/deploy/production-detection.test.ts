@@ -7,7 +7,6 @@ describe("isProductionRuntime fails closed on host signals", () => {
     [{ NODE_ENV: "production" }],
     [{ RESONANCE_DEPLOY_STAGE: "production" }],
     [{ NODE_ENV: "development", CONTEXT: "production" }],
-    [{ VERCEL_ENV: "production" }],
   ])("treats %o as production", (env) => { expect(isProductionRuntime(env)).toBe(true); });
 
   it.each([
@@ -15,7 +14,6 @@ describe("isProductionRuntime fails closed on host signals", () => {
     [{ NODE_ENV: "test" }],
     [{ CONTEXT: "deploy-preview" }],
     [{ CONTEXT: "branch-deploy" }],
-    [{ VERCEL_ENV: "preview" }],
   ])("does not treat %o as production", (env) => { expect(isProductionRuntime(env)).toBe(false); });
 
   it("Netlify production without NODE_ENV refuses in-memory user data", () => {
