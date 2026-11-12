@@ -47,6 +47,13 @@ describe("Nexus graph RLS lockdown", () => {
     expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke all on tables from anon, public/);
     expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on tables from anon, public/);
     expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke execute on functions from anon, public, authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke execute on functions from anon, public, authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke all on sequences from anon, public/);
+    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on sequences from anon, public/);
+    expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke all on tables from authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on tables from authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public grant select, insert, update, delete on tables to authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public grant select, insert, update, delete on tables to authenticated/);
     expect(lockdownSql).not.toMatch(/grant (all|truncate|trigger|maintain|references)\b/);
   });
 
