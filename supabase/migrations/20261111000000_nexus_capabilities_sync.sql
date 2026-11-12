@@ -14,25 +14,82 @@ alter table public.nexus_capabilities
   add constraint nexus_capabilities_availability_check
   check (availability in ('available', 'degraded', 'unavailable', 'planned'));
 
-insert into public.providers (key, name, category) values ('build-ios-apps', 'Build iOS Apps', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('coderabbit', 'CodeRabbit', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('supabase', 'Supabase', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('aictrl-dev', 'aictrl.dev', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('github', 'GitHub', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('linear', 'Linear', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('figma', 'Figma', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('openai-developers', 'OpenAI Developers', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('brainbase-mcp', 'Brainbase MCP', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('strengthcode', 'StrengthCode', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('riqor', 'Riqor', 'integration') on conflict (key) do update set name = excluded.name;
-insert into public.providers (key, name, category) values ('kora', 'Kora', 'integration') on conflict (key) do update set name = excluded.name;
+-- Global catalog entries are readable, but never writable by anon/authenticated.
+-- Project-scoped entries remain manageable by authenticated project members.
+DROP POLICY IF EXISTS nexus_capabilities_member_all ON public.nexus_capabilities;
+CREATE POLICY nexus_capabilities_global_read
+  ON public.nexus_capabilities FOR SELECT TO anon, authenticated
+  USING (project_id IS NULL);
+CREATE POLICY nexus_capabilities_member_read
+  ON public.nexus_capabilities FOR SELECT TO authenticated
+  USING (project_id IS NOT NULL AND private.is_project_member(project_id));
+CREATE POLICY nexus_capabilities_member_write
+  ON public.nexus_capabilities FOR ALL TO authenticated
+  USING (project_id IS NOT NULL AND private.is_project_member(project_id))
+  WITH CHECK (project_id IS NOT NULL AND private.is_project_member(project_id));
+
+REVOKE ALL ON TABLE public.nexus_capabilities FROM anon, authenticated;
+GRANT SELECT ON TABLE public.nexus_capabilities TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nexus_capabilities TO authenticated;
+
+-- The live providers table has (name, type, metadata), not key/category columns.
+-- Store a stable provider key in metadata and reuse existing providers by name.
+WITH provider_seed(provider_key, provider_name) AS (
+  VALUES
+    ('build-ios-apps', 'Build iOS Apps'),
+    ('coderabbit', 'CodeRabbit'),
+    ('supabase', 'Supabase'),
+    ('aictrl-dev', 'aictrl.dev'),
+    ('github', 'GitHub'),
+    ('linear', 'Linear'),
+    ('figma', 'Figma'),
+    ('openai-developers', 'OpenAI Developers'),
+    ('brainbase-mcp', 'Brainbase MCP'),
+    ('strengthcode', 'StrengthCode'),
+    ('riqor', 'Riqor'),
+    ('kora', 'Kora')
+)
+INSERT INTO public.providers (name, type, metadata)
+SELECT seed.provider_name, 'integration', jsonb_build_object('key', seed.provider_key)
+FROM provider_seed AS seed
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.providers AS existing
+  WHERE existing.metadata->>'key' = seed.provider_key
+     OR lower(existing.name) = lower(seed.provider_name)
+);
+
+WITH provider_seed(provider_key, provider_name) AS (
+  VALUES
+    ('build-ios-apps', 'Build iOS Apps'),
+    ('coderabbit', 'CodeRabbit'),
+    ('supabase', 'Supabase'),
+    ('aictrl-dev', 'aictrl.dev'),
+    ('github', 'GitHub'),
+    ('linear', 'Linear'),
+    ('figma', 'Figma'),
+    ('openai-developers', 'OpenAI Developers'),
+    ('brainbase-mcp', 'Brainbase MCP'),
+    ('strengthcode', 'StrengthCode'),
+    ('riqor', 'Riqor'),
+    ('kora', 'Kora')
+)
+UPDATE public.providers AS existing
+SET metadata = existing.metadata || jsonb_build_object('key', seed.provider_key),
+    type = COALESCE(existing.type, 'integration')
+FROM provider_seed AS seed
+WHERE lower(existing.name) = lower(seed.provider_name)
+  AND existing.metadata->>'key' IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS providers_metadata_key_uidx
+  ON public.providers ((metadata->>'key'))
+  WHERE metadata ? 'key';
 
 DO $$
 DECLARE
   p_id uuid;
 BEGIN
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'build-ios-apps';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'build-ios-apps';
 
   UPDATE public.nexus_capabilities
   SET
@@ -54,7 +111,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'coderabbit';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'coderabbit';
 
   UPDATE public.nexus_capabilities
   SET
@@ -76,7 +133,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'supabase';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'supabase';
 
   UPDATE public.nexus_capabilities
   SET
@@ -98,7 +155,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'aictrl-dev';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'aictrl-dev';
 
   UPDATE public.nexus_capabilities
   SET
@@ -120,7 +177,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'github';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'github';
 
   UPDATE public.nexus_capabilities
   SET
@@ -142,7 +199,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'linear';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'linear';
 
   UPDATE public.nexus_capabilities
   SET
@@ -164,7 +221,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'figma';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'figma';
 
   UPDATE public.nexus_capabilities
   SET
@@ -186,7 +243,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'openai-developers';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'openai-developers';
 
   UPDATE public.nexus_capabilities
   SET
@@ -208,7 +265,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'brainbase-mcp';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'brainbase-mcp';
 
   UPDATE public.nexus_capabilities
   SET
@@ -230,7 +287,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'supabase';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'supabase';
 
   UPDATE public.nexus_capabilities
   SET
@@ -252,7 +309,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'github';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'github';
 
   UPDATE public.nexus_capabilities
   SET
@@ -274,7 +331,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'strengthcode';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'strengthcode';
 
   UPDATE public.nexus_capabilities
   SET
@@ -296,7 +353,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'riqor';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'riqor';
 
   UPDATE public.nexus_capabilities
   SET
@@ -318,7 +375,7 @@ BEGIN
   END IF;
 
 
-  SELECT id INTO p_id FROM public.providers WHERE key = 'kora';
+  SELECT id INTO p_id FROM public.providers WHERE metadata->>'key' = 'kora';
 
   UPDATE public.nexus_capabilities
   SET
