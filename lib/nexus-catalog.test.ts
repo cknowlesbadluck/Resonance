@@ -87,10 +87,10 @@ describe("catalog → NexusCapability", () => {
   });
 
   it("preserves existing global capability availability and permission settings", () => {
-    const updates = capabilityMigration.match(/UPDATE public\\.nexus_capabilities[\\s\\S]*?;/g) ?? [];
+    const updates = capabilityMigration.match(/UPDATE public\.nexus_capabilities[\s\S]*?;/g) ?? [];
     expect(updates.length).toBe(14);
     for (const update of updates) {
-      expect(update).not.toMatch(/\\b(risk|availability|version|tags|dependencies|required_permissions)\\s*=/i);
+      expect(update).not.toMatch(/\b(risk|availability|version|tags|dependencies|required_permissions)\s*=/i);
       expect(update).toContain("provider_id = COALESCE(provider_id, p_id)");
     }
   });
