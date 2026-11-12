@@ -1,14 +1,14 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-12 ~00:02 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-12 ~02:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-12-0002Z.md
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-12-0200Z.md
 
-**Live probe evidence (2026-11-12 ~00:02Z):**
+**Live probe evidence (2026-11-12 ~02:01Z):**
 
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 503** (free-tier cold start). Recoverable; prior 23:02Z was 200 warm (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface).
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp ~2026-11-12T00:01Z). Owner gate cleared.
-- Open PR entropy: QuicksilverV1 **2**, Resonance **9**, Conduit **7**. Total **18**. Down from ~38. Target <10. Remaining primarily hardens, hygiene scripts, owner-gated migrations, auth matrices, redaction.
+- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (0.8.0, postgres, production true, contractRevision 2026-10-03-ready-surface). Warm.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-12T02:01:01.271Z). Owner gate cleared.
+- Open PR entropy: QuicksilverV1 **2**, Resonance **9**, Conduit **7**. Total **18**. Target <10. Remaining primarily hardens, hygiene scripts, owner-gated migrations, auth matrices, redaction.
 - CHR-55: In Review. deviceAcceptance=not_recorded.
-- Portfolio maturity ~7.8/10 this pass (Conduit cold); ~8.2/10 when both warm.
+- Portfolio maturity ~8.0/10 both warm.
 
 ## Phase 1 — Owner gate cleared
 Exit met. missingRequired=[] , posture contract_passed on Resonance Netlify. Conduit ready when warm.
@@ -30,7 +30,7 @@ No paid bindings. Cold-start recoverable. Free-only AI path. undici / @hono/node
 
 ## Phase 7 — Hygiene prune
 Target open PRs <10/repo. Close pure noise if any remain. Merge green hardens with no file overlap after CI. One canonical roadmap.
-**Innovate:** Enhanced entropy scoring (age + docs-only + Bolt/Jules flag + overlap - CI green). Interactive close forms for pure noise. Continuous probe refresh. Auto-report top close candidates. Direct main updates for docs hygiene. Cold-start timing in probes. Owner action queue for migrations/env.
+**Innovate:** Enhanced entropy scoring (age + docs-only + Bolt/Jules flag + overlap - CI green). Interactive close forms for pure noise. Continuous probe refresh. Auto-report top close candidates. Direct main updates for docs hygiene. Cold-start timing in probes. Owner action queue for migrations/env. Prune historical AUDIT files >30d into archive/.
 
 ## Phase 8 — Resonance adapters
 Configure githubAdapter (GITHUB_TOKEN + webhook secret) on Netlify. githubAdapterConfigured remains false until owner sets. Low priority until entropy down.
@@ -49,6 +49,7 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 1. Entropy scoring scripts already present in Conduit (entropy-score.mjs, entropy-dashboard.mjs, etc.) — rank by age, type, overlap, CI status → daily report of close candidates.
 2. Probe script enhancements with cold-start timing and auto-recovery logging already in portfolio-probe.mjs (retries on 503).
 3. Hygiene bot or manual queue for owner-gated items (migrations list, env checklist) — decision-queue.mjs exists.
-4. Direct docs commits for living audits to reduce PR noise (this update).
+4. Direct docs commits for living audits to reduce PR noise (this update and companion AUDIT).
+5. Historical AUDIT consolidation recommendation.
 
-Date: 2026-11-12 ~00:02 UTC
+Date: 2026-11-12 ~02:00 UTC
