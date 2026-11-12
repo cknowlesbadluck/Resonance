@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as capabilities } from "../../app/api/nexus/capabilities/route";
 import { GET as identities } from "../../app/api/nexus/identities/route";
 import { GET as skills } from "../../app/api/nexus/skills/route";
+import { POST as createIntent } from "../../app/api/nexus/intents/route";
 
 const PROJECT = "00000000-0000-4000-8000-000000000001";
 const routes = [
@@ -40,4 +41,29 @@ describe("route auth matrix (no bearer token, no Supabase env)", () => {
       });
     }
   }
+});
+
+
+describe("POST /api/nexus/intents authentication precedence", () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv("RESONANCE_AUTH_MODE", "required");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each([
+    ["missing bearer", undefined],
+    ["invalid bearer", "Bearer invalid-token"],
+  ])("returns 401 before parsing malformed JSON for %s", async (_label, authorization) => {
+    const headers = new Headers({ "content-type": "application/json" });
+    if (authorization) headers.set("authorization", authorization);
+    const response = await createIntent(new Request("http://x/api/nexus/intents", {
+      method: "POST",
+      headers,
+      body: "not json",
+    }));
+    expect(response.status).toBe(401);
+  });
 });
