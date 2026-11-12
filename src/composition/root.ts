@@ -1,5 +1,4 @@
-import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "../../lib/nexus-catalog";
-import type { AdapterBinding, CatalogEntry } from "../nexus/capability-bridge";
+import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities, type AdapterBinding } from "../../lib/nexus-catalog";
 import { composeNexusIntent, nexusAdapters, nexusRegistry } from "../nexus/runtime";
 import type { NexusCapability, NexusCapabilityResolution, NexusIntent } from "../nexus/types";
 
@@ -76,38 +75,29 @@ export function resetCompositionRoot(): void {
  * what *is* available from the provider.
  */
 function makeAdapterBinding(surface: AdapterSurface): AdapterBinding {
-  return (entry: CatalogEntry) => surface.invocable.get(entry.id);
+  return (capability: NexusCapability) => surface.invocable.get(capability.id);
 }
 
-function unexecutableReason(entry: CatalogEntry, surface: AdapterSurface): string {
-  const slug = providerSlug(entry.provider);
+function unexecutableReason(capability: NexusCapability, surface: AdapterSurface): string {
+  const providerId = capability.providerId ?? "";
+  const slug = providerSlug(providerId);
   const concrete = surface.byAdapter.get(slug);
   if (concrete?.length) {
-    return `"${entry.id}" describes the ${entry.provider} provider rather than a single operation. Invocable capabilities from this provider: ${concrete.join(", ")}.`;
+    return `"${capability.id}" describes the ${providerId} provider rather than a single operation. Invocable capabilities from this provider: ${concrete.join(", ")}.`;
   }
-  return `No adapter is bound to provider "${entry.provider}" in this deployment.`;
+  return `No adapter is bound to provider "${providerId}" in this deployment.`;
 }
 
-/** Minimal CatalogEntry view of an already-mapped capability, for reason rendering. */
-function entryOf(capability: NexusCapability): CatalogEntry {
-  return {
-    id: capability.id,
-    name: capability.name,
-    kind: String(capability.kind ?? "other"),
-    provider: capability.providerId ?? "",
-  };
-}
-
-function withReason(capability: NexusCapability, entry: CatalogEntry, surface: AdapterSurface): NexusCapability {
+function withReason(capability: NexusCapability, surface: AdapterSurface): NexusCapability {
   if (capability.executable) return capability;
-  return { ...capability, unexecutableReason: unexecutableReason(entry, surface) };
+  return { ...capability, unexecutableReason: unexecutableReason(capability, surface) };
 }
 
 /** Catalog capabilities mapped onto the Nexus contract, with real executability. */
 export async function catalogCapabilities(): Promise<NexusCapability[]> {
   const surface = await adapterSurface();
   const binding = makeAdapterBinding(surface);
-  return listNexusCapabilitiesFromCatalog(binding).map((capability) => withReason(capability, entryOf(capability), surface));
+  return listNexusCapabilitiesFromCatalog(binding).map((capability) => withReason(capability, surface));
 }
 
 export async function resolveCatalogCapabilities(requested: string[]): Promise<NexusCapabilityResolution> {
@@ -116,7 +106,7 @@ export async function resolveCatalogCapabilities(requested: string[]): Promise<N
   const resolution = resolveNexusCapabilities(requested, binding);
   return {
     ...resolution,
-    resolved: resolution.resolved.map((capability) => withReason(capability, entryOf(capability), surface)),
+    resolved: resolution.resolved.map((capability) => withReason(capability, surface)),
   };
 }
 
