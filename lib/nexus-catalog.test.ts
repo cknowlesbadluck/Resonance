@@ -1,8 +1,14 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { listNexusCapabilitiesFromCatalog, resolveNexusCapabilities } from "./nexus-catalog";
-import { catalogEntryToNexus } from "../src/nexus/capability-bridge";
+import type { NexusCapability } from "../src/nexus/types";
 
-const bindGitHub = (entry: { provider: string }) => (entry.provider === "GitHub" ? "github" : undefined);
+const bindGitHub = (capability: NexusCapability) => (capability.providerId === "GitHub" ? "github" : undefined);
+
+const capabilityMigration = readFileSync(
+  new URL("../supabase/migrations/20261111000000_nexus_capabilities_sync.sql", import.meta.url),
+  "utf8",
+);
 
 describe("catalog → NexusCapability", () => {
   it("maps catalog entries to the NexusCapability shape", () => {
@@ -51,12 +57,40 @@ describe("catalog → NexusCapability", () => {
     expect(github?.unexecutableReason).toBeUndefined();
   });
 
-  it("does not couple the nexus core to the catalog fixture", () => {
-    const mapped = catalogEntryToNexus({
-      id: "custom.thing", name: "Custom", kind: "tool", provider: "Acme",
-      status: "available", permissions: ["thing.read"],
-    });
-    expect(mapped.risk).toBe("low");
-    expect(mapped.providerId).toBe("Acme");
+  it("passes the fully hydrated capability to custom adapter bindings", () => {
+    const bound = listNexusCapabilitiesFromCatalog((capability) =>
+      capability.kind === "tool" && capability.requiredPermissions.includes("repo.write")
+        ? "write-capable-tool"
+        : undefined,
+    );
+    const github = bound.find((capability) => capability.id === "tool.github");
+    expect(github?.adapterId).toBe("write-capable-tool");
+  });
+
+  it("does not expose the catalog dependency arrays to caller mutation", () => {
+    const listed = listNexusCapabilitiesFromCatalog();
+    const skill = listed.find((capability) => capability.id === "skill.ios-swiftui");
+    skill?.dependencies?.splice(0);
+
+    const resolved = resolveNexusCapabilities(["skill.ios-swiftui"]);
+    expect(resolved.resolved.map((capability) => capability.key)).toEqual([
+      "tool.github",
+      "skill.ios-swiftui",
+    ]);
+  });
+
+  it("preserves legacy capability tables until their data is migrated", () => {
+    expect(capabilityMigration.toLowerCase()).not.toContain("drop table if exists public.capabilities");
+    expect(capabilityMigration.toLowerCase()).not.toContain("drop table if exists public.capability_dependencies");
+  });
+
+  it("allows planned capabilities before seeding the catalog", () => {
+    expect(capabilityMigration).toContain("check (availability in ('available', 'degraded', 'unavailable', 'planned'))");
+  });
+
+  it("reports missing dependencies instead of fabricating them", () => {
+    const result = resolveNexusCapabilities(["missing.capability"]);
+    expect(result.resolved).toEqual([]);
+    expect(result.missing).toEqual(["missing.capability"]);
   });
 });
