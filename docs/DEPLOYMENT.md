@@ -2,7 +2,7 @@
 
 P6 — host-neutral release surface for the Nexus control plane.
 
-The host is **runtime infrastructure**, not a domain object. Adapters stay in adapters. Switching Netlify → Render → Vercel does not change Identity, Capability, Intent, or Evidence.
+The host is **runtime infrastructure**, not a domain object. Adapters stay in adapters. Host changes do not change Identity, Capability, Intent, or Evidence.
 
 ## Observed 2026-09-25
 
@@ -71,13 +71,6 @@ SideStore / IPA evidence is issue #11. The Nexus contract (Idempotency-Key + Bea
 
 Host/runtime configuration is not a critical reformation. Changing core identity, domain semantics, or locking the Nexus to one vendor remains Two-Key.
 
-## Vercel alias drift (report-only)
+## Production host gate
 
-`npm run alias-drift` (machine JSON: `npm run --silent alias-drift -- --json`) fetches `/api/ready` on the public Vercel aliases
-(`ALIAS_HOSTS`, default `resonance.vercel.app,resonancenexus.vercel.app,resonanceplane.vercel.app`) and compares against `main` via the public
-GitHub API. Outcomes: `alias_absent` (Vercel DEPLOYMENT_NOT_FOUND), `stranger_occupant` (serves a non-Resonance app),
-`unreachable`, `resonance_unstamped` (no `commitSha`; `drift: null`, UNVERIFIED), `comparison_unavailable` (main SHA
-not fetched; `drift: null`), `resonance_stale`, `resonance_at_main`. Top-level `verified: false` means at least one alias
-could not be compared; it is never reported as clean. `/api/ready` does not yet expose `commitSha`, so Resonance aliases
-report UNVERIFIED until a deploy stamp is added (separate, owner-reviewed contract change). Public HTTP only, no
-secrets, always exits 0. Fixing drift is an owner action in the Vercel dashboard; this script never changes config.
+Only `resonancenexus.netlify.app` is the canonical public production host. A preview or alternate host is never production evidence. Verify the canonical host with `npm run smoke` and `GET /api/ready`.
