@@ -79,6 +79,23 @@ describe("catalog → NexusCapability", () => {
     ]);
   });
 
+  it("seeds providers against the live name/type/metadata schema", () => {
+    expect(capabilityMigration).toContain("INSERT INTO public.providers (name, type, metadata)");
+    expect(capabilityMigration).toContain("existing.metadata->>'key'");
+    expect(capabilityMigration).not.toMatch(/providers\s*\(key\s*,\s*name\s*,\s*category\)/i);
+    expect(capabilityMigration).not.toMatch(/ON CONFLICT\s*\(key\)/i);
+  });
+
+  it("keeps the global catalog read-only to anon/authenticated clients", () => {
+    expect(capabilityMigration).toContain("DROP POLICY IF EXISTS nexus_capabilities_member_all");
+    expect(capabilityMigration).toContain("CREATE POLICY nexus_capabilities_global_read");
+    expect(capabilityMigration).toContain("CREATE POLICY nexus_capabilities_member_write");
+    expect(capabilityMigration).toContain("REVOKE ALL ON TABLE public.nexus_capabilities FROM anon, authenticated");
+    expect(capabilityMigration).toContain("GRANT SELECT ON TABLE public.nexus_capabilities TO anon");
+    expect(capabilityMigration).toContain("GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nexus_capabilities TO authenticated");
+    expect(capabilityMigration).not.toMatch(/CREATE POLICY[^;]+TO public/i);
+  });
+
   it("preserves legacy capability tables until their data is migrated", () => {
     expect(capabilityMigration.toLowerCase()).not.toContain("drop table if exists public.capabilities");
     expect(capabilityMigration.toLowerCase()).not.toContain("drop table if exists public.capability_dependencies");
