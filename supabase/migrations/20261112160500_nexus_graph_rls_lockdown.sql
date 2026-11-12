@@ -73,6 +73,9 @@ DROP POLICY IF EXISTS "project members can read events" ON public.events;
 DROP POLICY IF EXISTS "project members can create execution requests" ON public.nexus_execution_requests;
 DROP POLICY IF EXISTS "project members can read execution requests" ON public.nexus_execution_requests;
 DROP POLICY IF EXISTS "project members can update execution requests" ON public.nexus_execution_requests;
+DROP POLICY IF EXISTS nexus_execution_requests_member_select ON public.nexus_execution_requests;
+DROP POLICY IF EXISTS nexus_execution_requests_member_insert ON public.nexus_execution_requests;
+DROP POLICY IF EXISTS nexus_execution_requests_member_update ON public.nexus_execution_requests;
 DROP POLICY IF EXISTS project_members_self_select ON public.project_members;
 DROP POLICY IF EXISTS projects_member_select ON public.projects;
 
