@@ -86,13 +86,13 @@ describe("catalog → NexusCapability", () => {
     expect(capabilityMigration).not.toMatch(/ON CONFLICT\s*\(key\)/i);
   });
 
-  it("keeps the global catalog read-only to anon/authenticated clients", () => {
+  it("keeps the global catalog read-only to authenticated clients", () => {
     expect(capabilityMigration).toContain("DROP POLICY IF EXISTS nexus_capabilities_member_all");
     expect(capabilityMigration).toContain("CREATE POLICY nexus_capabilities_global_read");
     expect(capabilityMigration).toContain("FOR SELECT TO authenticated");
     expect(capabilityMigration).toContain("CREATE POLICY nexus_capabilities_member_write");
     expect(capabilityMigration).toContain("REVOKE ALL ON TABLE public.nexus_capabilities FROM anon, authenticated");
-    expect(capabilityMigration).not.toMatch(/GRANT\\s+[^;]+\\s+TO\\s+anon/i);
+    expect(capabilityMigration).not.toMatch(/GRANT\s+[^;]+\s+TO\s+anon/i);
     expect(capabilityMigration).toContain("GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nexus_capabilities TO authenticated");
     expect(capabilityMigration).not.toMatch(/CREATE POLICY[^;]+TO public/i);
   });
