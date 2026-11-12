@@ -85,7 +85,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS providers_metadata_key_uidx
 
 -- Existing global rows keep their operational availability, risk, version, tags,
 -- dependency graph and permission grants; only display metadata and missing provider IDs sync.
-DO $
+DO $$
 DECLARE
   p_id uuid;
 BEGIN
