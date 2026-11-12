@@ -9,7 +9,7 @@ export type DeployEnvKeySpec = {
 /**
  * Host-neutral production env contract.
  * Presence only — never return secret values.
- * The host (Netlify today, Render/Vercel later) is not a Nexus domain object.
+ * The runtime host is infrastructure, never a Nexus domain object.
  */
 export const DEPLOY_ENV_KEYS: readonly DeployEnvKeySpec[] = [
   { key: "NEXT_PUBLIC_SUPABASE_URL", requiredInProduction: true, role: "persistence" },
@@ -60,14 +60,13 @@ function envPresent(env: NodeJS.Dict<string>, key: string): boolean {
 
 /**
  * Fail closed on host signals too: a production deploy that forgot NODE_ENV must still be
- * treated as production (no in-memory user data, auth required). Netlify sets
- * CONTEXT=production for production deploys; Vercel sets VERCEL_ENV=production.
+ * treated as production (no in-memory user data, auth required). Netlify and
+ * compatible hosts set CONTEXT=production for production deploys.
  */
 export function isProductionRuntime(env: NodeJS.Dict<string> = process.env): boolean {
   return env.NODE_ENV === "production"
     || env.RESONANCE_DEPLOY_STAGE === "production"
-    || env.CONTEXT === "production"
-    || env.VERCEL_ENV === "production";
+    || env.CONTEXT === "production";
 }
 
 /** Auth modes that may be echoed by /api/ready. Anything else is reported as "invalid". */
