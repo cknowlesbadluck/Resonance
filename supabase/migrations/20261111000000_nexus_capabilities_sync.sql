@@ -83,7 +83,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS providers_metadata_key_uidx
   ON public.providers ((metadata->>'key'))
   WHERE metadata ? 'key';
 
-DO $$
+-- Existing global rows keep their operational availability, risk, version, tags,
+-- dependency graph and permission grants; only display metadata and missing provider IDs sync.
+DO $
 DECLARE
   p_id uuid;
 BEGIN
