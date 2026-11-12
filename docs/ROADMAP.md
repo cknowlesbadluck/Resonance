@@ -31,6 +31,8 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 - [x] Control surface gates invoke on `executable` and shows `unexecutableReason` (availability alone is not enough)
 - [ ] Retire any remaining client-only capability shape if one is still decoded beside `NexusCapability`
 - [ ] `nexus_capabilities` rows on the live database match that publication
+- [ ] Idempotent external event replay via `Idempotency-Key` / `external_id` (implementation + regression tests proposed in PR #266)
+- [ ] Apply the additive public API security migration after the required owner review. Live Supabase inspection on 2026-11-12 confirmed five graph tables still have `PUBLIC` policies permitting unscoped `project_id IS NULL` rows; the `events` and `nexus_execution_requests` policies also target `PUBLIC` rather than `authenticated`. The ACL audit found `anon` had broad privileges on ten public tables, while `authenticated` had `TRUNCATE` and other unnecessary table privileges. Default privileges for both `postgres` and `supabase_admin` also re-granted broad table ACLs to future objects. The migration now tightens all ten current API tables, limits grants by operation, and removes unsafe anon/default grants. The migration remains unapplied and requires explicit owner authorization.
 
 ### P3 — Native execution loop (IN PROGRESS)
 - [x] Swift package client sends Idempotency-Key and Bearer
@@ -52,7 +54,7 @@ See also: `docs/PRODUCT_VISION.md`, `docs/DEVELOPMENT_GUIDELINES.md`, `docs/DEPL
 ### P6 — Release / deployment stage (IN PROGRESS)
 - [x] Host-neutral deploy contract and `/api/health` + `/api/ready`
 - [x] Production user-data routes refuse in-memory fallback
-- [ ] Live host env from `.env.example` and `/api/ready` 200
+- [x] Live host env from `.env.example` and `/api/ready` 200 (verified by the 2026-11-12 15:02 UTC live probe)
 - [ ] SideStore IPA on a physical iPhone (not a Swift package test)
 
 ## Definition of done
