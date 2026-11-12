@@ -11,8 +11,7 @@
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/production-smoke.mjs",
-    "alias-drift": "node scripts/vercel-alias-drift.mjs"
+    "smoke": "node scripts/production-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
