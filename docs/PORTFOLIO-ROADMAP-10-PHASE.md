@@ -1,11 +1,11 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-12 ~06:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-12 ~07:00 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-12-0600Z.md (prior: AUDIT-2026-11-12-0400Z.md)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-12-0700Z.md (prior: AUDIT-2026-11-12-0600Z.md)
 
-**Live probe evidence (2026-11-12 ~06:00Z):**
+**Live probe evidence (2026-11-12 ~07:01Z):**
 
-- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm. Recovered from prior 503 cold start.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-12T06:00:32.204Z). Owner gate cleared.
+- Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-12T07:01:52.720Z). Owner gate cleared.
 - Open PR entropy: QuicksilverV1 **2**, Resonance **9**, Conduit **7**. Total **18**. Target <10. Remaining primarily hardens, hygiene scripts, owner-gated migrations, auth matrices, redaction.
 - CHR-55: In Review. deviceAcceptance=not_recorded.
 - Portfolio maturity ~8.1/10 (both warm).
@@ -51,6 +51,6 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 3. Hygiene bot or manual queue for owner-gated items (migrations list, env checklist) — decision-queue.mjs exists.
 4. Direct docs commits for living audits to reduce PR noise (this update and companion AUDIT).
 5. Historical AUDIT consolidation recommendation.
-6. **New this pass:** Fresh 06:00Z audit committed directly to main; both planes confirmed warm; entropy formula documented for auto-ranking.
+6. **New this pass:** Fresh 07:00Z audit committed directly to main; both planes confirmed warm; entropy formula documented for auto-ranking.
 
-Date: 2026-11-12 ~06:00 UTC
+Date: 2026-11-12 ~07:00 UTC
