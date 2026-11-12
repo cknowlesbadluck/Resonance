@@ -9,7 +9,7 @@ describe("POST /api/nexus/executions/[id]/resume fails closed with 401 before va
   const saved = { ...process.env };
   beforeEach(() => {
     process.env.RESONANCE_AUTH_MODE = "required";
-    delete process.env.NETLIFY; delete process.env.CONTEXT; delete process.env.VERCEL_ENV;
+    delete process.env.NETLIFY; delete process.env.CONTEXT;
   });
   afterEach(() => { process.env = { ...saved }; });
 
