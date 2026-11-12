@@ -73,7 +73,7 @@ WITH provider_seed(provider_key, provider_name) AS (
     ('kora', 'Kora')
 )
 UPDATE public.providers AS existing
-SET metadata = existing.metadata || jsonb_build_object('key', seed.provider_key),
+SET metadata = COALESCE(existing.metadata, '{}'::jsonb) || jsonb_build_object('key', seed.provider_key),
     type = COALESCE(existing.type, 'integration')
 FROM provider_seed AS seed
 WHERE lower(existing.name) = lower(seed.provider_name)
