@@ -86,6 +86,15 @@ describe("catalog → NexusCapability", () => {
     expect(capabilityMigration).not.toMatch(/ON CONFLICT\s*\(key\)/i);
   });
 
+  it("preserves existing global capability availability and permission settings", () => {
+    const updates = capabilityMigration.match(/UPDATE public\\.nexus_capabilities[\\s\\S]*?;/g) ?? [];
+    expect(updates.length).toBe(14);
+    for (const update of updates) {
+      expect(update).not.toMatch(/\\b(risk|availability|version|tags|dependencies|required_permissions)\\s*=/i);
+      expect(update).toContain("provider_id = COALESCE(provider_id, p_id)");
+    }
+  });
+
   it("keeps the global catalog read-only to authenticated clients", () => {
     expect(capabilityMigration).toContain("DROP POLICY IF EXISTS nexus_capabilities_member_all");
     expect(capabilityMigration).toContain("CREATE POLICY nexus_capabilities_global_read");
