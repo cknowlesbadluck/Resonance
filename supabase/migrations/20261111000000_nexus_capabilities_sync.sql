@@ -94,13 +94,7 @@ BEGIN
   SET
     name = 'iOS SwiftUI',
     description = 'Production SwiftUI architecture, implementation and testing.',
-    risk = 'high',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["ios","swift","swiftui","kind:skill"]'::jsonb,
-    dependencies = '[{"capabilityKey":"tool.github","kind":"tool"}]'::jsonb,
-    required_permissions = '["repo.read","repo.write","build.run","test.run"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'skill.ios-swiftui';
 
@@ -116,13 +110,7 @@ BEGIN
   SET
     name = 'Code Review',
     description = 'Independent correctness, maintainability and security review.',
-    risk = 'low',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["review","quality","kind:skill"]'::jsonb,
-    dependencies = '[{"capabilityKey":"tool.github","kind":"tool"}]'::jsonb,
-    required_permissions = '["repo.read","review.write"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'skill.code-review';
 
@@ -138,13 +126,7 @@ BEGIN
   SET
     name = 'Supabase Architecture',
     description = 'Database, RLS, Realtime and Edge Function design.',
-    risk = 'medium',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["supabase","postgres","rls","kind:skill"]'::jsonb,
-    dependencies = '[{"capabilityKey":"integration.supabase","kind":"integration"}]'::jsonb,
-    required_permissions = '["database.read","database.write"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'skill.supabase-architecture';
 
@@ -159,20 +141,14 @@ BEGIN
   UPDATE public.nexus_capabilities
   SET
     name = 'Workflow Governance',
-    description = 'Plan, execute and verify governed multi-step work.',
-    risk = 'high',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["workflow","governance","kind:skill"]'::jsonb,
-    dependencies = '[{"capabilityKey":"tool.linear","kind":"tool"}]'::jsonb,
-    required_permissions = '["workflow.start","workflow.read"]'::jsonb,
-    provider_id = p_id,
+    description = 'Plan, execute and verify governed multi-step workflows.',
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'skill.workflow-governance';
 
   IF NOT FOUND THEN
     INSERT INTO public.nexus_capabilities (capability_key, name, description, risk, availability, version, tags, dependencies, required_permissions, provider_id)
-    VALUES ('skill.workflow-governance', 'Workflow Governance', 'Plan, execute and verify governed multi-step work.', 'high', 'available', '1.0.0', '["workflow","governance","kind:skill"]'::jsonb, '[{"capabilityKey":"tool.linear","kind":"tool"}]'::jsonb, '["workflow.start","workflow.read"]'::jsonb, p_id);
+    VALUES ('skill.workflow-governance', 'Workflow Governance', 'Plan, execute and verify governed multi-step workflows.', 'high', 'available', '1.0.0', '["workflow","governance","kind:skill"]'::jsonb, '[{"capabilityKey":"tool.linear","kind":"tool"}]'::jsonb, '["workflow.start","workflow.read"]'::jsonb, p_id);
   END IF;
 
 
@@ -182,13 +158,7 @@ BEGIN
   SET
     name = 'GitHub',
     description = 'Repositories, branches, commits, issues and pull requests.',
-    risk = 'high',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["git","github","code","kind:tool"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '["repo.read","repo.write","pr.write"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'tool.github';
 
@@ -204,13 +174,7 @@ BEGIN
   SET
     name = 'Linear',
     description = 'Project, milestone and issue tracking.',
-    risk = 'medium',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["planning","issues","kind:tool"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '["issue.read","issue.write"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'tool.linear';
 
@@ -226,13 +190,7 @@ BEGIN
   SET
     name = 'Figma',
     description = 'Design inspection and component integration.',
-    risk = 'low',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["design","ui","kind:tool"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '["design.read"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'tool.figma';
 
@@ -248,13 +206,7 @@ BEGIN
   SET
     name = 'OpenAI',
     description = 'OpenAI model and agent capabilities.',
-    risk = 'high',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["ai","agents","kind:tool"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '["model.invoke"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'tool.openai';
 
@@ -270,13 +222,7 @@ BEGIN
   SET
     name = 'Brainbase MCP',
     description = 'Managed agent orchestration and execution.',
-    risk = 'high',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["agents","mcp","kind:tool"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '["agent.execute"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'tool.brainbase';
 
@@ -292,13 +238,7 @@ BEGIN
   SET
     name = 'Supabase',
     description = 'Resonance backend integration.',
-    risk = 'medium',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["backend","database","kind:integration"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '["database.read","database.write","realtime.subscribe"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'integration.supabase';
 
@@ -314,13 +254,7 @@ BEGIN
   SET
     name = 'GitHub Integration',
     description = 'Source-control integration for Resonance execution.',
-    risk = 'medium',
-    availability = 'available',
-    version = '1.0.0',
-    tags = '["git","kind:integration"]'::jsonb,
-    dependencies = '[{"capabilityKey":"tool.github","kind":"tool"}]'::jsonb,
-    required_permissions = '["repo.read","repo.write"]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'integration.github';
 
@@ -336,13 +270,7 @@ BEGIN
   SET
     name = 'StrengthCode',
     description = 'Specialized capability provider.',
-    risk = 'low',
-    availability = 'planned',
-    version = '1.0.0',
-    tags = '["specialized","kind:integration"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '[]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'integration.strengthcode';
 
@@ -358,13 +286,7 @@ BEGIN
   SET
     name = 'Riqor',
     description = 'Registered integration capability slot.',
-    risk = 'low',
-    availability = 'planned',
-    version = '1.0.0',
-    tags = '["integration","kind:integration"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '[]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'integration.riqor';
 
@@ -380,13 +302,7 @@ BEGIN
   SET
     name = 'Kora',
     description = 'Registered integration capability slot.',
-    risk = 'low',
-    availability = 'planned',
-    version = '1.0.0',
-    tags = '["integration","kind:integration"]'::jsonb,
-    dependencies = '[]'::jsonb,
-    required_permissions = '[]'::jsonb,
-    provider_id = p_id,
+    provider_id = COALESCE(provider_id, p_id),
     updated_at = now()
   WHERE project_id IS NULL AND capability_key = 'integration.kora';
 
