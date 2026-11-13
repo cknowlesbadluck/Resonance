@@ -1,13 +1,13 @@
-# Portfolio 10-phase roadmap — refreshed 2026-11-13 ~01:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
+# Portfolio 10-phase roadmap — refreshed 2026-11-13 ~07:01 UTC (full audit + harden + stabilize + hygiene prune + innovate)
 
-**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-13-0101Z.md (prior: AUDIT-2026-11-12-2000Z.md)
+**Canonical source:** This file. Companion full audit: docs/AUDIT-2026-11-13-0701Z.md (prior: AUDIT-2026-11-13-0101Z.md)
 
-**Live probe evidence (2026-11-13 ~01:01Z):**
+**Live probe evidence (2026-11-13 ~07:01Z):**
 
 - Conduit https://conduit-feco.onrender.com/ready : **HTTP 200 ready** (version 0.8.0, contractRevision 2026-10-03-ready-surface, persistence postgres, production true). Warm.
-- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-13T01:01:33.083Z). Owner gate cleared.
-- Open PR entropy: QuicksilverV1 **1**, Resonance **4**, Conduit **2**. Total **7**. Target <10. Improved from 12 at 20:00Z. Remaining: Spotlight (#416), RLS (#265 green), indexes (#208), verify-rls (#196), drafts (#321/#120/#250).
-- CHR-55: In Review. deviceAcceptance=not_recorded.
+- Resonance https://resonancenexus.netlify.app/api/ready : **ready OK** (missingRequired=[], production true, githubAdapterConfigured=false, posture=contract_passed, timestamp 2026-11-13T07:01:31.814Z). Owner gate cleared.
+- Open PR entropy: QuicksilverV1 **1**, Resonance **4**, Conduit **2**. Total **7**. Target <10. Held from 01:01Z. Remaining: Spotlight (#416), RLS (#265 green), indexes (#208), verify-rls (#196), drafts (#321/#120/#250).
+- CHR-55: In Progress. deviceAcceptance=not_recorded.
 - Portfolio maturity ~8.6/10 (both warm, entropy at 7).
 
 ## Phase 1 — Owner gate cleared
@@ -20,7 +20,7 @@ Tests reject non-owned as ready. Clean Vercel aliases (non-blocking). Stranger o
 claimDeviceAcceptance rejects. deviceAcceptance stays not_recorded until owner records real IPA.
 
 ## Phase 4 — CHR-55 sole device gate
-Archive IPA on target iPhone 16e / iOS 27 only. Simulator/CI insufficient. Linear CHR-55 In Review. Share path via Diagnostics ready. Highest remaining gate for QS ship. Recent packaging icon validation landed (#417).
+Archive IPA on target iPhone 16e / iOS 27 only. Simulator/CI insufficient. Linear CHR-55 In Progress. Share path via Diagnostics ready. Highest remaining gate for QS ship. Recent packaging icon validation landed (#417).
 
 ## Phase 5 — Memory and conversation budgets
 Bounded, on-device first. AppTests green. Resilience tests progressing. Dynamic Type a11y landed (#418). Spotlight opt-in in #416.
@@ -51,6 +51,6 @@ Probe + device evidence + low entropy. Production verdict only after all gates. 
 3. Hygiene bot or manual queue for owner-gated items (migrations list, env checklist) — decision-queue.mjs exists.
 4. Direct docs commits for living audits to reduce PR noise (this update and companion AUDIT).
 5. Historical AUDIT consolidation + stale branch cleanup recommendation.
-6. **New this pass:** Fresh 01:01Z audit + roadmap committed directly to main; both planes confirmed warm; entropy reduced to 7; owner action priority elevated.
+6. **New this pass:** Fresh 07:01Z audit + roadmap committed directly to main; both planes confirmed warm; entropy held at 7; owner action priority elevated.
 
-Date: 2026-11-13 ~01:01 UTC
+Date: 2026-11-13 ~07:01 UTC
