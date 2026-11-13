@@ -68,13 +68,14 @@ function policyRoles(sql: string): string[] {
   return match?.[1].split(",").map((role) => role.trim().replace(/^["']|["']$/g, "")) ?? [];
 }
 
-const lockdownSql = readFileSync(join(DIR, "20261112160500_nexus_graph_rls_lockdown.sql"), "utf8").replace(/\s+/g, " ").toLowerCase();
+const lockdownSource = readFileSync(join(DIR, "20261112160500_nexus_graph_rls_lockdown.sql"), "utf8");
+const lockdownSql = lockdownSource.replace(/\s+/g, " ").toLowerCase();
 
 describe("Nexus graph RLS lockdown", () => {
   const policies = [...effectivePolicies().values()].filter((p) => TABLES.includes(p.table));
 
   it("revokes broad current and future API grants", () => {
-    const providerRevokes = statements(lockdownSql).filter((statement) => statement.startsWith("revoke all privileges on table") && statement.includes("public.providers"));
+    const providerRevokes = statements(lockdownSource).filter((statement) => statement.startsWith("revoke all privileges on table") && statement.includes("public.providers"));
     expect(providerRevokes).toHaveLength(2);
     expect(providerRevokes.some((statement) => statement.endsWith("from anon, public"))).toBe(true);
     expect(providerRevokes.some((statement) => statement.endsWith("from authenticated"))).toBe(true);
