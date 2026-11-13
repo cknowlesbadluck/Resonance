@@ -68,6 +68,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, PUBLIC, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, PUBLIC, authenticated;
 
+-- The membership predicate is SECURITY DEFINER and fully schema-qualifies
+-- its references. Pin an empty search_path to remove object-shadowing risk.
+ALTER FUNCTION private.is_project_member(uuid) SET search_path = '';
+
 -- Other public API tables also used PUBLIC policies. Their predicates are
 -- membership-aware, but explicit TO authenticated makes the boundary unambiguous.
 DROP POLICY IF EXISTS "project members can create events" ON public.events;
