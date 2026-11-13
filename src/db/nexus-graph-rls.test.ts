@@ -63,14 +63,21 @@ function isProjectScoped(expression: string | null): boolean {
     && !/project_id is null/.test(expression);
 }
 
+function policyRoles(sql: string): string[] {
+  const match = sql.match(/\bto\s+(.+?)(?=\s+(?:using|with check)\b|$)/);
+  return match?.[1].split(",").map((role) => role.trim().replace(/^["']|["']$/g, "")) ?? [];
+}
+
 const lockdownSql = readFileSync(join(DIR, "20261112160500_nexus_graph_rls_lockdown.sql"), "utf8").replace(/\s+/g, " ").toLowerCase();
 
 describe("Nexus graph RLS lockdown", () => {
   const policies = [...effectivePolicies().values()].filter((p) => TABLES.includes(p.table));
 
   it("revokes broad current and future API grants", () => {
-    expect(lockdownSql).toMatch(/revoke all privileges on table[^;]*public\.providers[^;]*from anon, public/);
-    expect(lockdownSql).toMatch(/revoke all privileges on table[^;]*public\.providers[^;]*from authenticated/);
+    const providerRevokes = statements(lockdownSql).filter((statement) => statement.startsWith("revoke all privileges on table") && statement.includes("public.providers"));
+    expect(providerRevokes).toHaveLength(2);
+    expect(providerRevokes.some((statement) => statement.endsWith("from anon, public"))).toBe(true);
+    expect(providerRevokes.some((statement) => statement.endsWith("from authenticated"))).toBe(true);
     expect(lockdownSql).toMatch(/revoke all privileges on all sequences in schema public from anon, public, authenticated/);
     expect(lockdownSql).toMatch(/revoke execute on all functions in schema public from anon, public, authenticated/);
     expect(lockdownSql).toMatch(/grant select, insert on table public\.events to authenticated/);
@@ -95,8 +102,16 @@ describe("Nexus graph RLS lockdown", () => {
     for (const table of TABLES) expect(policies.some((p) => p.table === table), table).toBe(true);
   });
 
-  it("scopes every effective policy to authenticated", () => {
-    for (const policy of policies) expect(policy.sql, `${policy.table}.${policy.name}`).toMatch(/ to authenticated\b/);
+  it("restricts every effective policy to authenticated only", () => {
+    for (const policy of policies) {
+      expect(policyRoles(policy.sql), `${policy.table}.${policy.name}`).toEqual(["authenticated"]);
+    }
+  });
+
+  it("rejects policies that add another role", () => {
+    const roles = policyRoles("create policy unsafe on public.events for select to authenticated, anon using (true)");
+    expect(roles).toEqual(["authenticated", "anon"]);
+    expect(roles).not.toEqual(["authenticated"]);
   });
 
   it("permits global reads only for catalog tables", () => {
