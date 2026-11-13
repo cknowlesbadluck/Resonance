@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 /** Effective policy guard: every Nexus graph policy must be authenticated-only; writes must be project-scoped. */
 const DIR = join(process.cwd(), "supabase", "migrations");
-const TABLES = ["events", "nexus_execution_requests", "project_members", "projects", "nexus_identities", "nexus_resources", "nexus_capabilities", "nexus_context_entries", "nexus_executions", "nexus_evidence"];
+const TABLES = ["events", "nexus_execution_requests", "project_members", "projects", "nexus_identities", "nexus_resources", "nexus_capabilities", "nexus_context_entries", "nexus_executions", "nexus_evidence", "providers"];
 const CATALOG = new Set(["nexus_identities", "nexus_resources", "nexus_capabilities"]);
 const EXECUTION = new Set(["events", "nexus_execution_requests", "nexus_context_entries", "nexus_executions", "nexus_evidence"]);
 
@@ -48,16 +48,18 @@ describe("Nexus graph RLS lockdown", () => {
     expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on tables from anon, public/);
     expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke execute on functions from anon, public, authenticated/);
     expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke execute on functions from anon, public, authenticated/);
-    expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke all on sequences from anon, public/);
-    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on sequences from anon, public/);
+    expect(lockdownSql).toMatch(/revoke all privileges on all sequences in schema public from anon, public, authenticated/);
+    expect(lockdownSql).toMatch(/revoke execute on all functions in schema public from anon, public, authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke all on sequences from anon, public, authenticated/);
+    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on sequences from anon, public, authenticated/);
     expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public revoke all on tables from authenticated/);
     expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public revoke all on tables from authenticated/);
-    expect(lockdownSql).toMatch(/alter default privileges for role postgres in schema public grant select, insert, update, delete on tables to authenticated/);
-    expect(lockdownSql).toMatch(/alter default privileges for role supabase_admin in schema public grant select, insert, update, delete on tables to authenticated/);
+    expect(lockdownSql).not.toMatch(/alter default privileges for role postgres in schema public grant .* on tables to authenticated/);
+    expect(lockdownSql).not.toMatch(/alter default privileges for role supabase_admin in schema public grant .* on tables to authenticated/);
     expect(lockdownSql).not.toMatch(/grant (all|truncate|trigger|maintain|references)\b/);
   });
 
-  it("retains policies for all six graph tables", () => {
+  it("retains policies for every exposed API table", () => {
     for (const table of TABLES) expect(policies.some((p) => p.table === table), table).toBe(true);
   });
 
