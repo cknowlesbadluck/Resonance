@@ -39,6 +39,8 @@ describe("Nexus graph RLS lockdown", () => {
 
   it("revokes broad ACLs and grants only the required authenticated operations", () => {
     expect(lockdownSql).toMatch(/revoke all privileges on table[\s\S]*from anon, public/);
+    expect(lockdownSql).toMatch(/revoke all privileges on table[^;]*public\\.providers[^;]*from anon, public/);
+    expect(lockdownSql).toMatch(/revoke all privileges on table[^;]*public\\.providers[^;]*from authenticated/);
     expect(lockdownSql).toMatch(/revoke all privileges on table[\s\S]*from authenticated/);
     expect(lockdownSql).toMatch(/grant select, insert, update, delete on table[\s\S]*to authenticated/);
     expect(lockdownSql).toMatch(/grant select on table public\.nexus_evidence to authenticated/);
