@@ -62,7 +62,7 @@ describe("Nexus graph RLS lockdown", () => {
   });
 
   it("pins the SECURITY DEFINER membership helper to an empty search_path", () => {
-    expect(lockdownSql).toMatch(/alter function private\\.is_project_member\\(uuid\\) set search_path = ''/);
+    expect(lockdownSql).toMatch(/alter function private\.is_project_member\(uuid\) set search_path = ''/);
   });
 
   it("retains policies for every exposed API table", () => {
