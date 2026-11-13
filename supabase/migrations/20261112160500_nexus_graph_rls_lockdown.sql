@@ -52,21 +52,24 @@ TO authenticated;
 
 GRANT SELECT ON TABLE public.nexus_evidence, public.providers TO authenticated;
 
--- Stop the same broad defaults from being reintroduced by future migrations.
--- Both roles have been observed creating public-schema objects in this project.
+-- Stop broad defaults from being reintroduced by future project migrations.
+-- The project postgres role owns app migrations. It is not a member of supabase_admin
+-- and is not a superuser, so platform-owned defaults cannot be altered here. Do not
+-- issue ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin: it would fail and roll back
+-- the entire migration.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM anon, PUBLIC;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON TABLES FROM anon, PUBLIC;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON TABLES FROM authenticated;
--- Future public-schema objects start inaccessible. Each future API table must
--- receive explicit grants and an RLS policy in the same reviewed migration.
+
+-- Future public-schema objects created by postgres start inaccessible. Each future
+-- API table/function/sequence must receive explicit grants and RLS in a reviewed migration.
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM anon, PUBLIC, authenticated;
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM anon, PUBLIC, authenticated;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, PUBLIC, authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, PUBLIC, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, PUBLIC, authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, PUBLIC, authenticated;
+-- PostgreSQL grants EXECUTE on new functions to PUBLIC by default globally;
+-- a schema-local revoke cannot cancel that global default.
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
 -- The membership predicate is SECURITY DEFINER and fully schema-qualifies
 -- its references. Pin an empty search_path to remove object-shadowing risk.
