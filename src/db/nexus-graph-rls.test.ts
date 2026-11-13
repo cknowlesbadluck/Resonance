@@ -61,6 +61,10 @@ describe("Nexus graph RLS lockdown", () => {
     expect(lockdownSql).not.toMatch(/grant (all|truncate|trigger|maintain|references)\b/);
   });
 
+  it("pins the SECURITY DEFINER membership helper to an empty search_path", () => {
+    expect(lockdownSql).toMatch(/alter function private\\.is_project_member\\(uuid\\) set search_path = ''/);
+  });
+
   it("retains policies for every exposed API table", () => {
     for (const table of TABLES) expect(policies.some((p) => p.table === table), table).toBe(true);
   });
