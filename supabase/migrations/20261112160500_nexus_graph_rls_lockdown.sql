@@ -55,7 +55,7 @@ GRANT SELECT ON TABLE public.nexus_evidence, public.providers TO authenticated;
 -- Stop broad defaults from being reintroduced by future project migrations.
 -- The project postgres role owns app migrations. It is not a member of supabase_admin
 -- and is not a superuser, so platform-owned defaults cannot be altered here. Do not
--- issue ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin: it would fail and roll back
+-- attempt to edit platform-owned defaults: it would fail and roll back
 -- the entire migration.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM anon, PUBLIC;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM authenticated;
