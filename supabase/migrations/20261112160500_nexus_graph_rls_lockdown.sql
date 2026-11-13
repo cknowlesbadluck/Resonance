@@ -20,7 +20,8 @@ REVOKE ALL PRIVILEGES ON TABLE
   public.nexus_capabilities,
   public.nexus_context_entries,
   public.nexus_executions,
-  public.nexus_evidence
+  public.nexus_evidence,
+  public.providers
 FROM anon, PUBLIC;
 
 REVOKE ALL PRIVILEGES ON TABLE
@@ -33,7 +34,8 @@ REVOKE ALL PRIVILEGES ON TABLE
   public.nexus_capabilities,
   public.nexus_context_entries,
   public.nexus_executions,
-  public.nexus_evidence
+  public.nexus_evidence,
+  public.providers
 FROM authenticated;
 
 GRANT SELECT, INSERT ON TABLE public.events TO authenticated;
@@ -48,7 +50,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   public.nexus_executions
 TO authenticated;
 
-GRANT SELECT ON TABLE public.nexus_evidence TO authenticated;
+GRANT SELECT ON TABLE public.nexus_evidence, public.providers TO authenticated;
 
 -- Stop the same broad defaults from being reintroduced by future migrations.
 -- Both roles have been observed creating public-schema objects in this project.
@@ -56,11 +58,13 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON TABLES FROM anon, PUBLIC;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON TABLES FROM authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+-- Future public-schema objects start inaccessible. Each future API table must
+-- receive explicit grants and an RLS policy in the same reviewed migration.
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM anon, PUBLIC, authenticated;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM anon, PUBLIC, authenticated;
 
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, PUBLIC;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, PUBLIC, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, PUBLIC, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, PUBLIC, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, PUBLIC, authenticated;
 
